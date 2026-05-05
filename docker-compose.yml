@@ -23,7 +23,7 @@ services:
       start_period: 10s
     restart: unless-stopped
     networks:
-      - astraeo-network
+      - mision-control-network
 
   # Redis Cache
   redis:
@@ -41,16 +41,16 @@ services:
       start_period: 10s
     restart: unless-stopped
     networks:
-      - astraeo-network
+      - mision-control-network
 
-  # Astraeo Next.js App
-  astraeo:
+  # Mision Control - Next.js App
+  mision-control:
     build:
       context: .
       dockerfile: Dockerfile
       args:
         NODE_ENV: development
-    container_name: astraeo-app
+    container_name: Mision-Control
     depends_on:
       postgres:
         condition: service_healthy
@@ -77,7 +77,7 @@ services:
       start_period: 40s
     restart: unless-stopped
     networks:
-      - astraeo-network
+      - mision-control-network
     stdin_open: true
     tty: true
 
@@ -88,5 +88,5 @@ volumes:
     driver: local
 
 networks:
-  astraeo-network:
+  mision-control-network:
     driver: bridge
