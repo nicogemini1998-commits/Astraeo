@@ -1,4 +1,4 @@
-# Misión Control v2
+# Astraeo - Misión Control v2
 
 Dashboard inteligente para gestión de proyectos y agentes Claude.
 
@@ -20,7 +20,7 @@ Dashboard inteligente para gestión de proyectos y agentes Claude.
 - **Charts:** Recharts
 - **API:** Claude API (Anthropic)
 
-## Setup
+## Setup Local
 
 ```bash
 cd astraeo
@@ -30,6 +30,15 @@ npm run dev
 
 Accede a `http://localhost:3000`
 
+## Docker
+
+```bash
+docker build -t astraeo .
+docker run -p 3002:3000 astraeo
+```
+
+Accede a `http://localhost:3002`
+
 ## Variables de Entorno
 
 Cuando tengas API key:
@@ -38,7 +47,7 @@ Cuando tengas API key:
 ANTHROPIC_API_KEY=sk-...
 ```
 
-Añade a `.env.local` (nunca en git)
+Añade a `astraeo/.env.local` (nunca en git)
 
 ## Estructura
 
@@ -55,7 +64,7 @@ astraeo/
 ## Seguridad
 
 - ✅ `.gitignore` protege credenciales
-- ✅ Sem API key en código
+- ✅ Sin API key en código
 - ✅ Variables de entorno aisladas
 
 ## Desarrollo
