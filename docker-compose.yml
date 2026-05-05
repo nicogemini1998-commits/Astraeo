@@ -1,19 +1,92 @@
 version: '3.8'
 
 services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: astraeo-db
+    environment:
+      POSTGRES_USER: astraeo
+      POSTGRES_PASSWORD: astraeo-dev
+      POSTGRES_DB: astraeo_db
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U astraeo -d astraeo_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - astraeo-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: astraeo-cache
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - astraeo-network
+
+  # Astraeo Next.js App
   astraeo:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NODE_ENV: development
     container_name: astraeo-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: "postgresql://astraeo:astraeo-dev@postgres:5432/astraeo_db"
+      REDIS_URL: "redis://redis:6379"
+      NEXT_PUBLIC_APP_URL: "http://localhost:3002"
+      # ANTHROPIC_API_KEY is loaded from .env.local when available
     ports:
       - "3002:3000"
-    environment:
-      NODE_ENV: production
-      # Add ANTHROPIC_API_KEY here or via .env file when ready
-      # ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-    restart: unless-stopped
+    volumes:
+      # Development mode: live code reload
+      - ./astraeo:/app
+      - /app/node_modules
+      - /app/.next
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+    restart: unless-stopped
+    networks:
+      - astraeo-network
+    stdin_open: true
+    tty: true
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  astraeo-network:
+    driver: bridge

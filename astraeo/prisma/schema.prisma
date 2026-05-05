@@ -1,0 +1,62 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Agent {
+  id        String   @id @default(cuid())
+  name      String
+  status    String   @default("active") // active, paused, archived
+  skills    String[] // JSON array of skills
+  config    Json?    // Agent configuration
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  missions Mission[]
+
+  @@map("agents")
+}
+
+model Mission {
+  id        String   @id @default(cuid())
+  title     String
+  status    String   @default("pending") // pending, in_progress, completed, blocked
+  priority  String   @default("medium") // low, medium, high, critical
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  data      Json?    // Mission specific data
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("missions")
+}
+
+model ChatSession {
+  id        String   @id @default(cuid())
+  title     String   @default("New Chat")
+  messages  String[] // Serialized messages array
+  agentId   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("chat_sessions")
+}
+
+model Settings {
+  id               String  @id @default(cuid())
+  companyName      String  @default("Cliender")
+  companyContext   String  @default("")
+  anthropicApiKey  String? // Encrypted in production
+  theme            String  @default("dark")
+  language         String  @default("es")
+  updatedAt        DateTime @updatedAt
+
+  @@map("settings")
+}

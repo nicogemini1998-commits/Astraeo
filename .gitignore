@@ -3,6 +3,7 @@
 .env.local
 .env.*.local
 .env.production.local
+.env.docker
 
 # API Keys & Secrets
 *.key
@@ -12,6 +13,10 @@
 *.p12
 secrets.json
 credentials.json
+
+# Prisma
+prisma/migrations/
+.prisma/
 
 # Dependencies
 node_modules/
