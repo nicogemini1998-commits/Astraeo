@@ -1,0 +1,433 @@
+"use client";
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { nanoid } from "nanoid";
+import type {
+  Page, Agent, Mission, ChatSession, ChatMessage,
+  MemoryEntry, Workflow, Integration, Notification,
+  AppSettings, MetricPoint, AgentStatus
+} from "@/lib/types";
+import {
+  seedAgents, seedMissions, seedMemory, seedWorkflows,
+  seedIntegrations, seedNotifications, seedChatSessions
+} from "@/lib/seeds";
+
+interface RealtimeMetrics {
+  apiLatency: number;
+  efficiency: number;
+  tokensPerMinute: number;
+  activeSessions: number;
+  requestsToday: number;
+  successRate: number;
+  latencyHistory: MetricPoint[];
+  tokensHistory: MetricPoint[];
+}
+
+interface AstraeoState {
+  currentPage: Page;
+  sidebarOpen: boolean;
+  agents: Agent[];
+  missions: Mission[];
+  chatSessions: ChatSession[];
+  activeChatId: string | null;
+  memory: MemoryEntry[];
+  workflows: Workflow[];
+  integrations: Integration[];
+  notifications: Notification[];
+  settings: AppSettings;
+  metrics: RealtimeMetrics;
+  notifPanelOpen: boolean;
+  modalOpen: boolean;
+  toasts: { id: string; message: string; type: "success" | "error" | "info" | "warning" }[];
+
+  // Navigation
+  setPage: (page: Page) => void;
+  toggleSidebar: () => void;
+
+  // Agents
+  updateAgent: (id: string, patch: Partial<Agent>) => void;
+  addAgent: (agent: Omit<Agent, "id" | "createdAt" | "tasksCompleted" | "tokensUsed" | "avgResponseMs">) => void;
+  deleteAgent: (id: string) => void;
+  setAgentStatus: (id: string, status: AgentStatus) => void;
+
+  // Missions
+  addMission: (m: Omit<Mission, "id" | "createdAt" | "updatedAt">) => void;
+  updateMission: (id: string, patch: Partial<Mission>) => void;
+  deleteMission: (id: string) => void;
+  moveMission: (id: string, status: Mission["status"]) => void;
+
+  // Chat
+  sendMessage: (sessionId: string, content: string, agentId: string) => Promise<void>;
+  createChatSession: (agentId: string) => string;
+  setActiveChat: (id: string) => void;
+  deleteChat: (id: string) => void;
+
+  // Memory
+  addMemory: (m: Omit<MemoryEntry, "id" | "createdAt" | "updatedAt">) => void;
+  updateMemory: (id: string, patch: Partial<MemoryEntry>) => void;
+  deleteMemory: (id: string) => void;
+  togglePinMemory: (id: string) => void;
+
+  // Workflows
+  toggleWorkflow: (id: string) => void;
+  runWorkflow: (id: string) => void;
+  updateWorkflow: (id: string, patch: Partial<Workflow>) => void;
+  addWorkflow: (w: Omit<Workflow, "id" | "createdAt" | "runs">) => void;
+  deleteWorkflow: (id: string) => void;
+
+  // Integrations
+  connectIntegration: (id: string, apiKey: string, config?: Record<string, string>) => void;
+  disconnectIntegration: (id: string) => void;
+
+  // Notifications
+  addNotification: (n: Omit<Notification, "id" | "timestamp">) => void;
+  markNotificationRead: (id: string) => void;
+  markAllRead: () => void;
+  toggleNotifPanel: () => void;
+
+  // Settings
+  updateSettings: (patch: Partial<AppSettings>) => void;
+
+  // Metrics (real-time)
+  tickMetrics: () => void;
+
+  // Toasts
+  showToast: (message: string, type?: "success" | "error" | "info" | "warning") => void;
+  dismissToast: (id: string) => void;
+}
+
+const defaultSettings: AppSettings = {
+  claudeApiKey: "",
+  claudeModel: "claude-sonnet-4-6",
+  theme: "dark",
+  language: "es",
+  notifications: true,
+  soundEffects: false,
+  realtimeUpdates: true,
+  userName: "Comandante",
+  userRole: "Admin Level 5",
+  starfieldDensity: 80,
+  compactMode: false,
+  companyContext: `CLIENDER — Consultora Tecnológica de Ventas
+Ubicación: Puerto de Sagunto (Valencia, España) | Equipo: ~12 profesionales
+
+MISIÓN: No gestiona marketing. Reconstruye sistemas de ventas completos para empresas con mínimo 5 empleados, estructura comercial activa y capacidad de inversión.
+
+TRES PILARES:
+1. Captación de clientes — Meta Ads, Google Ads, optimización de CPL, creatividades IA, calidad de leads.
+2. Sistema comercial y automatización — CRM Go High Level, WhatsApp/email automation, flujos de cualificación de leads, reducción de carga manual del equipo comercial.
+3. Visibilidad digital — SEO, redes sociales, web, reputación online (reseñas), imagen de marca.
+
+METODOLOGÍA (4 fases):
+1. Auditoría estratégica — análisis completo del sistema actual del cliente.
+2. Diseño del sistema — rediseño del flujo comercial + arquitectura de automatizaciones.
+3. Implementación — CRM, automatizaciones, campañas en marcha.
+4. Optimización continua — mejora de conversión, ajuste de campañas, refinamiento.
+
+STACK TECNOLÓGICO: Go High Level (CRM principal), automatización WhatsApp + email, IA para creatividades (UGC, vídeo hiperrealista), chatbots de cualificación, sistemas de captación de reseñas.
+
+IA EN CLIENDER: Integrada en captación (creatividades ganadoras, copies), procesos comerciales (chatbots, filtrado automático de leads, nutrición de contactos) y visibilidad digital (calendario de contenido, SEO, web).
+
+CLIENDER TECH (línea emergente): Desarrollo de software a medida para empresas avanzadas. Tickets 2.000€–5.000€+. Integra múltiples herramientas en un solo entorno. En fase de validación.
+
+PROPUESTA DE VALOR: Más leads cualificados, mejor conversión, menos trabajo manual, procesos automatizados, estructura comercial profesionalizada, crecimiento predecible.
+
+FILOSOFÍA: "CLIENDER no vende servicios. CLIENDER resuelve problemas concretos con precisión."`,
+};
+
+const makeLatencyHistory = (): MetricPoint[] => {
+  const now = Date.now();
+  return Array.from({ length: 20 }, (_, i) => ({
+    time: new Date(now - (19 - i) * 3000).toISOString(),
+    value: 800 + Math.random() * 600,
+  }));
+};
+
+const makeTokensHistory = (): MetricPoint[] => {
+  const now = Date.now();
+  return Array.from({ length: 20 }, (_, i) => ({
+    time: new Date(now - (19 - i) * 3000).toISOString(),
+    value: Math.floor(1200 + Math.random() * 800),
+  }));
+};
+
+export const useAstraeo = create<AstraeoState>()(
+  persist(
+    (set, get) => ({
+      currentPage: "overview",
+      sidebarOpen: true,
+      agents: seedAgents,
+      missions: seedMissions,
+      chatSessions: seedChatSessions,
+      activeChatId: "chat-1",
+      memory: seedMemory,
+      workflows: seedWorkflows,
+      integrations: seedIntegrations,
+      notifications: seedNotifications,
+      settings: defaultSettings,
+      notifPanelOpen: false,
+      modalOpen: false,
+      toasts: [],
+      metrics: {
+        apiLatency: 0,
+        efficiency: 92,
+        tokensPerMinute: 0,
+        activeSessions: 0,
+        requestsToday: 847,
+        successRate: 98.7,
+        latencyHistory: makeLatencyHistory(),
+        tokensHistory: makeTokensHistory(),
+      },
+
+      setPage: (page) => set({ currentPage: page }),
+      toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
+
+      updateAgent: (id, patch) =>
+        set((s) => ({ agents: s.agents.map((a) => (a.id === id ? { ...a, ...patch } : a)) })),
+      addAgent: (agent) =>
+        set((s) => ({
+          agents: [...s.agents, {
+            ...agent, id: `agent-${nanoid(6)}`,
+            createdAt: new Date().toISOString(),
+            tasksCompleted: 0, tokensUsed: 0, avgResponseMs: 0,
+          }],
+        })),
+      deleteAgent: (id) => set((s) => ({ agents: s.agents.filter((a) => a.id !== id) })),
+      setAgentStatus: (id, status) =>
+        set((s) => ({ agents: s.agents.map((a) => (a.id === id ? { ...a, status } : a)) })),
+
+      addMission: (m) =>
+        set((s) => ({
+          missions: [...s.missions, {
+            ...m, id: `m-${nanoid(6)}`,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          }],
+        })),
+      updateMission: (id, patch) =>
+        set((s) => ({
+          missions: s.missions.map((m) =>
+            m.id === id ? { ...m, ...patch, updatedAt: new Date().toISOString() } : m
+          ),
+        })),
+      deleteMission: (id) => set((s) => ({ missions: s.missions.filter((m) => m.id !== id) })),
+      moveMission: (id, status) =>
+        set((s) => ({
+          missions: s.missions.map((m) =>
+            m.id === id ? { ...m, status, updatedAt: new Date().toISOString() } : m
+          ),
+        })),
+
+      createChatSession: (agentId) => {
+        const agent = get().agents.find((a) => a.id === agentId);
+        const id = `chat-${nanoid(6)}`;
+        set((s) => ({
+          chatSessions: [...s.chatSessions, {
+            id, agentId,
+            title: `Chat con ${agent?.name ?? "Agente"}`,
+            messages: [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          }],
+          activeChatId: id,
+        }));
+        return id;
+      },
+      setActiveChat: (id) => set({ activeChatId: id }),
+      deleteChat: (id) => set((s) => ({
+        chatSessions: s.chatSessions.filter((c) => c.id !== id),
+        activeChatId: s.activeChatId === id ? (s.chatSessions[0]?.id ?? null) : s.activeChatId,
+      })),
+
+      sendMessage: async (sessionId, content, agentId) => {
+        const state = get();
+        const userMsg: ChatMessage = {
+          id: nanoid(), role: "user", content,
+          timestamp: new Date().toISOString(),
+        };
+        const addMsg = (msg: ChatMessage) =>
+          set((s) => ({
+            chatSessions: s.chatSessions.map((c) =>
+              c.id === sessionId
+                ? { ...c, messages: [...c.messages, msg], updatedAt: new Date().toISOString() }
+                : c
+            ),
+          }));
+
+        addMsg(userMsg);
+
+        const agent = state.agents.find((a) => a.id === agentId);
+        const apiKey = state.settings.claudeApiKey;
+
+        if (!apiKey) {
+          const noKeyMsg: ChatMessage = {
+            id: nanoid(), role: "system",
+            content: "⚠️ Configura tu Claude API Key en Ajustes para habilitar respuestas reales.",
+            timestamp: new Date().toISOString(),
+          };
+          setTimeout(() => addMsg(noKeyMsg), 500);
+          return;
+        }
+
+        try {
+          const session = get().chatSessions.find((c) => c.id === sessionId);
+          const history = (session?.messages ?? [])
+            .filter((m) => m.role !== "system")
+            .slice(-20)
+            .map((m) => ({ role: m.role === "agent" ? "assistant" as const : "user" as const, content: m.content }));
+
+          const res = await fetch("https://api.anthropic.com/v1/messages", {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              "x-api-key": apiKey,
+              "anthropic-version": "2023-06-01",
+            },
+            body: JSON.stringify({
+              model: state.settings.claudeModel,
+              max_tokens: 1024,
+              system: [
+                agent?.systemPrompt ?? "Eres un asistente útil.",
+                state.settings.companyContext?.trim()
+                  ? `\n\nContexto de la empresa:\n${state.settings.companyContext}`
+                  : "",
+              ].join(""),
+              messages: history,
+            }),
+          });
+
+          if (!res.ok) throw new Error(`API Error ${res.status}`);
+          const data = await res.json();
+          const replyText = data.content?.[0]?.text ?? "Sin respuesta";
+          const tokens = data.usage?.output_tokens ?? 0;
+
+          const agentMsg: ChatMessage = {
+            id: nanoid(), role: "agent", agentId,
+            content: replyText, timestamp: new Date().toISOString(), tokens,
+          };
+          addMsg(agentMsg);
+
+          set((s) => ({
+            agents: s.agents.map((a) =>
+              a.id === agentId
+                ? { ...a, tokensUsed: a.tokensUsed + (data.usage?.total_tokens ?? 0), tasksCompleted: a.tasksCompleted + 1 }
+                : a
+            ),
+          }));
+        } catch (err) {
+          const errMsg: ChatMessage = {
+            id: nanoid(), role: "system",
+            content: `Error al contactar Claude: ${err instanceof Error ? err.message : "Error desconocido"}`,
+            timestamp: new Date().toISOString(),
+          };
+          addMsg(errMsg);
+        }
+      },
+
+      addMemory: (m) =>
+        set((s) => ({
+          memory: [...s.memory, {
+            ...m, id: `mem-${nanoid(6)}`,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          }],
+        })),
+      updateMemory: (id, patch) =>
+        set((s) => ({
+          memory: s.memory.map((m) =>
+            m.id === id ? { ...m, ...patch, updatedAt: new Date().toISOString() } : m
+          ),
+        })),
+      deleteMemory: (id) => set((s) => ({ memory: s.memory.filter((m) => m.id !== id) })),
+      togglePinMemory: (id) =>
+        set((s) => ({
+          memory: s.memory.map((m) => (m.id === id ? { ...m, pinned: !m.pinned } : m)),
+        })),
+
+      toggleWorkflow: (id) =>
+        set((s) => ({ workflows: s.workflows.map((w) => (w.id === id ? { ...w, active: !w.active } : w)) })),
+      runWorkflow: (id) =>
+        set((s) => ({
+          workflows: s.workflows.map((w) =>
+            w.id === id ? { ...w, runs: w.runs + 1, lastRun: new Date().toISOString() } : w
+          ),
+        })),
+      updateWorkflow: (id, patch) =>
+        set((s) => ({ workflows: s.workflows.map((w) => (w.id === id ? { ...w, ...patch } : w)) })),
+      addWorkflow: (w) =>
+        set((s) => ({
+          workflows: [...s.workflows, { ...w, id: `wf-${nanoid(6)}`, createdAt: new Date().toISOString(), runs: 0 }],
+        })),
+      deleteWorkflow: (id) => set((s) => ({ workflows: s.workflows.filter((w) => w.id !== id) })),
+
+      connectIntegration: (id, apiKey, config) =>
+        set((s) => ({
+          integrations: s.integrations.map((i) =>
+            i.id === id ? { ...i, connected: true, apiKey, config: config ?? i.config } : i
+          ),
+        })),
+      disconnectIntegration: (id) =>
+        set((s) => ({
+          integrations: s.integrations.map((i) =>
+            i.id === id ? { ...i, connected: false, apiKey: "" } : i
+          ),
+        })),
+
+      addNotification: (n) =>
+        set((s) => ({
+          notifications: [{ ...n, id: nanoid(), timestamp: new Date().toISOString() }, ...s.notifications],
+        })),
+      markNotificationRead: (id) =>
+        set((s) => ({ notifications: s.notifications.map((n) => (n.id === id ? { ...n, read: true } : n)) })),
+      markAllRead: () => set((s) => ({ notifications: s.notifications.map((n) => ({ ...n, read: true })) })),
+      toggleNotifPanel: () => set((s) => ({ notifPanelOpen: !s.notifPanelOpen })),
+
+      updateSettings: (patch) => set((s) => ({ settings: { ...s.settings, ...patch } })),
+
+      tickMetrics: () => {
+        set((s) => {
+          const now = new Date().toISOString();
+          const lat = 600 + Math.random() * 700;
+          const tok = Math.floor(1000 + Math.random() * 1200);
+          const newLatHistory = [...s.metrics.latencyHistory.slice(-19), { time: now, value: lat }];
+          const newTokHistory = [...s.metrics.tokensHistory.slice(-19), { time: now, value: tok }];
+          return {
+            metrics: {
+              ...s.metrics,
+              apiLatency: Math.round(lat),
+              tokensPerMinute: tok,
+              efficiency: parseFloat((90 + Math.random() * 8).toFixed(1)),
+              activeSessions: Math.floor(Math.random() * 5) + 1,
+              requestsToday: s.metrics.requestsToday + Math.floor(Math.random() * 3),
+              successRate: parseFloat((97 + Math.random() * 2.5).toFixed(1)),
+              latencyHistory: newLatHistory,
+              tokensHistory: newTokHistory,
+            },
+          };
+        });
+      },
+
+      showToast: (message, type = "info") => {
+        const id = nanoid();
+        set((s) => ({ toasts: [...s.toasts, { id, message, type }] }));
+        setTimeout(() => get().dismissToast(id), 4000);
+      },
+      dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
+    }),
+    {
+      name: "astraeo-store",
+      version: 2,
+      partialize: (s) => ({
+        agents: s.agents,
+        missions: s.missions,
+        chatSessions: s.chatSessions,
+        activeChatId: s.activeChatId,
+        memory: s.memory,
+        workflows: s.workflows,
+        integrations: s.integrations,
+        notifications: s.notifications,
+        settings: s.settings,
+      }),
+    }
+  )
+);

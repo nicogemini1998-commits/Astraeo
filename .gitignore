@@ -1,0 +1,84 @@
+# Environment Variables
+.env
+.env.local
+.env.*.local
+.env.production.local
+
+# API Keys & Secrets
+*.key
+*.pem
+*.p8
+*.pfx
+*.p12
+secrets.json
+credentials.json
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+.turbo/
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Testing
+.nyc_output/
+coverage/
+.jest/
+
+# Temporary
+tmp/
+temp/
+*.tmp
+.cache/
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+
+# Local development
+.env.development.local
+.env.test.local
+.env.production.local
+.pem
+.key
+
+# Sensitive data
+/private
+/secrets
+*.backup
+*.bak
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
