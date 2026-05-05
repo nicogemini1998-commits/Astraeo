@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  astraeo:
+    build: .
+    container_name: astraeo-app
+    ports:
+      - "3002:3000"
+    environment:
+      NODE_ENV: production
+      # Add ANTHROPIC_API_KEY here or via .env file when ready
+      # ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
