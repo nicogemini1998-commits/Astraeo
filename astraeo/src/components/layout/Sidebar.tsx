@@ -204,19 +204,16 @@ function ConnectionOrb({ online }: { online: boolean }) {
     <div className="relative flex items-center justify-center w-5 h-5 flex-shrink-0">
       {online && (
         <motion.span
-          className="absolute w-4 h-4 rounded-full"
-          style={{ background: "rgba(52,211,153,0.25)" }}
-          animate={{ scale: [1, 1.9, 1], opacity: [0.5, 0, 0.5] }}
-          transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute w-3 h-3 rounded-full"
+          style={{ background: "rgba(61,138,96,0.15)" }}
+          animate={{ scale: [1, 1.8, 1], opacity: [0.4, 0, 0.4] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
         />
       )}
       <span
         className="w-2 h-2 rounded-full flex-shrink-0"
         style={{
           background: online ? "var(--accent-emerald)" : "var(--accent-rose)",
-          boxShadow: online
-            ? "0 0 6px rgba(52,211,153,0.6)"
-            : "0 0 6px rgba(251,113,133,0.4)",
         }}
       />
     </div>

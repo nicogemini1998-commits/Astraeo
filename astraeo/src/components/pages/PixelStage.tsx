@@ -226,21 +226,21 @@ function drawExterior(ctx: CanvasRenderingContext2D): void {
   ctx.fillStyle = moonGlow;
   ctx.fillRect(1180, 0, 240, 160);
 
-  // Aurora borealis bands
+  // Subtle atmospheric haze — very muted, not aurora-bright
   const auroraColors: [number, string, string][] = [
-    [0.2, "rgba(0, 212, 255, 0.06)",  "rgba(0, 212, 255, 0)"],
-    [0.4, "rgba(123, 97, 255, 0.08)", "rgba(123, 97, 255, 0)"],
-    [0.6, "rgba(0, 229, 160, 0.05)",  "rgba(0, 229, 160, 0)"],
+    [0.25, "rgba(80,  70, 160, 0.04)", "rgba(80,  70, 160, 0)"],
+    [0.45, "rgba(60,  90, 130, 0.03)", "rgba(60,  90, 130, 0)"],
+    [0.65, "rgba(50, 100,  80, 0.025)","rgba(50, 100,  80, 0)"],
   ];
   auroraColors.forEach(([yFrac, colorA, colorB], i) => {
     const ay = yFrac * 320;
-    const aGrad = ctx.createLinearGradient(0, ay - 30, 0, ay + 30);
+    const aGrad = ctx.createLinearGradient(0, ay - 25, 0, ay + 25);
     aGrad.addColorStop(0, colorB);
     aGrad.addColorStop(0.5, colorA);
     aGrad.addColorStop(1, colorB);
     ctx.fillStyle = aGrad;
     ctx.beginPath();
-    ctx.ellipse(750 + i * 80, ay, 600, 30, 0, 0, Math.PI * 2);
+    ctx.ellipse(750 + i * 60, ay, 700, 25, 0, 0, Math.PI * 2);
     ctx.fill();
   });
 
@@ -730,15 +730,12 @@ function drawMonitor(
   screenGrad.addColorStop(0.5, glowColor + "18");
   screenGrad.addColorStop(1, glowColor + "08");
   ctx.fillStyle = screenGrad;
-  ctx.shadowColor = glowColor;
-  ctx.shadowBlur = 12 + pulse * 6;
   ctx.beginPath();
   ctx.roundRect(cx - 18, cy - 37, 36, 28, 2);
   ctx.fill();
-  ctx.shadowBlur = 0;
 
-  // Screen content lines
-  ctx.fillStyle = glowColor + "90";
+  // Screen content lines — muted, no glow
+  ctx.fillStyle = glowColor + "70";
   const lines = [cy - 32, cy - 26, cy - 20, cy - 14];
   const widths = [28, 20, 24, 16];
   lines.forEach((ly, i) => {

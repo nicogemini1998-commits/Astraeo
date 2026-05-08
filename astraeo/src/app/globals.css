@@ -33,29 +33,31 @@
      Indigo shifted to violet-blue (#6F5BFF) for premium identity.
      Gold (#C99647) replaces yellow-amber — more muted, timeless.
      ──────────────────────────────────────────────────────────────────── */
-  --accent-indigo:   #6F5BFF;   /* primary — deep violet-indigo */
-  --accent-indigo-2: #9B8FFF;   /* lighter variant / hover */
-  --accent-sky:      #38BDF8;   /* precision / data */
-  --accent-sky-2:    #7DD3FC;
-  --accent-emerald:  #34D399;   /* success / growth */
-  --accent-emerald-2:#6EE7B7;
-  --accent-amber:    #C99647;   /* premium gold — muted, not yellow */
-  --accent-amber-2:  #E8C070;
-  --accent-rose:     #E05A6B;   /* alert / human warmth */
-  --accent-rose-2:   #F08090;
-  --accent-violet:   #A78BFA;   /* secondary purple */
+  /* Jewel tones — rich not bright. Low saturation, high depth.
+     Think Bloomberg Terminal, Arc browser, Linear in dark mode.
+     No neon. No electric. Restrained, intentional, premium.      */
+  --accent-indigo:   #6655CC;   /* primary — deep violet, not electric purple */
+  --accent-indigo-2: #8878E0;   /* softer hover variant */
+  --accent-sky:      #4A8EB8;   /* steel blue — not cyan, not electric */
+  --accent-sky-2:    #7AAFD4;
+  --accent-emerald:  #3D8A60;   /* forest/sage — not neon green */
+  --accent-emerald-2:#5EAA80;
+  --accent-amber:    #B88530;   /* aged gold — not yellow */
+  --accent-amber-2:  #D4A855;
+  --accent-rose:     #B04858;   /* deep wine rose — not hot pink */
+  --accent-rose-2:   #CC6878;
+  --accent-violet:   #7B68C8;   /* muted mauve */
 
   /* ── Semantic Tokens ───────────────────────────────────────────────── */
-  --ink-primary: var(--accent-indigo);   /* primary interactive color */
-  --ok:          #5BA66B;                /* success state — muted forest green */
-  --warn:        var(--accent-amber);    /* warning state */
-  --danger:      #C75353;                /* error / danger state */
+  --ink-primary: var(--accent-indigo);
+  --ok:          var(--accent-emerald);
+  --warn:        var(--accent-amber);
+  --danger:      #A83C50;
 
   --primary:   var(--accent-indigo);
   --secondary: var(--accent-sky);
   --success:   var(--ok);
   --warning:   var(--warn);
-  --danger:    #C75353;
 
   /* ── Text Hierarchy ────────────────────────────────────────────────────
      Warm paper whites — not cold blue-white.
@@ -115,10 +117,11 @@
   --shadow-xl:    0 20px 52px rgba(0,0,0,0.55), 0 8px 20px rgba(0,0,0,0.4);
   --shadow-2xl:   0 32px 72px rgba(0,0,0,0.6),  0 12px 28px rgba(0,0,0,0.45);
   --shadow-inner: inset 0 1px 0 rgba(255,252,245,0.04);
-  --shadow-glow-indigo:  0 0 20px rgba(111,91,255,0.22),  0 0 48px rgba(111,91,255,0.08);
-  --shadow-glow-sky:     0 0 18px rgba(56,189,248,0.22),  0 0 40px rgba(56,189,248,0.08);
-  --shadow-glow-emerald: 0 0 18px rgba(52,211,153,0.22),  0 0 40px rgba(52,211,153,0.08);
-  --shadow-glow-amber:   0 0 18px rgba(201,150,71,0.22),  0 0 40px rgba(201,150,71,0.08);
+  /* Glows: very restrained — used only for selection states, not decoration */
+  --shadow-glow-indigo:  0 0 12px rgba(102,85,204,0.14),  0 0 28px rgba(102,85,204,0.05);
+  --shadow-glow-sky:     0 0 10px rgba(74,142,184,0.13),  0 0 24px rgba(74,142,184,0.04);
+  --shadow-glow-emerald: 0 0 10px rgba(61,138,96,0.13),   0 0 24px rgba(61,138,96,0.04);
+  --shadow-glow-amber:   0 0 10px rgba(184,133,48,0.13),  0 0 24px rgba(184,133,48,0.04);
   --shadow-card:  0 0 0 1px rgba(255,252,245,0.06), 0 8px 24px rgba(0,0,0,0.45);
   --shadow-panel: 0 0 0 1px rgba(255,252,245,0.07), 0 16px 48px rgba(0,0,0,0.55);
 
@@ -190,7 +193,7 @@ input, textarea, select { font-family: inherit; }
   transition: background var(--duration-fast);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(111,91,255,0.45);
+  background: rgba(102,85,204,0.3);
 }
 ::-webkit-scrollbar-corner { background: transparent; }
 
@@ -217,8 +220,8 @@ input, textarea, select { font-family: inherit; }
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(111,91,255,0); }
-  50%       { box-shadow: 0 0 0 6px rgba(111,91,255,0.14); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(102,85,204,0); }
+  50%       { box-shadow: 0 0 0 4px rgba(102,85,204,0.1); }
 }
 
 @keyframes twinkle {
@@ -563,10 +566,10 @@ input, textarea, select { font-family: inherit; }
 /* ═══════════════════════════════════════════════════════════════════════
    STATUS DOTS
    ═══════════════════════════════════════════════════════════════════════ */
-.status-online  { background: var(--accent-emerald); box-shadow: 0 0 0 2px rgba(52,211,153,0.22); animation: pulse-gentle 2.5s ease-in-out infinite; }
-.status-busy    { background: var(--accent-amber);   box-shadow: 0 0 0 2px rgba(201,150,71,0.22); animation: pulse-gentle 2s ease-in-out infinite; }
+.status-online  { background: var(--accent-emerald); box-shadow: 0 0 0 2px rgba(61,138,96,0.18);  animation: pulse-gentle 2.5s ease-in-out infinite; }
+.status-busy    { background: var(--accent-amber);   box-shadow: 0 0 0 2px rgba(184,133,48,0.16); animation: pulse-gentle 2s ease-in-out infinite; }
 .status-offline { background: var(--text-muted); }
-.status-error   { background: var(--danger);          box-shadow: 0 0 0 2px rgba(199,83,83,0.22);  animation: pulse-gentle 1.5s ease-in-out infinite; }
+.status-error   { background: var(--danger);         box-shadow: 0 0 0 2px rgba(168,60,80,0.18);  animation: pulse-gentle 1.5s ease-in-out infinite; }
 
 /* ═══════════════════════════════════════════════════════════════════════
    TYPOGRAPHY UTILITIES
@@ -655,9 +658,10 @@ input, textarea, select { font-family: inherit; }
 /* Legacy aliases */
 .glow-cyan    { box-shadow: var(--shadow-glow-sky); }
 .glow-purple  { box-shadow: var(--shadow-glow-indigo); }
-.neon-border  { border: 1px solid rgba(111,91,255,0.28); box-shadow: 0 0 10px rgba(111,91,255,0.1), inset 0 0 10px rgba(111,91,255,0.02); }
-.neon-primary { text-shadow: 0 0 16px rgba(111,91,255,0.4), 0 0 32px rgba(111,91,255,0.15); }
-.neon-box     { box-shadow: 0 0 16px rgba(111,91,255,0.08), inset 0 0 16px rgba(111,91,255,0.02); }
+/* Neon classes kept for compat but intentionally neutralized */
+.neon-border  { border: 1px solid rgba(102,85,204,0.2); }
+.neon-primary { color: var(--accent-indigo-2); }
+.neon-box     { box-shadow: var(--shadow-md); }
 
 /* ═══════════════════════════════════════════════════════════════════════
    GRID BACKGROUNDS — Subtle data-grid textures
@@ -706,11 +710,11 @@ input, textarea, select { font-family: inherit; }
 .nav-active::before {
   content: "";
   position: absolute;
-  left: 0; top: 14%; bottom: 14%;
-  width: 2.5px;
-  background: linear-gradient(180deg, var(--accent-indigo-2) 0%, var(--accent-sky) 100%);
+  left: 0; top: 18%; bottom: 18%;
+  width: 2px;
+  background: var(--accent-indigo-2);
   border-radius: 0 2px 2px 0;
-  box-shadow: 2px 0 10px rgba(111,91,255,0.5);
+  /* No glow — clean indicator line only */
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
