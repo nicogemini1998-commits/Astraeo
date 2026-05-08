@@ -1,428 +1,815 @@
 "use client";
-import { useAstraeo } from "@/store/astraeo";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  AreaChart, Area, ResponsiveContainer, Tooltip, ReferenceLine,
-} from "recharts";
-import { motion } from "framer-motion";
-import type { Variants } from "framer-motion";
+  Bot, Zap, CheckCircle2, Clock, Activity,
+  TrendingUp, MessageSquare, Cpu, Database, Users,
+} from "lucide-react";
+import { useAstraeo } from "@/store/astraeo";
+import type { Agent, Notification } from "@/lib/types";
 
-const EASE_STANDARD: [number, number, number, number] = [0.4, 0, 0.2, 1];
-
-const priorityColors: Record<string, string> = {
-  critical: "#FF4757", high: "#FFB800", medium: "#7B61FF", low: "#6B7A99",
-};
-
-const containerVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.07 },
-  },
-};
-
-const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: EASE_STANDARD } },
-};
-
-const kpiIconGradients: Record<string, string> = {
-  "#00E5A0": "linear-gradient(135deg, rgba(0,229,160,0.2), rgba(0,229,160,0.05))",
-  "#00D4FF": "linear-gradient(135deg, rgba(0,212,255,0.2), rgba(0,212,255,0.05))",
-  "#7B61FF": "linear-gradient(135deg, rgba(123,97,255,0.2), rgba(123,97,255,0.05))",
-  "#FF6B9D": "linear-gradient(135deg, rgba(255,107,157,0.2), rgba(255,107,157,0.05))",
-  "#FFB800": "linear-gradient(135deg, rgba(255,184,0,0.2), rgba(255,184,0,0.05))",
-};
-
-// Simulated sparkline data per KPI index
-const sparklineData = [
-  [3, 5, 4, 6, 5],
-  [8, 10, 7, 11, 9],
-  [60, 75, 68, 82, 79],
-  [2, 3, 2, 4, 3],
-  [120, 145, 130, 160, 155],
-  [14, 16, 15, 18, 17],
-];
-
-// Simulated trend deltas per KPI index (positive = up, negative = down)
-const trendDeltas = ["+2", "+1", "+12%", "0", "+8%", "+3"];
-const trendPositive = [true, true, true, false, true, true];
-
-function SparklineBar({ data, color }: { data: number[]; color: string }) {
-  const max = Math.max(...data);
-  return (
-    <div className="flex items-end gap-0.5 h-6 mt-3">
-      {data.map((v, i) => (
-        <div
-          key={i}
-          className="flex-1 rounded-sm transition-all duration-300"
-          style={{
-            height: `${Math.round((v / max) * 100)}%`,
-            background: i === data.length - 1 ? color : `${color}50`,
-            boxShadow: i === data.length - 1 ? `0 0 6px ${color}80` : "none",
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-export default function Overview() {
-  const { agents, missions, metrics, memory, workflows, setPage } = useAstraeo();
-
-  const onlineAgents = agents.filter((a) => a.status === "online").length;
-  const activeMissions = missions.filter((m) => m.status === "active").length;
-  const doneMissions = missions.filter((m) => m.status === "done").length;
-  const totalTokens = agents.reduce((s, a) => s + a.tokensUsed, 0);
-  const activeWorkflows = workflows.filter((w) => w.active).length;
-  const recentMissions = missions.slice(0, 4);
-
-  const kpis = [
-    {
-      label: "Agentes Online",
-      value: `${onlineAgents}/${agents.length}`,
-      sub: "activos ahora",
-      color: "#00E5A0",
-      icon: "◉",
-    },
-    {
-      label: "Misiones Activas",
-      value: activeMissions,
-      sub: `${doneMissions} completadas`,
-      color: "#00D4FF",
-      icon: "◆",
-    },
-    {
-      label: "Tokens Totales",
-      value: formatTokens(totalTokens),
-      sub: `${metrics.tokensPerMinute > 0 ? metrics.tokensPerMinute : "—"}/min`,
-      color: "#7B61FF",
-      icon: "◷",
-    },
-    {
-      label: "Workflows Activos",
-      value: `${activeWorkflows}/${workflows.length}`,
-      sub: `${workflows.reduce((s, w) => s + w.runs, 0)} ejecuciones`,
-      color: "#FF6B9D",
-      icon: "◫",
-    },
-    {
-      label: "Requests Hoy",
-      value: metrics.requestsToday.toLocaleString(),
-      sub: `${metrics.successRate}% éxito`,
-      color: "#FFB800",
-      icon: "◷",
-    },
-    {
-      label: "Memorias",
-      value: memory.length,
-      sub: `${memory.filter((m) => m.pinned).length} fijadas`,
-      color: "#00D4FF",
-      icon: "◍",
-    },
-  ];
-
-  const latAvg = metrics.latencyHistory.length > 0
-    ? Math.round(metrics.latencyHistory.reduce((s, p) => s + p.value, 0) / metrics.latencyHistory.length)
-    : 0;
-  const tokAvg = metrics.tokensHistory.length > 0
-    ? Math.round(metrics.tokensHistory.reduce((s, p) => s + p.value, 0) / metrics.tokensHistory.length)
-    : 0;
-
-  return (
-    <div className="p-6 space-y-6 h-full overflow-y-auto">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: EASE_STANDARD }}
-      >
-        <h2 className="text-xl font-bold tracking-wide text-[#E8ECF4]">
-          Centro de Control
-        </h2>
-        <p className="text-[12px] text-[#6B7A99] mt-0.5 font-mono tracking-widest uppercase">
-          {new Date().toLocaleDateString("es", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
-        </p>
-      </motion.div>
-
-      {/* KPI Grid */}
-      <motion.div
-        className="grid grid-cols-2 lg:grid-cols-3 gap-4"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        {kpis.map((k, idx) => (
-          <motion.div
-            key={k.label}
-            variants={itemVariants}
-            className="premium-card p-4 scanline-effect"
-          >
-            <div className="flex items-start justify-between mb-1">
-              <span className="text-[11px] text-[#6B7A99] uppercase tracking-[0.15em] font-semibold">
-                {k.label}
-              </span>
-              {/* Icon with unique gradient bg */}
-              <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0"
-                style={{
-                  background: kpiIconGradients[k.color] ?? `${k.color}15`,
-                  border: `1px solid ${k.color}30`,
-                  color: k.color,
-                  boxShadow: `0 0 12px ${k.color}20`,
-                }}
-              >
-                {k.icon}
-              </div>
-            </div>
-
-            <div className="flex items-end justify-between mt-2">
-              <div
-                className="text-3xl font-bold font-display tracking-tight metric-value"
-                style={{ color: k.color }}
-              >
-                {k.value}
-              </div>
-              {/* Trend badge */}
-              <span
-                className="text-[10px] px-2 py-0.5 rounded-full font-semibold mb-1"
-                style={{
-                  background: trendPositive[idx] ? "rgba(0,229,160,0.1)" : "rgba(255,71,87,0.1)",
-                  color: trendPositive[idx] ? "#00E5A0" : "#FF4757",
-                  border: `1px solid ${trendPositive[idx] ? "rgba(0,229,160,0.25)" : "rgba(255,71,87,0.25)"}`,
-                }}
-              >
-                {trendPositive[idx] ? "↑" : "↓"} {trendDeltas[idx]}
-              </span>
-            </div>
-
-            <div className="text-[11px] text-[#6B7A99] font-mono">{k.sub}</div>
-
-            {/* Sparkline */}
-            <SparklineBar data={sparklineData[idx] ?? [1, 2, 1, 3, 2]} color={k.color} />
-          </motion.div>
-        ))}
-      </motion.div>
-
-      {/* Charts row */}
-      <motion.div
-        className="grid grid-cols-1 lg:grid-cols-2 gap-4"
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.25, ease: EASE_STANDARD }}
-      >
-        {/* Latency chart */}
-        <div className="premium-card p-5">
-          <div className="flex items-center justify-between mb-1">
-            <div>
-              <h3 className="text-[13px] font-semibold text-[#E8ECF4] tracking-wide">Latencia API</h3>
-              <p className="text-[22px] font-bold font-mono text-[#00D4FF] leading-tight mt-0.5">
-                {metrics.apiLatency}
-                <span className="text-[12px] text-[#6B7A99] ml-1 font-normal">ms</span>
-              </p>
-            </div>
-            <div className="text-[10px] px-2 py-1 rounded-full bg-[#00D4FF]/10 text-[#00D4FF] border border-[#00D4FF]/20 border-glow">
-              LIVE
-            </div>
-          </div>
-          <ResponsiveContainer width="100%" height={80}>
-            <AreaChart data={metrics.latencyHistory.map((p) => ({ value: Math.round(p.value) }))}>
-              <defs>
-                <linearGradient id="latGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#00D4FF" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#00D4FF" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              {latAvg > 0 && (
-                <ReferenceLine
-                  y={latAvg}
-                  stroke="#00D4FF"
-                  strokeDasharray="4 4"
-                  strokeOpacity={0.4}
-                  label={{ value: `avg ${latAvg}ms`, fill: "#6B7A99", fontSize: 9, position: "insideTopRight" }}
-                />
-              )}
-              <Area
-                type="monotone"
-                dataKey="value"
-                stroke="#00D4FF"
-                strokeWidth={2}
-                fill="url(#latGrad)"
-                dot={{ r: 2, fill: "#00D4FF", strokeWidth: 0 }}
-                activeDot={{ r: 4, fill: "#00D4FF", strokeWidth: 0, filter: "drop-shadow(0 0 4px #00D4FF)" }}
-              />
-              <Tooltip
-                contentStyle={{ background: "rgba(13,27,62,0.95)", border: "1px solid #1A2744", borderRadius: 8, fontSize: 11 }}
-                labelStyle={{ display: "none" }}
-                formatter={(v) => [`${v}ms`, ""]}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Tokens chart */}
-        <div className="premium-card p-5">
-          <div className="flex items-center justify-between mb-1">
-            <div>
-              <h3 className="text-[13px] font-semibold text-[#E8ECF4] tracking-wide">Tokens / min</h3>
-              <p className="text-[22px] font-bold font-mono text-[#7B61FF] leading-tight mt-0.5">
-                {metrics.tokensPerMinute}
-                <span className="text-[12px] text-[#6B7A99] ml-1 font-normal">tok/min</span>
-              </p>
-            </div>
-            <div className="text-[10px] px-2 py-1 rounded-full bg-[#7B61FF]/10 text-[#7B61FF] border border-[#7B61FF]/20">
-              LIVE
-            </div>
-          </div>
-          <ResponsiveContainer width="100%" height={80}>
-            <AreaChart data={metrics.tokensHistory.map((p) => ({ value: p.value }))}>
-              <defs>
-                <linearGradient id="tokGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#7B61FF" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#7B61FF" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              {tokAvg > 0 && (
-                <ReferenceLine
-                  y={tokAvg}
-                  stroke="#7B61FF"
-                  strokeDasharray="4 4"
-                  strokeOpacity={0.4}
-                  label={{ value: `avg ${tokAvg}`, fill: "#6B7A99", fontSize: 9, position: "insideTopRight" }}
-                />
-              )}
-              <Area
-                type="monotone"
-                dataKey="value"
-                stroke="#7B61FF"
-                strokeWidth={2}
-                fill="url(#tokGrad)"
-                dot={{ r: 2, fill: "#7B61FF", strokeWidth: 0 }}
-                activeDot={{ r: 4, fill: "#7B61FF", strokeWidth: 0, filter: "drop-shadow(0 0 4px #7B61FF)" }}
-              />
-              <Tooltip
-                contentStyle={{ background: "rgba(13,27,62,0.95)", border: "1px solid #1A2744", borderRadius: 8, fontSize: 11 }}
-                labelStyle={{ display: "none" }}
-                formatter={(v) => [`${v} tok`, ""]}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </motion.div>
-
-      {/* Bottom row */}
-      <motion.div
-        className="grid grid-cols-1 lg:grid-cols-2 gap-4"
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.35, ease: EASE_STANDARD }}
-      >
-        {/* Agent status */}
-        <div className="premium-card p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[13px] font-semibold text-[#E8ECF4] tracking-wide">Estado de Agentes</h3>
-            <button onClick={() => setPage("agents")} className="text-[11px] text-[#00D4FF] hover:underline tracking-wide transition-opacity hover:opacity-80">
-              Ver todos →
-            </button>
-          </div>
-          <div className="space-y-1.5">
-            {agents.map((a) => (
-              <div
-                key={a.id}
-                className="flex items-center gap-3 p-2.5 rounded-xl transition-all duration-200 group cursor-default"
-                style={{ background: "transparent" }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLDivElement).style.background = `${a.color}08`;
-                  (e.currentTarget as HTMLDivElement).style.borderLeft = `2px solid ${a.color}40`;
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLDivElement).style.background = "transparent";
-                  (e.currentTarget as HTMLDivElement).style.borderLeft = "2px solid transparent";
-                }}
-              >
-                <div
-                  className="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold flex-shrink-0"
-                  style={{ background: `${a.color}15`, border: `1px solid ${a.color}30`, color: a.color }}
-                >
-                  {a.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-semibold text-[#E8ECF4] tracking-wide">{a.name}</p>
-                  {/* Progress bar in width proportional to tokensUsed */}
-                  <div className="w-full h-0.5 bg-[#1A2744]/50 rounded-full overflow-hidden mt-1">
-                    <div
-                      className="h-full rounded-full transition-all duration-700"
-                      style={{
-                        width: `${Math.min(100, Math.round((a.tokensUsed / 5000) * 100))}%`,
-                        background: `linear-gradient(90deg, ${a.color}90, ${a.color})`,
-                      }}
-                    />
-                  </div>
-                </div>
-                <div className="flex items-center gap-1.5 flex-shrink-0">
-                  <div
-                    className={`w-2 h-2 rounded-full flex-shrink-0 status-${a.status}`}
-                    style={a.status === "online" ? { animation: "pulseGlow 2s ease-in-out infinite" } : undefined}
-                  />
-                  <span className="text-[10px] text-[#6B7A99] capitalize font-mono">{a.status}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Recent missions */}
-        <div className="premium-card p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[13px] font-semibold text-[#E8ECF4] tracking-wide">Misiones Recientes</h3>
-            <button onClick={() => setPage("missions")} className="text-[11px] text-[#00D4FF] hover:underline tracking-wide transition-opacity hover:opacity-80">
-              Ver tablero →
-            </button>
-          </div>
-          <div className="space-y-2">
-            {recentMissions.map((m) => (
-              <div key={m.id} className="p-2.5 rounded-xl hover:bg-white/[0.03] transition-all duration-200">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <span
-                    className="text-[9px] px-1.5 py-0.5 rounded font-semibold uppercase tracking-wider"
-                    style={{
-                      background: `${priorityColors[m.priority]}15`,
-                      color: priorityColors[m.priority],
-                      border: `1px solid ${priorityColors[m.priority]}30`,
-                    }}
-                  >
-                    {m.priority}
-                  </span>
-                  <span className="text-[12px] font-medium text-[#E8ECF4] truncate">{m.title}</span>
-                </div>
-                <div className="w-full h-1.5 bg-[#1A2744]/60 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-500 data-bar"
-                    style={{
-                      width: `${m.progress}%`,
-                      background: m.status === "done"
-                        ? "linear-gradient(90deg, #00E5A0, #00D4FF)"
-                        : "linear-gradient(90deg, #7B61FF, #00D4FF)",
-                      boxShadow: m.status === "done"
-                        ? "0 0 6px rgba(0,229,160,0.4)"
-                        : "0 0 6px rgba(123,97,255,0.4)",
-                    }}
-                  />
-                </div>
-                <div className="flex justify-between mt-1">
-                  <span className="text-[10px] text-[#6B7A99] capitalize">{m.status}</span>
-                  <span className="text-[10px] text-[#6B7A99] font-mono">{m.progress}%</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </motion.div>
-    </div>
-  );
-}
+const COLORS = {
+  cyan: "#00D4FF",
+  purple: "#7B61FF",
+  emerald: "#00E5A0",
+  amber: "#FFB800",
+  coral: "#FF6B9D",
+  red: "#FF4757",
+  bg: "#050810",
+  surface: "#0D1120",
+  border: "rgba(255,255,255,0.06)",
+  text: "#E8ECF8",
+  muted: "#3A4560",
+} as const;
 
 function formatTokens(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(0)}k`;
   return String(n);
+}
+
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return "ahora";
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  return `${Math.floor(h / 24)}d`;
+}
+
+function getDeptAbbr(role: string): string {
+  const map: Record<string, string> = {
+    "Chief": "CSO", "Paid": "ADS", "Especialista": "SPE",
+    "Growth": "GRW", "Analytics": "ANL", "SEO": "SEO",
+    "Content": "CNT", "Ventas": "VNT", "IA": "AI",
+  };
+  for (const key of Object.keys(map)) {
+    if (role.includes(key)) return map[key];
+  }
+  return role.slice(0, 3).toUpperCase();
+}
+
+function getNotifColor(type: Notification["type"]): string {
+  const map: Record<Notification["type"], string> = {
+    success: COLORS.emerald,
+    warning: COLORS.amber,
+    error: COLORS.red,
+    info: COLORS.cyan,
+  };
+  return map[type];
+}
+
+function getSystemStatus(onlineCount: number, total: number): { ok: boolean; label: string } {
+  const ratio = total > 0 ? onlineCount / total : 0;
+  return ratio >= 0.7
+    ? { ok: true, label: "TODOS LOS SISTEMAS OPERATIVOS" }
+    : { ok: false, label: "SISTEMA DEGRADADO" };
+}
+
+interface KpiCardProps {
+  label: string;
+  value: string | number;
+  target: number;
+  color: string;
+  icon: React.ReactNode;
+  trend: "up" | "flat" | "down";
+  trendText: string;
+  delay: number;
+}
+
+function KpiCard({ label, color, icon, trend, trendText, delay, target }: KpiCardProps) {
+  const [displayed, setDisplayed] = useState(0);
+  const rafRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const start = performance.now();
+    const duration = 1200;
+    const end = target;
+
+    function tick(now: number) {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplayed(Math.round(eased * end));
+      if (progress < 1) rafRef.current = requestAnimationFrame(tick);
+    }
+
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    };
+  }, [target]);
+
+  const trendColor = trend === "up" ? COLORS.emerald : trend === "down" ? COLORS.red : COLORS.muted;
+  const trendSymbol = trend === "up" ? "↑" : trend === "down" ? "↓" : "→";
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay, ease: [0.16, 1, 0.3, 1] }}
+      style={{
+        background: `linear-gradient(135deg, ${COLORS.surface} 0%, rgba(13,17,32,0.95) 100%)`,
+        border: `1px solid ${color}22`,
+        borderRadius: 16,
+        padding: "20px 22px 16px",
+        position: "relative",
+        overflow: "hidden",
+        cursor: "default",
+      }}
+    >
+      {/* ambient glow */}
+      <div style={{
+        position: "absolute", inset: 0, borderRadius: 16,
+        background: `radial-gradient(ellipse at top left, ${color}08 0%, transparent 60%)`,
+        pointerEvents: "none",
+      }} />
+
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
+        <p style={{
+          fontSize: 10, letterSpacing: "0.18em", fontWeight: 700,
+          color: COLORS.muted, textTransform: "uppercase",
+        }}>{label}</p>
+        <div style={{
+          width: 36, height: 36, borderRadius: 10, display: "flex",
+          alignItems: "center", justifyContent: "center", flexShrink: 0,
+          background: `${color}12`, border: `1px solid ${color}30`, color,
+        }}>
+          {icon}
+        </div>
+      </div>
+
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 10, marginBottom: 6 }}>
+        <span style={{
+          fontSize: 36, fontWeight: 800, lineHeight: 1, color,
+          fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em",
+        }}>
+          {displayed.toLocaleString()}
+        </span>
+        <span style={{
+          fontSize: 11, fontWeight: 600, color: trendColor,
+          background: `${trendColor}18`, border: `1px solid ${trendColor}30`,
+          borderRadius: 20, padding: "2px 8px", marginBottom: 4,
+        }}>
+          {trendSymbol} {trendText}
+        </span>
+      </div>
+
+      {/* bottom accent bar */}
+      <div style={{
+        position: "absolute", bottom: 0, left: 0, right: 0,
+        height: 3, background: `linear-gradient(90deg, transparent, ${color}, transparent)`,
+        opacity: 0.6,
+      }} />
+    </motion.div>
+  );
+}
+
+interface AgentCardProps {
+  agent: Agent;
+  onChat: (agentId: string) => void;
+  delay: number;
+}
+
+function AgentCard({ agent, onChat, delay }: AgentCardProps) {
+  const [hovered, setHovered] = useState(false);
+  const statusColors: Record<string, string> = {
+    online: COLORS.emerald,
+    busy: COLORS.amber,
+    offline: COLORS.muted,
+    error: COLORS.red,
+  };
+  const statusColor = statusColors[agent.status] ?? COLORS.muted;
+  const tokenPct = Math.min(100, Math.round((agent.tokensUsed / 50000) * 100));
+  const deptAbbr = getDeptAbbr(agent.role);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.45, delay, ease: [0.16, 1, 0.3, 1] }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: hovered
+          ? `linear-gradient(135deg, ${agent.color}0D 0%, ${COLORS.surface} 100%)`
+          : COLORS.surface,
+        border: `1px solid ${hovered ? `${agent.color}40` : `${agent.color}1A`}`,
+        borderRadius: 14,
+        padding: "16px",
+        cursor: "pointer",
+        transition: "all 0.22s ease",
+        position: "relative",
+        overflow: "hidden",
+      }}
+      onClick={() => onChat(agent.id)}
+    >
+      {/* Subtle corner accent */}
+      <div style={{
+        position: "absolute", top: 0, right: 0, width: 60, height: 60,
+        background: `radial-gradient(circle at top right, ${agent.color}10 0%, transparent 70%)`,
+        pointerEvents: "none",
+      }} />
+
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 12 }}>
+        <div style={{
+          minWidth: 36, height: 36, borderRadius: 10, display: "flex",
+          alignItems: "center", justifyContent: "center",
+          background: `${agent.color}15`, border: `1px solid ${agent.color}35`,
+          fontSize: 9, fontWeight: 800, letterSpacing: "0.06em",
+          color: agent.color, flexShrink: 0,
+        }}>
+          {deptAbbr}
+        </div>
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+            <span style={{
+              fontSize: 13, fontWeight: 700, color: COLORS.text,
+              letterSpacing: "0.04em", whiteSpace: "nowrap", overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}>
+              {agent.name}
+            </span>
+            {/* Status dot */}
+            <div style={{
+              width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
+              background: statusColor,
+              boxShadow: agent.status === "online" ? `0 0 8px ${statusColor}` : "none",
+              animation: agent.status === "online" ? "pulseGlow 2s ease-in-out infinite" : "none",
+            }} />
+          </div>
+          <p style={{
+            fontSize: 10, color: COLORS.muted, letterSpacing: "0.02em",
+            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+          }}>
+            {agent.role.split("·")[0].trim()}
+          </p>
+        </div>
+      </div>
+
+      {/* Token bar */}
+      <div style={{ marginBottom: 10 }}>
+        <div style={{
+          display: "flex", justifyContent: "space-between",
+          marginBottom: 4,
+        }}>
+          <span style={{ fontSize: 9, color: COLORS.muted, letterSpacing: "0.12em", textTransform: "uppercase" }}>
+            TOKENS
+          </span>
+          <span style={{ fontSize: 9, color: agent.color, fontVariantNumeric: "tabular-nums", fontWeight: 600 }}>
+            {formatTokens(agent.tokensUsed)}
+          </span>
+        </div>
+        <div style={{
+          height: 3, borderRadius: 4,
+          background: `${COLORS.muted}30`, overflow: "hidden",
+        }}>
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${tokenPct}%` }}
+            transition={{ duration: 1.1, delay: delay + 0.3, ease: [0.16, 1, 0.3, 1] }}
+            style={{
+              height: "100%", borderRadius: 4,
+              background: `linear-gradient(90deg, ${agent.color}80, ${agent.color})`,
+              boxShadow: `0 0 6px ${agent.color}60`,
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Footer: tasks + chat button */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+      }}>
+        <span style={{
+          fontSize: 10, color: COLORS.muted,
+          fontVariantNumeric: "tabular-nums",
+        }}>
+          <span style={{ color: COLORS.text, fontWeight: 600 }}>{agent.tasksCompleted}</span> tareas
+        </span>
+
+        <AnimatePresence>
+          {hovered && (
+            <motion.button
+              initial={{ opacity: 0, x: 8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 8 }}
+              transition={{ duration: 0.18 }}
+              style={{
+                fontSize: 9, fontWeight: 700, letterSpacing: "0.1em",
+                color: agent.color, background: `${agent.color}18`,
+                border: `1px solid ${agent.color}40`, borderRadius: 6,
+                padding: "4px 10px", cursor: "pointer",
+              }}
+              onClick={(e) => { e.stopPropagation(); onChat(agent.id); }}
+            >
+              CHAT →
+            </motion.button>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.div>
+  );
+}
+
+interface ActivityFeedProps {
+  notifications: Notification[];
+}
+
+function ActivityFeed({ notifications }: ActivityFeedProps) {
+  const recent = useMemo(() => notifications.slice(0, 8), [notifications]);
+
+  return (
+    <div style={{
+      background: COLORS.surface, border: `1px solid ${COLORS.border}`,
+      borderRadius: 16, padding: "20px", height: "100%",
+      display: "flex", flexDirection: "column",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Activity size={14} color={COLORS.cyan} />
+          <span style={{
+            fontSize: 11, fontWeight: 700, letterSpacing: "0.14em",
+            color: COLORS.text, textTransform: "uppercase",
+          }}>
+            Actividad en Tiempo Real
+          </span>
+        </div>
+        <div style={{
+          width: 6, height: 6, borderRadius: "50%",
+          background: COLORS.emerald,
+          boxShadow: `0 0 8px ${COLORS.emerald}`,
+          animation: "pulseGlow 1.5s ease-in-out infinite",
+        }} />
+      </div>
+
+      {recent.length === 0 ? (
+        <div style={{
+          flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
+          color: COLORS.muted, fontSize: 12,
+        }}>
+          Sin actividad reciente
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1, overflow: "hidden" }}>
+          <AnimatePresence initial={false}>
+            {recent.map((n, i) => {
+              const nColor = getNotifColor(n.type);
+              return (
+                <motion.div
+                  key={n.id}
+                  initial={{ opacity: 0, x: -12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 12 }}
+                  transition={{ duration: 0.3, delay: i * 0.06 }}
+                  style={{
+                    display: "flex", alignItems: "flex-start", gap: 10,
+                    padding: "8px 10px", borderRadius: 10,
+                    background: n.read ? "transparent" : `${nColor}07`,
+                    borderLeft: `2px solid ${n.read ? "transparent" : nColor}`,
+                  }}
+                >
+                  <div style={{
+                    width: 6, height: 6, borderRadius: "50%", marginTop: 5, flexShrink: 0,
+                    background: nColor,
+                    boxShadow: n.read ? "none" : `0 0 6px ${nColor}`,
+                  }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{
+                      fontSize: 11, fontWeight: 600, color: COLORS.text,
+                      marginBottom: 2, overflow: "hidden",
+                      textOverflow: "ellipsis", whiteSpace: "nowrap",
+                    }}>
+                      {n.title}
+                    </p>
+                    <p style={{
+                      fontSize: 10, color: COLORS.muted, lineHeight: 1.4,
+                      display: "-webkit-box", WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical", overflow: "hidden",
+                    }}>
+                      {n.message}
+                    </p>
+                  </div>
+                  <span style={{
+                    fontSize: 9, color: COLORS.muted, flexShrink: 0,
+                    marginTop: 1, fontVariantNumeric: "tabular-nums",
+                  }}>
+                    {relativeTime(n.timestamp)}
+                  </span>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface HealthMetric {
+  label: string;
+  pct: number;
+  color: string;
+  suffix: string;
+}
+
+interface SystemHealthProps {
+  metrics: HealthMetric[];
+  agentsOnline: number;
+  agentsTotal: number;
+}
+
+function SystemHealth({ metrics, agentsOnline, agentsTotal }: SystemHealthProps) {
+  return (
+    <div style={{
+      background: COLORS.surface, border: `1px solid ${COLORS.border}`,
+      borderRadius: 16, padding: "20px", height: "100%",
+      display: "flex", flexDirection: "column",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
+        <Cpu size={14} color={COLORS.purple} />
+        <span style={{
+          fontSize: 11, fontWeight: 700, letterSpacing: "0.14em",
+          color: COLORS.text, textTransform: "uppercase",
+        }}>
+          Estado del Sistema
+        </span>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 14, flex: 1 }}>
+        {metrics.map((m, i) => (
+          <div key={m.label}>
+            <div style={{
+              display: "flex", justifyContent: "space-between",
+              alignItems: "center", marginBottom: 6,
+            }}>
+              <span style={{ fontSize: 10, color: COLORS.muted, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                {m.label}
+              </span>
+              <span style={{ fontSize: 11, color: m.color, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
+                {m.pct}{m.suffix}
+              </span>
+            </div>
+            <div style={{
+              height: 6, borderRadius: 4,
+              background: `${COLORS.muted}25`, overflow: "hidden",
+            }}>
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${m.pct}%` }}
+                transition={{ duration: 1.2, delay: 0.4 + i * 0.1, ease: [0.16, 1, 0.3, 1] }}
+                style={{
+                  height: "100%", borderRadius: 4,
+                  background: `linear-gradient(90deg, ${m.color}70, ${m.color})`,
+                  boxShadow: `0 0 8px ${m.color}50`,
+                }}
+              />
+            </div>
+          </div>
+        ))}
+
+        <div style={{
+          marginTop: 8, padding: "12px 14px",
+          background: `${COLORS.emerald}08`, border: `1px solid ${COLORS.emerald}20`,
+          borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "space-between",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Users size={12} color={COLORS.emerald} />
+            <span style={{ fontSize: 10, color: COLORS.muted, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+              Agentes
+            </span>
+          </div>
+          <span style={{ fontSize: 13, fontWeight: 700, color: COLORS.emerald }}>
+            {agentsOnline}/{agentsTotal} online
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function Overview() {
+  const {
+    agents, missions, metrics, notifications,
+    workflows, setPage, createChatSession, setActiveChat,
+  } = useAstraeo();
+
+  const [clock, setClock] = useState(() => new Date());
+
+  useEffect(() => {
+    const id = setInterval(() => setClock(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Derived values
+  const onlineAgents = useMemo(() => agents.filter((a) => a.status === "online").length, [agents]);
+  const totalTokens = useMemo(() => agents.reduce((s, a) => s + a.tokensUsed, 0), [agents]);
+  const doneMissions = useMemo(() => missions.filter((m) => m.status === "done").length, [missions]);
+  const avgLatency = useMemo(() => {
+    if (metrics.latencyHistory.length === 0) return 0;
+    return Math.round(metrics.latencyHistory.reduce((s, p) => s + p.value, 0) / metrics.latencyHistory.length);
+  }, [metrics.latencyHistory]);
+
+  const sysStatus = useMemo(() => getSystemStatus(onlineAgents, agents.length), [onlineAgents, agents.length]);
+
+  const healthMetrics = useMemo<HealthMetric[]>(() => [
+    { label: "API", pct: Math.round(metrics.successRate), color: COLORS.cyan, suffix: "%" },
+    { label: "Memoria", pct: Math.min(100, Math.round((totalTokens / 200000) * 100)), color: COLORS.purple, suffix: "%" },
+    { label: "Tareas", pct: missions.length > 0 ? Math.round((doneMissions / missions.length) * 100) : 0, color: COLORS.emerald, suffix: "%" },
+    { label: "Eficiencia", pct: Math.round(metrics.efficiency), color: COLORS.amber, suffix: "%" },
+  ], [metrics.successRate, totalTokens, doneMissions, missions.length, metrics.efficiency]);
+
+  const dateStr = useMemo(() => clock.toLocaleDateString("es-ES", {
+    weekday: "long", year: "numeric", month: "long", day: "numeric",
+  }), [clock]);
+
+  const timeStr = clock.toLocaleTimeString("es-ES", {
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+  });
+
+  function handleChatWithAgent(agentId: string) {
+    const sessionId = createChatSession(agentId);
+    setActiveChat(sessionId);
+    setPage("chat");
+  }
+
+  return (
+    <div style={{
+      padding: "0",
+      height: "100%",
+      overflowY: "auto",
+      overflowX: "hidden",
+      display: "flex",
+      flexDirection: "column",
+      gap: 0,
+      background: COLORS.bg,
+    }}>
+      <motion.div
+        initial={{ opacity: 0, y: -16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        style={{
+          display: "flex", alignItems: "center",
+          justifyContent: "space-between", flexWrap: "wrap", gap: 12,
+          padding: "24px 28px 20px",
+          background: `linear-gradient(180deg, rgba(0,212,255,0.04) 0%, transparent 100%)`,
+          borderBottom: `1px solid ${COLORS.border}`,
+          position: "relative",
+        }}
+      >
+        <div style={{
+          position: "absolute", inset: 0, pointerEvents: "none",
+          backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.005) 2px, rgba(255,255,255,0.005) 4px)",
+        }} />
+        <div>
+          <h1 style={{
+            fontSize: 20, fontWeight: 800, letterSpacing: "0.12em",
+            color: COLORS.text, textTransform: "uppercase", margin: 0,
+            lineHeight: 1,
+          }}>
+            ASTRAEO{" "}
+            <span style={{
+              background: `linear-gradient(90deg, ${COLORS.cyan}, ${COLORS.purple})`,
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+            }}>
+              CONTROL CENTER
+            </span>
+          </h1>
+          <p style={{
+            fontSize: 10, color: COLORS.muted, letterSpacing: "0.2em",
+            textTransform: "uppercase", marginTop: 5, fontWeight: 500,
+          }}>
+            Sistema Operativo de Agentes IA
+          </p>
+        </div>
+
+        <div style={{ textAlign: "center" }}>
+          <div style={{
+            fontSize: 28, fontWeight: 800, letterSpacing: "0.08em",
+            color: COLORS.cyan, fontVariantNumeric: "tabular-nums",
+            lineHeight: 1, textShadow: `0 0 20px ${COLORS.cyan}60`,
+          }}>
+            {timeStr}
+          </div>
+          <div style={{
+            fontSize: 10, color: COLORS.muted, letterSpacing: "0.14em",
+            textTransform: "capitalize", marginTop: 4,
+          }}>
+            {dateStr}
+          </div>
+        </div>
+
+        <div style={{
+          display: "flex", alignItems: "center", gap: 10,
+          padding: "8px 16px",
+          background: sysStatus.ok ? `${COLORS.emerald}0C` : `${COLORS.amber}0C`,
+          border: `1px solid ${sysStatus.ok ? `${COLORS.emerald}30` : `${COLORS.amber}30`}`,
+          borderRadius: 30,
+        }}>
+          <div style={{
+            width: 8, height: 8, borderRadius: "50%",
+            background: sysStatus.ok ? COLORS.emerald : COLORS.amber,
+            boxShadow: `0 0 10px ${sysStatus.ok ? COLORS.emerald : COLORS.amber}`,
+            animation: "pulseGlow 1.8s ease-in-out infinite",
+          }} />
+          <span style={{
+            fontSize: 10, fontWeight: 700, letterSpacing: "0.12em",
+            color: sysStatus.ok ? COLORS.emerald : COLORS.amber,
+            textTransform: "uppercase",
+          }}>
+            {sysStatus.label}
+          </span>
+        </div>
+      </motion.div>
+
+      <div style={{ padding: "24px 28px", display: "flex", flexDirection: "column", gap: 24 }}>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
+          gap: 16,
+        }}>
+          <KpiCard
+            label="Agentes Online"
+            value={onlineAgents}
+            target={onlineAgents}
+            color={COLORS.emerald}
+            icon={<Bot size={16} />}
+            trend="up"
+            trendText={`${onlineAgents}/${agents.length}`}
+            delay={0.05}
+          />
+          <KpiCard
+            label="Tokens Hoy"
+            value={formatTokens(totalTokens)}
+            target={Math.min(9999, Math.round(totalTokens / 1000))}
+            color={COLORS.purple}
+            icon={<Zap size={16} />}
+            trend="up"
+            trendText={formatTokens(totalTokens)}
+            delay={0.1}
+          />
+          <KpiCard
+            label="Tareas Completadas"
+            value={doneMissions}
+            target={doneMissions}
+            color={COLORS.amber}
+            icon={<CheckCircle2 size={16} />}
+            trend={doneMissions > 0 ? "up" : "flat"}
+            trendText={`${missions.length} total`}
+            delay={0.15}
+          />
+          <KpiCard
+            label="Latencia Media"
+            value={`${avgLatency}ms`}
+            target={avgLatency}
+            color={COLORS.cyan}
+            icon={<Clock size={16} />}
+            trend={avgLatency < 1000 ? "up" : "down"}
+            trendText={`${avgLatency}ms`}
+            delay={0.2}
+          />
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4, delay: 0.3 }}
+        >
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            marginBottom: 14,
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <Database size={13} color={COLORS.purple} />
+              <span style={{
+                fontSize: 11, fontWeight: 700, letterSpacing: "0.14em",
+                color: COLORS.text, textTransform: "uppercase",
+              }}>
+                Red de Agentes
+              </span>
+              <span style={{
+                fontSize: 9, color: COLORS.purple, background: `${COLORS.purple}18`,
+                border: `1px solid ${COLORS.purple}30`, borderRadius: 10,
+                padding: "2px 8px", fontWeight: 700, letterSpacing: "0.1em",
+              }}>
+                {agents.length} NODOS
+              </span>
+            </div>
+            <button
+              onClick={() => setPage("agents")}
+              style={{
+                fontSize: 10, color: COLORS.cyan, background: "transparent",
+                border: "none", cursor: "pointer", letterSpacing: "0.1em",
+                textDecoration: "none", fontWeight: 600,
+              }}
+            >
+              GESTIONAR →
+            </button>
+          </div>
+
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4, 1fr)",
+            gap: 12,
+          }}>
+            {agents.slice(0, 8).map((agent, i) => (
+              <AgentCard
+                key={agent.id}
+                agent={agent}
+                onChat={handleChatWithAgent}
+                delay={0.32 + i * 0.05}
+              />
+            ))}
+          </div>
+        </motion.div>
+
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 16,
+        }}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <ActivityFeed notifications={notifications} />
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <SystemHealth
+              metrics={healthMetrics}
+              agentsOnline={onlineAgents}
+              agentsTotal={agents.length}
+            />
+          </motion.div>
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.9 }}
+          style={{
+            display: "flex", gap: 10, flexWrap: "wrap",
+            paddingBottom: 8,
+          }}
+        >
+          {[
+            { label: "Nueva Misión", page: "missions" as const, color: COLORS.amber, icon: <TrendingUp size={13} /> },
+            { label: "Chat con Agente", page: "chat" as const, color: COLORS.cyan, icon: <MessageSquare size={13} /> },
+            { label: "Ver Analytics", page: "analytics" as const, color: COLORS.purple, icon: <Activity size={13} /> },
+          ].map((action) => (
+            <button
+              key={action.label}
+              onClick={() => setPage(action.page)}
+              style={{
+                display: "flex", alignItems: "center", gap: 7,
+                padding: "9px 18px", borderRadius: 10, cursor: "pointer",
+                background: `${action.color}10`, border: `1px solid ${action.color}30`,
+                color: action.color, fontSize: 11, fontWeight: 700,
+                letterSpacing: "0.08em", textTransform: "uppercase",
+                transition: "all 0.18s ease",
+              }}
+              onMouseEnter={(e) => {
+                const el = e.currentTarget as HTMLButtonElement;
+                el.style.background = `${action.color}20`;
+                el.style.borderColor = `${action.color}60`;
+              }}
+              onMouseLeave={(e) => {
+                const el = e.currentTarget as HTMLButtonElement;
+                el.style.background = `${action.color}10`;
+                el.style.borderColor = `${action.color}30`;
+              }}
+            >
+              {action.icon}
+              {action.label}
+            </button>
+          ))}
+
+          <div style={{
+            display: "flex", alignItems: "center", gap: 8,
+            marginLeft: "auto", padding: "9px 14px",
+            background: `${COLORS.emerald}08`, border: `1px solid ${COLORS.emerald}20`,
+            borderRadius: 10, color: COLORS.muted, fontSize: 10,
+            letterSpacing: "0.1em", textTransform: "uppercase",
+          }}>
+            <div style={{
+              width: 6, height: 6, borderRadius: "50%",
+              background: COLORS.emerald,
+              boxShadow: `0 0 6px ${COLORS.emerald}`,
+            }} />
+            <span style={{ color: COLORS.emerald, fontWeight: 700 }}>
+              {workflows.filter((w) => w.active).length}
+            </span>
+            <span>workflows activos</span>
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  );
 }

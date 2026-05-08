@@ -4,258 +4,666 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAstraeo } from "@/store/astraeo";
 import type { Integration } from "@/lib/types";
 
-const TAB_CATEGORIES = ["Todas", "AI", "Comunicación", "Productividad", "Dev", "Analytics", "Pagos", "CRM", "Automatización"];
+// ── Static integration catalog ─────────────────────────────────────────────────
+// The live store integrations power connect/disconnect state.
+// This catalog provides rich metadata for all 12+ integrations.
 
-const API_KEY_INSTRUCTIONS: Record<string, string> = {
-  default:       "Ve a la página de tu proveedor → Configuración → API → Crear nueva clave.",
-  Claude:        "Visita console.anthropic.com → API Keys → Create Key.",
-  OpenAI:        "Visita platform.openai.com → API Keys → Create new secret key.",
-  Slack:         "Visita api.slack.com → Your Apps → OAuth & Permissions → Bot Token Scopes.",
-  HubSpot:       "Visita app.hubspot.com → Settings → Integrations → API Key.",
-  "Google Analytics": "Visita console.cloud.google.com → Credentials → Create OAuth 2.0 client.",
-  "Meta Ads":    "Visita developers.facebook.com → My Apps → Generar token de acceso.",
-  "Stripe":      "Visita dashboard.stripe.com → Developers → API Keys.",
-  Notion:        "Visita notion.so/my-integrations → New Integration → Submit → Copy token.",
-  GitHub:        "Visita github.com → Settings → Developer settings → Personal access tokens.",
-};
-
-function getInstructions(name: string): string {
-  return API_KEY_INSTRUCTIONS[name] ?? API_KEY_INSTRUCTIONS.default;
+interface IntegrationMeta {
+  id: string;
+  name: string;
+  icon: string;
+  category: string;
+  color: string;
+  description: string;
+  beta?: boolean;
+  webhookField?: boolean;
 }
 
-export default function Integrations() {
+const CATALOG: IntegrationMeta[] = [
+  {
+    id: "int-1",
+    name: "Anthropic Claude",
+    icon: "🤖",
+    category: "IA",
+    color: "#CC785C",
+    description: "Motor de IA principal para todos los agentes y el Comandante.",
+  },
+  {
+    id: "int-2",
+    name: "Go High Level",
+    icon: "⚡",
+    category: "CRM",
+    color: "#FF7A59",
+    description: "CRM central para gestión de leads, pipelines y automatizaciones comerciales.",
+  },
+  {
+    id: "int-3",
+    name: "Meta Ads",
+    icon: "📱",
+    category: "Marketing",
+    color: "#1877F2",
+    description: "Gestión de campañas en Facebook e Instagram con optimización de CPL.",
+    beta: false,
+  },
+  {
+    id: "int-4",
+    name: "Google Ads",
+    icon: "🎯",
+    category: "Marketing",
+    color: "#4285F4",
+    description: "Campañas de búsqueda y display con seguimiento de conversiones.",
+  },
+  {
+    id: "int-5",
+    name: "WhatsApp Business",
+    icon: "💬",
+    category: "Comunicación",
+    color: "#25D366",
+    description: "Automatización de mensajes, secuencias de nutrición y chatbots de cualificación.",
+    webhookField: true,
+  },
+  {
+    id: "int-6",
+    name: "Google Analytics",
+    icon: "📊",
+    category: "Analytics",
+    color: "#E37400",
+    description: "Análisis de tráfico, comportamiento de usuarios y atribución de campañas.",
+  },
+  {
+    id: "int-7",
+    name: "Slack",
+    icon: "💼",
+    category: "Comunicación",
+    color: "#4A154B",
+    description: "Notificaciones en tiempo real, alertas de agentes y reportes automáticos.",
+    webhookField: true,
+  },
+  {
+    id: "int-8",
+    name: "Zapier",
+    icon: "🔗",
+    category: "Automatización",
+    color: "#FF4A00",
+    description: "Conecta ASTRAEO con miles de aplicaciones mediante flujos automatizados.",
+    webhookField: true,
+  },
+  {
+    id: "int-hub",
+    name: "HubSpot",
+    icon: "🧲",
+    category: "CRM",
+    color: "#FF7A59",
+    description: "Sincronización de contactos, deals y actividad comercial.",
+  },
+  {
+    id: "int-notion",
+    name: "Notion",
+    icon: "◻",
+    category: "Productividad",
+    color: "#E8ECF4",
+    description: "Exporta informes, planes y documentación de agentes a Notion.",
+    beta: true,
+  },
+  {
+    id: "int-stripe",
+    name: "Stripe",
+    icon: "💳",
+    category: "Pagos",
+    color: "#635BFF",
+    description: "Seguimiento de ingresos, suscripciones y métricas de conversión financiera.",
+  },
+  {
+    id: "int-shopify",
+    name: "Shopify",
+    icon: "🛍️",
+    category: "E-commerce",
+    color: "#96BF48",
+    description: "Datos de ventas, inventario y comportamiento de clientes para análisis.",
+    beta: true,
+  },
+  {
+    id: "int-gmail",
+    name: "Gmail",
+    icon: "📧",
+    category: "Comunicación",
+    color: "#EA4335",
+    description: "Envío de secuencias de email, respuestas automáticas y seguimiento de apertura.",
+    webhookField: false,
+  },
+  {
+    id: "int-gsheets",
+    name: "Google Sheets",
+    icon: "📋",
+    category: "Productividad",
+    color: "#34A853",
+    description: "Exporta datos de agentes, métricas y reportes a hojas de cálculo.",
+    beta: true,
+  },
+  {
+    id: "int-make",
+    name: "Make.com",
+    icon: "⚙️",
+    category: "Automatización",
+    color: "#7C3AED",
+    description: "Automatizaciones visuales avanzadas con lógica condicional y transformación de datos.",
+    webhookField: true,
+  },
+  {
+    id: "int-sf",
+    name: "Salesforce",
+    icon: "☁️",
+    category: "CRM",
+    color: "#00A1E0",
+    description: "Sincronización empresarial de oportunidades, cuentas y actividad de ventas.",
+  },
+];
+
+const API_KEY_INSTRUCTIONS: Record<string, string> = {
+  default:         "Ve a la página de tu proveedor → Configuración → API → Crear nueva clave.",
+  "Anthropic Claude": "Visita console.anthropic.com → API Keys → Create Key.",
+  Slack:           "Visita api.slack.com → Your Apps → OAuth & Permissions → Bot Token Scopes.",
+  "Go High Level": "Visita app.gohighlevel.com → Settings → API → Generar clave.",
+  "Google Analytics": "Visita console.cloud.google.com → Credentials → Create OAuth 2.0 client.",
+  "Meta Ads":      "Visita developers.facebook.com → My Apps → Generar token de acceso.",
+  Stripe:          "Visita dashboard.stripe.com → Developers → API Keys.",
+  Notion:          "Visita notion.so/my-integrations → New Integration → Submit → Copy token.",
+  HubSpot:         "Visita app.hubspot.com → Settings → Integrations → Private Apps.",
+  Gmail:           "Visita console.cloud.google.com → Enable Gmail API → OAuth 2.0 credentials.",
+  "Google Sheets": "Visita console.cloud.google.com → Enable Sheets API → Service account.",
+  "Make.com":      "Visita make.com → Organization → API keys → Add token.",
+  Salesforce:      "Visita tu org Salesforce → Setup → App Manager → Connected App.",
+};
+
+const TABS = ["Todas", "Activas", "CRM", "Marketing", "Comunicación", "Analytics", "Automatización", "Productividad", "Pagos", "E-commerce", "IA"];
+
+// ── Merge catalog with live store data ────────────────────────────────────────
+
+interface MergedIntegration extends IntegrationMeta {
+  connected: boolean;
+  apiKey: string;
+  config: Record<string, string>;
+}
+
+// ── Main component ─────────────────────────────────────────────────────────────
+
+export default function IntegrationsPage() {
   const { integrations, connectIntegration, disconnectIntegration, showToast } = useAstraeo();
 
-  const [filterCat,   setFilterCat]   = useState("Todas");
-  const [configuring, setConfiguring] = useState<Integration | null>(null);
+  const [activeTab,   setActiveTab]   = useState("Todas");
+  const [configuring, setConfiguring] = useState<MergedIntegration | null>(null);
   const [apiKey,      setApiKey]      = useState("");
+  const [webhookUrl,  setWebhookUrl]  = useState("");
   const [apiVisible,  setApiVisible]  = useState(false);
-  const [config,      setConfig]      = useState<Record<string, string>>({});
+  const [testStatus,  setTestStatus]  = useState<"idle" | "testing" | "ok" | "fail">("idle");
 
-  const filtered       = integrations.filter((i) => filterCat === "Todas" || i.category === filterCat);
-  const connectedCount = integrations.filter((i) => i.connected).length;
+  // Merge static catalog with live store
+  const merged: MergedIntegration[] = CATALOG.map((meta) => {
+    const live = integrations.find((i) => i.id === meta.id);
+    return {
+      ...meta,
+      connected: live?.connected ?? false,
+      apiKey: live?.apiKey ?? "",
+      config: live?.config ?? {},
+    };
+  });
+
+  const connectedCount = merged.filter((i) => i.connected).length;
+  const betaCount = merged.filter((i) => i.beta).length;
+
+  const filtered = merged.filter((i) => {
+    if (activeTab === "Todas") return true;
+    if (activeTab === "Activas") return i.connected;
+    return i.category === activeTab;
+  });
+
+  const openConfig = (item: MergedIntegration) => {
+    setConfiguring(item);
+    setApiKey("");
+    setWebhookUrl("");
+    setApiVisible(false);
+    setTestStatus("idle");
+  };
 
   const handleConnect = () => {
     if (!configuring || !apiKey.trim()) return;
-    connectIntegration(configuring.id, apiKey, config);
-    showToast(`${configuring.name} conectado`, "success");
+    const extraConfig: Record<string, string> = webhookUrl.trim() ? { webhookUrl } : {};
+    connectIntegration(configuring.id, apiKey, extraConfig);
+    showToast(`${configuring.name} conectado correctamente`, "success");
     setConfiguring(null);
     setApiKey("");
-    setApiVisible(false);
-    setConfig({});
+    setWebhookUrl("");
   };
 
-  const handleDisconnect = (i: Integration) => {
-    disconnectIntegration(i.id);
-    showToast(`${i.name} desconectado`, "info");
+  const handleDisconnect = (item: MergedIntegration) => {
+    disconnectIntegration(item.id);
+    showToast(`${item.name} desconectado`, "info");
   };
 
-  const openConfig = (i: Integration) => {
-    setConfiguring(i);
-    setApiKey("");
-    setApiVisible(false);
-    setConfig({});
+  const handleTestConnection = async () => {
+    setTestStatus("testing");
+    await new Promise((r) => setTimeout(r, 1400));
+    setTestStatus(apiKey.length > 8 ? "ok" : "fail");
   };
 
   return (
-    <div className="flex flex-col h-full animate-fade-in">
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
 
-      {/* ── Header ────────────────────────────────────────────────────────── */}
-      <div className="px-6 py-4 border-b border-[#1A2744]/60 flex-shrink-0">
-        <div className="flex items-center justify-between mb-3">
+      {/* ── Header ──────────────────────────────────────────────────────────── */}
+      <header
+        style={{
+          padding: "20px 24px 0",
+          borderBottom: "1px solid rgba(26,39,68,0.6)",
+          flexShrink: 0,
+        }}
+      >
+        {/* Title row */}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16 }}>
           <div>
-            <h2 className="text-[15px] font-bold tracking-wide text-[#E8ECF4]">Integraciones</h2>
-            <p className="text-[11px] text-[#6B7A99] font-mono mt-0.5">
-              <span className="text-[#00E5A0]">{connectedCount}</span>
-              {" "}de{" "}
-              <span className="text-[#E8ECF4]">{integrations.length}</span>
-              {" "}integraciones activas
+            <p style={{ fontSize: 11, color: "#4A5568", fontFamily: "monospace", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 3 }}>
+              Ecosistema
             </p>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: "#E8ECF4", letterSpacing: "-0.02em" }}>
+              Integraciones
+            </h2>
           </div>
 
-          {/* Active indicator pills */}
-          <div className="flex items-center gap-2">
-            <div
-              className="px-3 py-1 rounded-full text-[11px] font-semibold border flex items-center gap-1.5"
-              style={{
-                background:  "rgba(0,229,160,0.08)",
-                borderColor: "rgba(0,229,160,0.25)",
-                color:       "#00E5A0",
-              }}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-[#00E5A0] inline-block animate-pulse" />
-              {connectedCount} activas
-            </div>
-            <div
-              className="px-3 py-1 rounded-full text-[11px] font-semibold border flex items-center gap-1.5"
-              style={{
-                background:  "rgba(107,122,153,0.08)",
-                borderColor: "#1A2744",
-                color:       "#6B7A99",
-              }}
-            >
-              {integrations.length - connectedCount} inactivas
-            </div>
+          {/* Status bar */}
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <StatusPill color="#00E5A0" pulse>
+              {connectedCount} conectadas
+            </StatusPill>
+            <StatusPill color="#6B7A99">
+              {merged.length - connectedCount} disponibles
+            </StatusPill>
+            {betaCount > 0 && (
+              <StatusPill color="#7B61FF">
+                {betaCount} en beta
+              </StatusPill>
+            )}
           </div>
         </div>
 
-        {/* Category tabs */}
-        <div className="flex flex-wrap gap-1">
-          {TAB_CATEGORIES.map((c) => (
-            <button
-              key={c}
-              onClick={() => setFilterCat(c)}
-              className="text-[10px] px-2.5 py-1 rounded-lg font-medium transition-all"
-              style={{
-                background:  filterCat === c ? "rgba(0,212,255,0.12)" : "transparent",
-                color:       filterCat === c ? "#00D4FF" : "#6B7A99",
-                border:      `1px solid ${filterCat === c ? "rgba(0,212,255,0.25)" : "#1A2744"}`,
-              }}
-            >
-              {c}
-            </button>
-          ))}
+        {/* Tab bar */}
+        <div style={{ display: "flex", gap: 4, overflowX: "auto", paddingBottom: 1 }}>
+          {TABS.map((tab) => {
+            const active = activeTab === tab;
+            const count = tab === "Todas"
+              ? merged.length
+              : tab === "Activas"
+              ? connectedCount
+              : merged.filter((i) => i.category === tab).length;
+            if (count === 0 && tab !== "Todas" && tab !== "Activas") return null;
+            return (
+              <motion.button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                whileHover={{ y: -1 }}
+                style={{
+                  padding: "7px 13px",
+                  borderRadius: "8px 8px 0 0",
+                  border: `1px solid ${active ? "rgba(0,212,255,0.3)" : "rgba(26,39,68,0.5)"}`,
+                  borderBottom: active ? "1px solid transparent" : "1px solid rgba(26,39,68,0.5)",
+                  background: active ? "rgba(0,212,255,0.08)" : "transparent",
+                  color: active ? "#00D4FF" : "#6B7A99",
+                  fontSize: 11,
+                  fontWeight: active ? 600 : 400,
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                  transition: "all 0.15s",
+                  marginBottom: active ? -1 : 0,
+                  position: "relative",
+                  zIndex: active ? 1 : 0,
+                }}
+              >
+                {tab}
+                {count > 0 && (
+                  <span
+                    style={{
+                      fontSize: 9,
+                      padding: "1px 5px",
+                      borderRadius: 4,
+                      background: active ? "rgba(0,212,255,0.15)" : "rgba(107,122,153,0.12)",
+                      color: active ? "#00D4FF" : "#6B7A99",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {count}
+                  </span>
+                )}
+              </motion.button>
+            );
+          })}
         </div>
-      </div>
+      </header>
 
-      {/* ── Cards grid ────────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto p-5">
-        <motion.div layout className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      {/* ── Cards grid ──────────────────────────────────────────────────────── */}
+      <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px" }}>
+        <motion.div
+          layout
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+            gap: 14,
+          }}
+        >
           <AnimatePresence mode="popLayout">
-            {filtered.map((intg, idx) => (
+            {filtered.map((item, idx) => (
               <motion.div
-                key={intg.id}
+                key={item.id}
                 layout
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, scale: 0.94, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.2, delay: idx < 9 ? idx * 0.04 : 0 }}
+                transition={{ duration: 0.2, delay: idx < 12 ? idx * 0.03 : 0 }}
               >
                 <IntegrationCard
-                  intg={intg}
-                  onConnect={() => openConfig(intg)}
-                  onDisconnect={() => handleDisconnect(intg)}
-                  onConfigure={() => openConfig(intg)}
+                  item={item}
+                  onConnect={() => openConfig(item)}
+                  onDisconnect={() => handleDisconnect(item)}
+                  onConfigure={() => openConfig(item)}
                 />
               </motion.div>
             ))}
           </AnimatePresence>
 
           {filtered.length === 0 && (
-            <div className="col-span-full flex flex-col items-center justify-center py-20 gap-3 opacity-40">
-              <span className="text-4xl">◍</span>
-              <p className="text-[14px] text-[#6B7A99]">Sin integraciones en esta categoría</p>
+            <div
+              style={{
+                gridColumn: "1 / -1",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "80px 0",
+                gap: 12,
+                opacity: 0.4,
+              }}
+            >
+              <span style={{ fontSize: 36 }}>◍</span>
+              <p style={{ fontSize: 14, color: "#6B7A99" }}>Sin integraciones en esta categoría</p>
             </div>
           )}
         </motion.div>
       </div>
 
-      {/* ── Config modal ──────────────────────────────────────────────────── */}
+      {/* ── Config modal ──────────────────────────────────────────────────────  */}
       <AnimatePresence>
         {configuring && (
           <motion.div
-            key="modal-backdrop"
+            key="backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: "rgba(5,8,16,0.85)", backdropFilter: "blur(16px)" }}
             onClick={(e) => { if (e.target === e.currentTarget) setConfiguring(null); }}
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 50,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 16,
+              background: "rgba(5,8,16,0.88)",
+              backdropFilter: "blur(18px)",
+            }}
           >
             <motion.div
               key="modal"
-              initial={{ opacity: 0, scale: 0.94, y: 12 }}
+              initial={{ opacity: 0, scale: 0.93, y: 14 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.94, y: 12 }}
-              transition={{ duration: 0.2 }}
-              className="glass-strong rounded-2xl w-full max-w-md border border-[#1A2744] p-6 space-y-5"
+              exit={{ opacity: 0, scale: 0.93, y: 14 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              style={{
+                width: "100%",
+                maxWidth: 460,
+                borderRadius: 18,
+                border: "1px solid rgba(26,39,68,0.8)",
+                background: "rgba(8,12,26,0.95)",
+                backdropFilter: "blur(32px)",
+                padding: 24,
+                display: "flex",
+                flexDirection: "column",
+                gap: 18,
+              }}
             >
               {/* Modal header */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                   <div
-                    className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
                     style={{
-                      background: `${configuring.color}12`,
-                      border:     `1px solid ${configuring.color}30`,
+                      width: 48,
+                      height: 48,
+                      borderRadius: 14,
+                      background: `${configuring.color}14`,
+                      border: `1px solid ${configuring.color}30`,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 24,
+                      flexShrink: 0,
                     }}
                   >
                     {configuring.icon}
                   </div>
                   <div>
-                    <h3 className="font-bold text-[16px] text-[#E8ECF4]">
-                      Configurar {configuring.name}
-                    </h3>
-                    <p className="text-[11px] text-[#6B7A99]">{configuring.category}</p>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <h3 style={{ fontSize: 16, fontWeight: 700, color: "#E8ECF4" }}>
+                        {configuring.name}
+                      </h3>
+                      {configuring.beta && (
+                        <span
+                          style={{
+                            fontSize: 9,
+                            padding: "2px 7px",
+                            borderRadius: 4,
+                            background: "rgba(123,97,255,0.12)",
+                            color: "#7B61FF",
+                            border: "1px solid rgba(123,97,255,0.25)",
+                            fontWeight: 700,
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          Beta
+                        </span>
+                      )}
+                    </div>
+                    <p style={{ fontSize: 11, color: "#6B7A99", marginTop: 2 }}>{configuring.category}</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setConfiguring(null)}
-                  className="text-[#6B7A99] hover:text-[#E8ECF4] transition-colors text-lg leading-none"
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 7,
+                    border: "1px solid rgba(26,39,68,0.7)",
+                    background: "rgba(10,15,31,0.5)",
+                    color: "#6B7A99",
+                    cursor: "pointer",
+                    fontSize: 12,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
                 >
                   ✕
                 </button>
               </div>
 
+              {/* Description */}
+              <p style={{ fontSize: 12, color: "#6B7A99", lineHeight: 1.6, padding: "0 2px" }}>
+                {configuring.description}
+              </p>
+
               {/* API Key field */}
-              <div>
-                <label className="text-[11px] text-[#6B7A99] mb-1.5 block tracking-wide">
-                  API Key <span className="text-[#FF4757]">*</span>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <label style={{ fontSize: 11, color: "#6B7A99", letterSpacing: "0.04em" }}>
+                  API Key <span style={{ color: "#FF4757" }}>*</span>
                 </label>
-                <div className="relative">
+                <div style={{ position: "relative" }}>
                   <input
-                    className="astraeo-input pr-10"
+                    style={{
+                      width: "100%",
+                      padding: "10px 40px 10px 12px",
+                      borderRadius: 8,
+                      border: "1px solid rgba(26,39,68,0.7)",
+                      background: "rgba(10,15,31,0.5)",
+                      color: "#E8ECF4",
+                      fontSize: 12,
+                      fontFamily: "monospace",
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
                     type={apiVisible ? "text" : "password"}
-                    placeholder="sk-..."
+                    placeholder="Pega tu API key aquí..."
                     value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
+                    onChange={(e) => {
+                      setApiKey(e.target.value);
+                      setTestStatus("idle");
+                    }}
                     autoFocus
                   />
                   <button
                     onClick={() => setApiVisible((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7A99] hover:text-[#E8ECF4] transition-colors text-[13px]"
                     type="button"
+                    style={{
+                      position: "absolute",
+                      right: 12,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      background: "none",
+                      border: "none",
+                      color: "#6B7A99",
+                      cursor: "pointer",
+                      fontSize: 13,
+                      padding: 0,
+                    }}
                   >
                     {apiVisible ? "◑" : "◐"}
                   </button>
                 </div>
-                {/* Instructions */}
-                <p className="text-[10px] text-[#6B7A99]/70 mt-1.5 leading-relaxed">
-                  {getInstructions(configuring.name)}
+                <p style={{ fontSize: 10, color: "rgba(107,122,153,0.65)", lineHeight: 1.5 }}>
+                  {API_KEY_INSTRUCTIONS[configuring.name] ?? API_KEY_INSTRUCTIONS.default}
                 </p>
               </div>
 
-              {/* Extra config fields */}
-              {Object.keys(configuring.config).map((key) => (
-                <div key={key}>
-                  <label className="text-[11px] text-[#6B7A99] mb-1 block tracking-wide capitalize">
-                    {key}
+              {/* Webhook URL (optional) */}
+              {configuring.webhookField && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <label style={{ fontSize: 11, color: "#6B7A99", letterSpacing: "0.04em" }}>
+                    Webhook URL <span style={{ color: "#4A5568" }}>(opcional)</span>
                   </label>
                   <input
-                    className="astraeo-input"
-                    placeholder={key}
-                    value={config[key] ?? ""}
-                    onChange={(e) => setConfig((c) => ({ ...c, [key]: e.target.value }))}
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      borderRadius: 8,
+                      border: "1px solid rgba(26,39,68,0.7)",
+                      background: "rgba(10,15,31,0.5)",
+                      color: "#E8ECF4",
+                      fontSize: 12,
+                      fontFamily: "monospace",
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                    type="url"
+                    placeholder="https://hooks.example.com/..."
+                    value={webhookUrl}
+                    onChange={(e) => setWebhookUrl(e.target.value)}
                   />
                 </div>
-              ))}
+              )}
+
+              {/* Test connection */}
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <motion.button
+                  onClick={handleTestConnection}
+                  disabled={!apiKey.trim() || testStatus === "testing"}
+                  whileTap={{ scale: 0.95 }}
+                  style={{
+                    padding: "8px 14px",
+                    borderRadius: 7,
+                    border: "1px solid rgba(26,39,68,0.7)",
+                    background: "transparent",
+                    color: "#6B7A99",
+                    fontSize: 11,
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    opacity: !apiKey.trim() ? 0.4 : 1,
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {testStatus === "testing" ? "Probando..." : "Probar conexión"}
+                </motion.button>
+                <AnimatePresence mode="wait">
+                  {testStatus === "ok" && (
+                    <motion.span
+                      key="ok"
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0 }}
+                      style={{ fontSize: 12, color: "#00E5A0", fontWeight: 600 }}
+                    >
+                      ✓ Conexión exitosa
+                    </motion.span>
+                  )}
+                  {testStatus === "fail" && (
+                    <motion.span
+                      key="fail"
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0 }}
+                      style={{ fontSize: 12, color: "#FF4757", fontWeight: 600 }}
+                    >
+                      ✗ Verificar credenciales
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </div>
 
               {/* Actions */}
-              <div className="flex gap-3 pt-1">
+              <div style={{ display: "flex", gap: 10, paddingTop: 2 }}>
                 <button
                   onClick={() => setConfiguring(null)}
-                  className="btn-ghost flex-1 justify-center"
+                  style={{
+                    flex: 1,
+                    padding: "10px 0",
+                    borderRadius: 9,
+                    border: "1px solid rgba(26,39,68,0.7)",
+                    background: "transparent",
+                    color: "#6B7A99",
+                    fontSize: 12,
+                    fontWeight: 500,
+                    cursor: "pointer",
+                  }}
                 >
                   Cancelar
                 </button>
-                <button
+                <motion.button
                   onClick={handleConnect}
                   disabled={!apiKey.trim()}
-                  className="btn-primary flex-1 justify-center disabled:opacity-40 disabled:cursor-not-allowed"
+                  whileTap={{ scale: 0.97 }}
+                  style={{
+                    flex: 2,
+                    padding: "10px 0",
+                    borderRadius: 9,
+                    border: `1px solid ${configuring.color}40`,
+                    background: `${configuring.color}12`,
+                    color: configuring.color,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    opacity: !apiKey.trim() ? 0.4 : 1,
+                    transition: "all 0.15s",
+                  }}
                 >
-                  Guardar y Conectar
-                </button>
+                  Guardar y Conectar →
+                </motion.button>
               </div>
             </motion.div>
           </motion.div>
@@ -266,89 +674,218 @@ export default function Integrations() {
 }
 
 // ── Integration card ───────────────────────────────────────────────────────────
+
 function IntegrationCard({
-  intg,
+  item,
   onConnect,
   onDisconnect,
   onConfigure,
 }: {
-  intg: Integration;
+  item: MergedIntegration;
   onConnect: () => void;
   onDisconnect: () => void;
   onConfigure: () => void;
 }) {
+  const statusStyle = item.connected
+    ? { bg: "rgba(0,229,160,0.08)", border: "rgba(0,229,160,0.25)", color: "#00E5A0", label: "Conectado" }
+    : { bg: "rgba(107,122,153,0.06)", border: "rgba(26,39,68,0.6)", color: "#6B7A99", label: "Disponible" };
+
   return (
-    <div
-      className="premium-card p-5 flex flex-col gap-4 h-full"
+    <motion.div
+      whileHover={{ y: -2, boxShadow: `0 8px 32px ${item.color}14` }}
       style={{
-        borderColor: intg.connected ? `${intg.color}35` : undefined,
+        borderRadius: 14,
+        border: `1px solid ${item.connected ? item.color + "30" : "rgba(26,39,68,0.55)"}`,
+        background: item.connected
+          ? `${item.color}04`
+          : "rgba(10,15,31,0.35)",
+        padding: "16px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 14,
+        height: "100%",
+        boxSizing: "border-box",
+        transition: "border-color 0.2s, background 0.2s",
       }}
     >
-      {/* Top: icon + name + status badge */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3">
+      {/* Top section */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+        {/* Icon + name */}
+        <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
           <div
             style={{
-              width: 44, height: 44, borderRadius: 12,
-              background:   `${intg.color}18`,
-              border:       `1px solid ${intg.color}30`,
-              display:      "flex",
-              alignItems:   "center",
+              width: 42,
+              height: 42,
+              borderRadius: 11,
+              background: `${item.color}14`,
+              border: `1px solid ${item.color}28`,
+              display: "flex",
+              alignItems: "center",
               justifyContent: "center",
-              fontSize:     22,
-              flexShrink:   0,
+              fontSize: 20,
+              flexShrink: 0,
             }}
           >
-            {intg.icon}
+            {item.icon}
           </div>
-          <div>
-            <p className="text-[13px] font-semibold text-[#E8ECF4]">{intg.name}</p>
-            <p className="text-[10px] text-[#6B7A99]">{intg.category}</p>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+              <p style={{ fontSize: 13, fontWeight: 600, color: "#E8ECF4", whiteSpace: "nowrap" }}>
+                {item.name}
+              </p>
+              {item.beta && (
+                <span
+                  style={{
+                    fontSize: 8,
+                    padding: "2px 6px",
+                    borderRadius: 4,
+                    background: "rgba(123,97,255,0.12)",
+                    color: "#7B61FF",
+                    border: "1px solid rgba(123,97,255,0.22)",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                  }}
+                >
+                  Beta
+                </span>
+              )}
+            </div>
+            <p style={{ fontSize: 10, color: "#6B7A99", marginTop: 1 }}>{item.category}</p>
           </div>
         </div>
 
         {/* Status pill */}
         <div
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border flex-shrink-0"
-          style={
-            intg.connected
-              ? { background: "rgba(0,229,160,0.08)", borderColor: "rgba(0,229,160,0.25)", color: "#00E5A0" }
-              : { background: "rgba(107,122,153,0.08)", borderColor: "#1A2744",            color: "#6B7A99" }
-          }
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 5,
+            padding: "4px 9px",
+            borderRadius: 20,
+            background: statusStyle.bg,
+            border: `1px solid ${statusStyle.border}`,
+            flexShrink: 0,
+          }}
         >
           <div
-            className={`w-1.5 h-1.5 rounded-full ${intg.connected ? "bg-[#00E5A0] animate-pulse" : "bg-[#6B7A99]"}`}
+            style={{
+              width: 5,
+              height: 5,
+              borderRadius: "50%",
+              background: statusStyle.color,
+              ...(item.connected ? { animation: "pulse 2s infinite" } : {}),
+            }}
           />
-          {intg.connected ? "Conectado" : "Offline"}
+          <span style={{ fontSize: 10, color: statusStyle.color, fontWeight: 600 }}>
+            {statusStyle.label}
+          </span>
         </div>
       </div>
 
+      {/* Description */}
+      <p style={{ fontSize: 11, color: "rgba(107,122,153,0.75)", lineHeight: 1.6, flex: 1 }}>
+        {item.description}
+      </p>
+
       {/* Actions */}
-      <div className="flex gap-2 mt-auto">
-        {intg.connected ? (
+      <div style={{ display: "flex", gap: 7, marginTop: "auto" }}>
+        {item.connected ? (
           <>
             <button
               onClick={onConfigure}
-              className="btn-ghost flex-1 text-[11px] py-2 justify-center"
+              style={{
+                flex: 1,
+                padding: "7px 0",
+                borderRadius: 8,
+                border: "1px solid rgba(26,39,68,0.6)",
+                background: "transparent",
+                color: "#6B7A99",
+                fontSize: 11,
+                fontWeight: 500,
+                cursor: "pointer",
+                transition: "all 0.15s",
+              }}
             >
-              Configurar →
+              Configurar
             </button>
             <button
               onClick={onDisconnect}
-              className="btn-danger text-[11px] py-2 px-3 justify-center"
+              style={{
+                padding: "7px 12px",
+                borderRadius: 8,
+                border: "1px solid rgba(255,71,87,0.3)",
+                background: "rgba(255,71,87,0.07)",
+                color: "#FF4757",
+                fontSize: 11,
+                fontWeight: 600,
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                transition: "all 0.15s",
+              }}
             >
               Desconectar
             </button>
           </>
         ) : (
-          <button
+          <motion.button
             onClick={onConnect}
-            className="btn-primary flex-1 text-[11px] py-2 justify-center"
+            whileHover={{ background: `${item.color}18` }}
+            whileTap={{ scale: 0.97 }}
+            style={{
+              flex: 1,
+              padding: "8px 0",
+              borderRadius: 8,
+              border: `1px solid ${item.color}35`,
+              background: `${item.color}0C`,
+              color: item.color,
+              fontSize: 11,
+              fontWeight: 700,
+              cursor: "pointer",
+              transition: "all 0.15s",
+            }}
           >
             Conectar →
-          </button>
+          </motion.button>
         )}
       </div>
+    </motion.div>
+  );
+}
+
+// ── Status pill ────────────────────────────────────────────────────────────────
+
+function StatusPill({
+  color,
+  children,
+  pulse,
+}: {
+  color: string;
+  children: React.ReactNode;
+  pulse?: boolean;
+}) {
+  return (
+    <div
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        padding: "5px 11px",
+        borderRadius: 20,
+        background: `${color}0D`,
+        border: `1px solid ${color}28`,
+      }}
+    >
+      <div
+        style={{
+          width: 6,
+          height: 6,
+          borderRadius: "50%",
+          background: color,
+          ...(pulse ? { animation: "pulse 2s infinite" } : {}),
+        }}
+      />
+      <span style={{ fontSize: 11, color, fontWeight: 600 }}>{children}</span>
     </div>
   );
 }

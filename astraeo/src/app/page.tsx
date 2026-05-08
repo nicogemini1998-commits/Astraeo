@@ -20,21 +20,23 @@ import Commander from "@/components/pages/Commander";
 
 import type { Variants } from "framer-motion";
 
-const EASE_STANDARD: [number, number, number, number] = [0.4, 0, 0.2, 1];
+const EASE_EXPO: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
 const pageVariants: Variants = {
-  initial: { opacity: 0, x: -8, filter: "blur(4px)" },
+  initial: { opacity: 0, y: 12, scale: 0.992, filter: "blur(6px)" },
   enter: {
     opacity: 1,
-    x: 0,
+    y: 0,
+    scale: 1,
     filter: "blur(0px)",
-    transition: { duration: 0.3, ease: EASE_STANDARD },
+    transition: { duration: 0.38, ease: EASE_EXPO },
   },
   exit: {
     opacity: 0,
-    x: 8,
+    y: -8,
+    scale: 1.004,
     filter: "blur(4px)",
-    transition: { duration: 0.15, ease: EASE_STANDARD },
+    transition: { duration: 0.18, ease: EASE_EXPO },
   },
 };
 
@@ -44,10 +46,10 @@ function Starfield({ density = 80 }: { density?: number }) {
     id: i,
     left: `${(i * 137.508) % 100}%`,
     top: `${(i * 97.3) % 100}%`,
-    size: i % 5 === 0 ? 2 : 1,
-    delay: (i * 0.3) % 6,
-    duration: 2 + (i % 4),
-    opacity: 0.2 + (i % 8) * 0.08,
+    size: i % 7 === 0 ? 2.5 : i % 3 === 0 ? 1.5 : 1,
+    delay: (i * 0.37) % 7,
+    duration: 2.5 + (i % 5),
+    opacity: 0.15 + (i % 9) * 0.07,
   }));
 
   return (
@@ -61,19 +63,24 @@ function Starfield({ density = 80 }: { density?: number }) {
             top: s.top,
             width: s.size,
             height: s.size,
+            borderRadius: "50%",
+            position: "absolute",
+            background: s.id % 11 === 0 ? "#00D4FF" : s.id % 7 === 0 ? "#7B61FF" : "#FFFFFF",
             opacity: s.opacity,
             animation: `twinkle ${s.duration}s ease-in-out ${s.delay}s infinite`,
           }}
         />
       ))}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "radial-gradient(ellipse at 20% 50%, rgba(0,212,255,0.03) 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, rgba(123,97,255,0.03) 0%, transparent 50%)",
-        }}
-      />
+      {/* Nebula clouds */}
+      <div style={{
+        position: "absolute", inset: 0,
+        background: [
+          "radial-gradient(ellipse 60% 40% at 15% 40%, rgba(0,212,255,0.04) 0%, transparent 60%)",
+          "radial-gradient(ellipse 50% 35% at 85% 20%, rgba(123,97,255,0.05) 0%, transparent 60%)",
+          "radial-gradient(ellipse 40% 30% at 70% 75%, rgba(0,229,160,0.03) 0%, transparent 60%)",
+          "radial-gradient(ellipse 35% 25% at 40% 85%, rgba(255,107,157,0.03) 0%, transparent 60%)",
+        ].join(", "),
+      }} />
     </div>
   );
 }

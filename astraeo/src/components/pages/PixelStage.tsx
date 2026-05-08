@@ -106,6 +106,24 @@ function drawExterior(ctx: CanvasRenderingContext2D): void {
   ctx.fillStyle = moonGlow;
   ctx.fillRect(1180, 0, 240, 160);
 
+  // Aurora borealis bands
+  const auroraColors: [number, string, string][] = [
+    [0.2, "rgba(0, 212, 255, 0.06)",  "rgba(0, 212, 255, 0)"],
+    [0.4, "rgba(123, 97, 255, 0.08)", "rgba(123, 97, 255, 0)"],
+    [0.6, "rgba(0, 229, 160, 0.05)",  "rgba(0, 229, 160, 0)"],
+  ];
+  auroraColors.forEach(([yFrac, colorA, colorB], i) => {
+    const ay = yFrac * 320;
+    const aGrad = ctx.createLinearGradient(0, ay - 30, 0, ay + 30);
+    aGrad.addColorStop(0, colorB);
+    aGrad.addColorStop(0.5, colorA);
+    aGrad.addColorStop(1, colorB);
+    ctx.fillStyle = aGrad;
+    ctx.beginPath();
+    ctx.ellipse(750 + i * 80, ay, 600, 30, 0, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
   // Stars
   STAR_POSITIONS.forEach(([sx, sy]) => {
     const brightness = 0.4 + (sx % 7) * 0.08;
@@ -214,22 +232,22 @@ function drawAllFloorTiles(ctx: CanvasRenderingContext2D): void {
   // Main workspace — rich warm mahogany wood planks, clearly visible
   for (let c = 0; c < 14; c++) {
     for (let r = 0; r < 14; r++) {
-      const shade = (c + r) % 2 === 0 ? "#3E2A10" : "#362410";
-      drawFloorTile(ctx, c, r, shade, "#281808");
+      const shade = (c + r) % 2 === 0 ? "#5A3C18" : "#503618";
+      drawFloorTile(ctx, c, r, shade, "#3A2510");
     }
   }
   // Meeting room — cool polished slate/marble
   for (let c = 14; c < 19; c++) {
     for (let r = 0; r < 9; r++) {
-      const shade = (c + r) % 2 === 0 ? "#1C2840" : "#182238";
-      drawFloorTile(ctx, c, r, shade, "#101830");
+      const shade = (c + r) % 2 === 0 ? "#1E2A42" : "#1A2440";
+      drawFloorTile(ctx, c, r, shade, "#0E1828");
     }
   }
   // Lounge zone — plum/warm purple carpet base
   for (let c = 10; c < 14; c++) {
     for (let r = 10; r < 14; r++) {
-      const shade = (c + r) % 2 === 0 ? "#281838" : "#221430";
-      drawFloorTile(ctx, c, r, shade, "#1C0E28");
+      const shade = (c + r) % 2 === 0 ? "#2E2248" : "#281C40";
+      drawFloorTile(ctx, c, r, shade, "#200E30");
     }
   }
 }
@@ -295,7 +313,7 @@ function drawWalls(ctx: CanvasRenderingContext2D, t: number): void {
     const y1 = isoY(c + 1, 0);
 
     // Wall face — warm dark brown-charcoal
-    ctx.fillStyle = "#1C1610";
+    ctx.fillStyle = "#282018";
     ctx.beginPath();
     ctx.moveTo(x0, y0);
     ctx.lineTo(x1, y1);
@@ -313,7 +331,7 @@ function drawWalls(ctx: CanvasRenderingContext2D, t: number): void {
     ctx.stroke();
 
     // Top cap — slightly lighter warm tone
-    ctx.fillStyle = "#2A2018";
+    ctx.fillStyle = "#342A20";
     ctx.beginPath();
     ctx.moveTo(x0, y0 - wallH);
     ctx.lineTo(x1, y1 - wallH);
@@ -338,7 +356,7 @@ function drawWalls(ctx: CanvasRenderingContext2D, t: number): void {
     const x1 = isoX(0, r + 1);
     const y1 = isoY(0, r + 1);
 
-    ctx.fillStyle = "#181210";
+    ctx.fillStyle = "#221810";
     ctx.beginPath();
     ctx.moveTo(x0, y0);
     ctx.lineTo(x1, y1);
@@ -440,7 +458,7 @@ function drawDesk(
   const tr0 = { x: isoX(col+2, row),   y: isoY(col+2, row,   0) };
 
   // Left face — dark warm mahogany
-  ctx.fillStyle = "#241408";
+  ctx.fillStyle = "#3A2410";
   ctx.beginPath();
   ctx.moveTo(tl0.x, tl0.y);
   ctx.lineTo(bl0.x, bl0.y);
@@ -450,7 +468,7 @@ function drawDesk(
   ctx.fill();
 
   // Front face — slightly warmer
-  ctx.fillStyle = "#2E1A0A";
+  ctx.fillStyle = "#482C14";
   ctx.beginPath();
   ctx.moveTo(bl0.x, bl0.y);
   ctx.lineTo(br0.x, br0.y);
@@ -473,9 +491,9 @@ function drawDesk(
 
   // Desktop surface — warm wood with slight color tint from agent
   const surfGrad = ctx.createLinearGradient(tl.x, tl.y, br.x, br.y);
-  surfGrad.addColorStop(0, "#3E2A12");
-  surfGrad.addColorStop(0.5, "#342210");
-  surfGrad.addColorStop(1, "#2A1A0C");
+  surfGrad.addColorStop(0, "#6A4820");
+  surfGrad.addColorStop(0.5, "#5A3C18");
+  surfGrad.addColorStop(1, "#4A3010");
   ctx.fillStyle = surfGrad;
   ctx.beginPath();
   ctx.moveTo(tl.x, tl.y);
@@ -994,8 +1012,8 @@ function drawCeilingLights(ctx: CanvasRenderingContext2D, t: number): void {
     const b = parseInt(lcolor.slice(5, 7), 16);
 
     const grad = ctx.createRadialGradient(lx, ly, 0, lx, ly, 100 * pulse);
-    grad.addColorStop(0,   `rgba(${r},${g},${b},0.14)`);
-    grad.addColorStop(0.4, `rgba(${r},${g},${b},0.07)`);
+    grad.addColorStop(0,   `rgba(${r},${g},${b},0.18)`);
+    grad.addColorStop(0.4, `rgba(${r},${g},${b},0.10)`);
     grad.addColorStop(1,   `rgba(${r},${g},${b},0)`);
 
     ctx.save();
@@ -1028,6 +1046,46 @@ function drawWallDecor(ctx: CanvasRenderingContext2D): void {
     ctx.fillStyle = ledGrad;
     ctx.fillRect(lx0 - 1, ly0 - 3, lx1 - lx0 + 2, 4);
   }
+
+  // Pendant lamp fixtures (isometric pendant lights above each zone)
+  const lampZones = [
+    { col: 2, row: 3 }, { col: 7, row: 2 },
+    { col: 2, row: 7 }, { col: 7, row: 6 },
+    { col: 2, row: 11 }, { col: 7, row: 10 },
+    { col: 12, row: 4 }, { col: 12, row: 8 },
+  ];
+  lampZones.forEach(({ col, row }) => {
+    const lx = isoX(col, row);
+    const ly = isoY(col, row) - 90;
+    // Lamp cord
+    ctx.strokeStyle = "#2A2018";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(lx, ly - 20);
+    ctx.lineTo(lx, ly);
+    ctx.stroke();
+    // Lamp shade (isometric cone shape)
+    ctx.fillStyle = "#C8A840";
+    ctx.beginPath();
+    ctx.moveTo(lx - 12, ly);
+    ctx.lineTo(lx + 12, ly);
+    ctx.lineTo(lx + 8, ly + 10);
+    ctx.lineTo(lx - 8, ly + 10);
+    ctx.closePath();
+    ctx.fill();
+    // Lamp bottom glow
+    ctx.fillStyle = "rgba(255, 220, 100, 0.85)";
+    ctx.beginPath();
+    ctx.ellipse(lx, ly + 10, 9, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Lamp outer rim
+    ctx.strokeStyle = "#8A7020";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(lx - 12, ly);
+    ctx.lineTo(lx + 12, ly);
+    ctx.stroke();
+  });
 
   posterData.forEach(({ col, row, label, color }) => {
     const px = isoX(col, row) - 16;
@@ -1065,6 +1123,51 @@ function drawWallDecor(ctx: CanvasRenderingContext2D): void {
     ctx.textAlign = "left";
     ctx.fillText(label.toUpperCase(), px + 13, py + 16);
   });
+
+  // Whiteboard on back wall
+  {
+    const wbx = isoX(3.2, 0) - 35;
+    const wby = isoY(3.2, 0) - 120;
+    // Frame
+    ctx.fillStyle = "#3A2A16";
+    ctx.beginPath();
+    ctx.roundRect(wbx - 3, wby - 3, 70, 44, 4);
+    ctx.fill();
+    // White surface
+    ctx.fillStyle = "#E8ECF0";
+    ctx.beginPath();
+    ctx.roundRect(wbx, wby, 64, 38, 2);
+    ctx.fill();
+    // Colorful diagram lines on whiteboard
+    const wbLines = [
+      { color: "#FF4757", x1: wbx + 5, y1: wby + 10, x2: wbx + 32, y2: wby + 10 },
+      { color: "#00D4FF", x1: wbx + 5, y1: wby + 18, x2: wbx + 50, y2: wby + 18 },
+      { color: "#00E5A0", x1: wbx + 5, y1: wby + 26, x2: wbx + 40, y2: wby + 26 },
+    ];
+    wbLines.forEach(({ color, x1, y1, x2, y2 }) => {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    });
+    // Circle node
+    ctx.fillStyle = "#7B61FF";
+    ctx.beginPath();
+    ctx.arc(wbx + 55, wby + 14, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = "bold 6px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("!", wbx + 55, wby + 17);
+    // Tray
+    ctx.fillStyle = "#2A1E10";
+    ctx.beginPath();
+    ctx.roundRect(wbx, wby + 38, 64, 5, [0, 0, 2, 2]);
+    ctx.fill();
+  }
 }
 
 function drawChibiHairBack(
@@ -1393,9 +1496,9 @@ function drawChibiAvatar(
   ctx.roundRect(-4, -32, 8, 9, 3);
   ctx.fill();
 
-  // ── HEAD (r = 22, chibi proportions) ──
-  const headY = -56;
-  const headR = 22;
+  // ── HEAD (r = 26, chibi proportions) ──
+  const headY = -62;
+  const headR = 26;
 
   ctx.save();
   if (isOffline) {
@@ -1624,8 +1727,8 @@ function drawScene(
   ];
   roomLights.forEach(([lx, ly, rx, ry, r, g, b]) => {
     const grad = ctx.createRadialGradient(lx, ly - 10, 0, lx, ly, rx);
-    grad.addColorStop(0,   `rgba(${r},${g},${b},0.08)`);
-    grad.addColorStop(0.6, `rgba(${r},${g},${b},0.03)`);
+    grad.addColorStop(0,   `rgba(${r},${g},${b},0.15)`);
+    grad.addColorStop(0.6, `rgba(${r},${g},${b},0.07)`);
     grad.addColorStop(1,   "rgba(0,0,0,0)");
     ctx.save();
     ctx.fillStyle = grad;
@@ -1634,6 +1737,24 @@ function drawScene(
     ctx.fill();
     ctx.restore();
   });
+
+  // 2c. Floor polish — subtle specular shine on wood
+  const floorShine = ctx.createLinearGradient(isoX(0, 7), isoY(0, 7), isoX(10, 0), isoY(10, 0));
+  floorShine.addColorStop(0, "rgba(255, 220, 160, 0)");
+  floorShine.addColorStop(0.4, "rgba(255, 220, 160, 0.04)");
+  floorShine.addColorStop(0.6, "rgba(255, 255, 255, 0.03)");
+  floorShine.addColorStop(1, "rgba(255, 220, 160, 0)");
+  ctx.save();
+  ctx.fillStyle = floorShine;
+  // Cover main floor area
+  ctx.beginPath();
+  ctx.moveTo(isoX(0, 0), isoY(0, 0));
+  ctx.lineTo(isoX(14, 0), isoY(14, 0));
+  ctx.lineTo(isoX(14, 14), isoY(14, 14));
+  ctx.lineTo(isoX(0, 14), isoY(0, 14));
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
 
   // 3. Zone carpets per agent — signature colored zones (Sowork-style)
   agents.forEach((agent) => {
@@ -1743,6 +1864,41 @@ function drawScene(
   // 7. Sofa / lounge
   drawSofa(ctx);
 
+  // Bookshelf on left wall (col 0, rows 3-5)
+  {
+    const bx = isoX(0, 3) + 5;
+    const by = isoY(0, 3) - 18;
+    // Shelf frame
+    ctx.fillStyle = "#3A2410";
+    ctx.beginPath();
+    ctx.roundRect(bx - 2, by - 42, 28, 52, 3);
+    ctx.fill();
+    // Book spines — colorful
+    const books = [
+      { x: bx, y: by - 38, w: 5, h: 18, c: "#FF4757" },
+      { x: bx + 6, y: by - 36, w: 4, h: 16, c: "#00D4FF" },
+      { x: bx + 11, y: by - 40, w: 6, h: 20, c: "#FFB800" },
+      { x: bx + 18, y: by - 37, w: 5, h: 17, c: "#7B61FF" },
+      { x: bx, y: by - 16, w: 5, h: 14, c: "#00E5A0" },
+      { x: bx + 6, y: by - 18, w: 7, h: 16, c: "#FF6B9D" },
+      { x: bx + 14, y: by - 15, w: 8, h: 13, c: "#64B5F6" },
+    ];
+    books.forEach(({ x, y, w, h, c }) => {
+      ctx.fillStyle = c;
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, 1);
+      ctx.fill();
+      // Book shine
+      ctx.fillStyle = "rgba(255,255,255,0.15)";
+      ctx.beginPath();
+      ctx.roundRect(x + 1, y + 1, 1.5, h - 2, 0);
+      ctx.fill();
+    });
+    // Shelf divider
+    ctx.fillStyle = "#5A3C18";
+    ctx.fillRect(bx - 2, by - 20, 28, 2);
+  }
+
   // 8. Desks + furniture — sorted by depth (col+row)
   const agentsByDepth = [...agents].sort((a, b) => {
     const pa = DESK_POSITIONS[a.id] ?? { col: 0, row: 0 };
@@ -1773,7 +1929,7 @@ function drawScene(
     const cy = isoY(pos.col + 1.0, pos.row + 0.45, 0);
 
     drawChibiAvatar(ctx, cx, cy, t, agent, cfg, agent.id === hoveredId, agent.id === selectedId);
-    hitboxes.set(agent.id, { x: cx, y: cy - 55, r: 28 });
+    hitboxes.set(agent.id, { x: cx, y: cy - 60, r: 32 });
   });
 
   // 10b. Zone dept labels — floating above each carpet
@@ -1835,6 +1991,7 @@ function NexusHeader({ stats }: NexusHeaderProps) {
         backdropFilter: "blur(12px)",
         flexShrink: 0,
         zIndex: 10,
+        backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,212,255,0.01) 2px, rgba(0,212,255,0.01) 4px)",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -1856,8 +2013,9 @@ function NexusHeader({ stats }: NexusHeaderProps) {
             textTransform: "uppercase",
           }}
         >
-          NEXUS — OFICINA VIRTUAL
+          NEXUS · OFICINA VIRTUAL
         </span>
+        <span style={{ animation: "neon-flicker 3s infinite", marginLeft: 4, color: "#00D4FF" }}>▮</span>
       </div>
 
       <div style={{ display: "flex", gap: 32 }}>
@@ -2126,6 +2284,32 @@ function AgentPanel({ agent, onClose, onChat, onStatusChange }: AgentPanelProps)
       >
         INICIAR CHAT →
       </button>
+
+      {/* Activity sparkline decoration */}
+      <div style={{
+        marginTop: 10,
+        padding: "8px 10px",
+        background: "rgba(255,255,255,0.03)",
+        borderRadius: 6,
+        border: "1px solid rgba(255,255,255,0.05)",
+        display: "flex",
+        gap: 2,
+        alignItems: "flex-end",
+        height: 36,
+      }}>
+        {Array.from({ length: 16 }, (_, i) => (
+          <div
+            key={i}
+            style={{
+              flex: 1,
+              height: `${20 + Math.sin(i * 0.8) * 10 + (i % 3) * 4}px`,
+              background: `${cfg?.color ?? "#00D4FF"}${i === 15 ? "FF" : i > 10 ? "AA" : "50"}`,
+              borderRadius: "1px 1px 0 0",
+              transition: "height 0.3s ease",
+            }}
+          />
+        ))}
+      </div>
     </motion.div>
   );
 }
@@ -2239,7 +2423,7 @@ export default function NexusPage() {
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        background: "linear-gradient(180deg, #080420 0%, #0A0618 50%, #060318 100%)",
+        background: "linear-gradient(180deg, #0C0626 0%, #0E0820 60%, #080418 100%)",
         overflow: "hidden",
       }}
     >
@@ -2271,6 +2455,30 @@ export default function NexusPage() {
             />
           )}
         </AnimatePresence>
+      </div>
+
+      {/* Status bar */}
+      <div style={{
+        height: 24,
+        background: "rgba(5,8,20,0.98)",
+        borderTop: "1px solid rgba(255,255,255,0.04)",
+        display: "flex",
+        alignItems: "center",
+        padding: "0 16px",
+        gap: 20,
+        flexShrink: 0,
+      }}>
+        {[
+          { label: "CANVAS", value: "1500×800", color: "#3A4560" },
+          { label: "FPS", value: "60", color: "#00E5A0" },
+          { label: "AGENTS", value: `${agents.filter(a => a.status === "online").length} ONLINE`, color: "#00D4FF" },
+          { label: "RENDER", value: "CANVAS 2D · ISO 2.5D", color: "#7B61FF" },
+        ].map(({ label, value, color }) => (
+          <div key={label} style={{ display: "flex", gap: 5, alignItems: "center" }}>
+            <span style={{ color: "#1E2840", fontSize: 8, fontFamily: "'JetBrains Mono', monospace", textTransform: "uppercase" }}>{label}</span>
+            <span style={{ color, fontSize: 9, fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.05em" }}>{value}</span>
+          </div>
+        ))}
       </div>
     </div>
   );

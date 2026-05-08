@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useAstraeo } from "@/store/astraeo";
 import {
@@ -17,249 +17,406 @@ import {
   CartesianGrid,
 } from "recharts";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-const CHART_COLORS = ["#00D4FF", "#7B61FF", "#00E5A0", "#FFB800", "#FF6B9D", "#FF4757", "#64B5F6"];
+// ─── Types ────────────────────────────────────────────────────────────────────
+type Period = "7d" | "30d" | "90d";
 
-const TOOLTIP_STYLE = {
-  background: "rgba(10,15,31,0.97)",
-  border: "1px solid #1A2744",
-  borderRadius: 8,
+interface KpiData {
+  label: string;
+  value: number;
+  display: string;
+  sub: string;
+  color: string;
+  unit: string;
+}
+
+interface AgentBar {
+  name: string;
+  tokens: number;
+  tasks: number;
+}
+
+interface MissionPie {
+  name: string;
+  value: number;
+}
+
+interface TimelinePoint {
+  v: number;
+  t: string;
+}
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+const CHART_COLORS = [
+  "#00D4FF",
+  "#7B61FF",
+  "#00E5A0",
+  "#FFB800",
+  "#FF6B9D",
+  "#FF4757",
+  "#64B5F6",
+];
+
+const PERIODS: { key: Period; label: string; days: number }[] = [
+  { key: "7d", label: "7 días", days: 7 },
+  { key: "30d", label: "30 días", days: 30 },
+  { key: "90d", label: "90 días", days: 90 },
+];
+
+const GLASS_TOOLTIP: React.CSSProperties = {
+  background: "rgba(6,11,26,0.92)",
+  backdropFilter: "blur(16px)",
+  border: "1px solid rgba(0,212,255,0.15)",
+  borderRadius: 10,
   fontSize: 11,
   color: "#C8D0E0",
+  boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+  padding: "8px 12px",
 };
 
-type Period = "today" | "7d" | "30d" | "all";
+// ─── Custom Tooltip ───────────────────────────────────────────────────────────
+function makeGlassTooltip(suffix: string) {
+  return function GlassTooltipInner(props: Record<string, unknown>) {
+    const active = props.active as boolean | undefined;
+    const label = props.label as string | undefined;
+    const payload = props.payload as { value: number; name: string; color: string }[] | undefined;
+    if (!active || !payload?.length) return null;
+    return (
+      <div style={GLASS_TOOLTIP}>
+        <p className="text-[10px] text-[#6B7A99] font-mono mb-1">{label}</p>
+        {payload.map((entry) => (
+          <p key={entry.name} className="text-[12px] font-semibold font-mono" style={{ color: entry.color }}>
+            {entry.value}
+            {suffix}
+          </p>
+        ))}
+      </div>
+    );
+  };
+}
+
+// ─── Count-up Hook ────────────────────────────────────────────────────────────
+function useCountUp(target: number, duration = 900): number {
+  const [count, setCount] = useState(0);
+  const raf = useRef<number | null>(null);
+  const startRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    startRef.current = null;
+    const step = (ts: number) => {
+      if (startRef.current === null) startRef.current = ts;
+      const elapsed = ts - startRef.current;
+      const progress = Math.min(elapsed / duration, 1);
+      const ease = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.round(target * ease));
+      if (progress < 1) {
+        raf.current = requestAnimationFrame(step);
+      }
+    };
+    raf.current = requestAnimationFrame(step);
+    return () => {
+      if (raf.current !== null) cancelAnimationFrame(raf.current);
+    };
+  }, [target, duration]);
+
+  return count;
+}
 
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
 interface KpiCardProps {
-  label: string;
-  value: string;
-  sub: string;
-  color: string;
+  kpi: KpiData;
   index: number;
 }
 
-function KpiCard({ label, value, sub, color, index }: KpiCardProps) {
+function KpiCard({ kpi, index }: KpiCardProps) {
+  const animated = useCountUp(kpi.value);
+  const display =
+    kpi.unit === "k" && kpi.value > 999
+      ? `${(animated / 1000).toFixed(1)}k`
+      : kpi.unit === "ms"
+      ? `${animated}ms`
+      : kpi.unit === "%"
+      ? `${animated}%`
+      : animated.toLocaleString();
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay: index * 0.07 }}
-      className="glass-card rounded-2xl p-5 border border-[#1A2744]/50 card-hover"
+      transition={{ duration: 0.4, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
+      className="relative overflow-hidden rounded-2xl p-5 border border-white/[0.06]"
+      style={{
+        background: "linear-gradient(135deg, rgba(10,15,31,0.9) 0%, rgba(6,11,26,0.95) 100%)",
+        boxShadow: `0 1px 0 0 ${kpi.color}18 inset, 0 0 40px -12px ${kpi.color}20`,
+      }}
     >
       <div
-        className="text-3xl font-bold font-mono mb-1 tabular-nums"
-        style={{ color }}
-      >
-        {value}
+        className="absolute top-0 left-0 right-0 h-px"
+        style={{ background: `linear-gradient(90deg, transparent, ${kpi.color}40, transparent)` }}
+      />
+      <div
+        className="absolute -top-8 -right-8 w-24 h-24 rounded-full opacity-[0.06] blur-2xl"
+        style={{ background: kpi.color }}
+      />
+      <div className="text-[11px] font-semibold text-[#6B7A99] tracking-widest uppercase mb-3">
+        {kpi.label}
       </div>
-      <div className="text-[12px] font-semibold text-[#E8ECF4] mb-0.5">{label}</div>
-      <div className="text-[10px] text-[#6B7A99] font-mono">{sub}</div>
+      <div
+        className="text-[28px] font-bold font-mono tabular-nums leading-none mb-2"
+        style={{ color: kpi.color }}
+      >
+        {kpi.value === 0 ? "—" : display}
+      </div>
+      <div className="text-[10px] text-[#4A5570] font-mono">{kpi.sub}</div>
     </motion.div>
   );
 }
 
 // ─── Section Header ───────────────────────────────────────────────────────────
-function SectionHeader({ title, sub }: { title: string; sub?: string }) {
+interface SectionHeaderProps {
+  title: string;
+  sub?: string;
+  accent?: string;
+}
+
+function SectionHeader({ title, sub, accent = "#00D4FF" }: SectionHeaderProps) {
   return (
-    <div className="mb-4">
-      <h3 className="text-[13px] font-semibold text-[#E8ECF4] tracking-wide">{title}</h3>
-      {sub && <p className="text-[10px] text-[#6B7A99] font-mono mt-0.5">{sub}</p>}
+    <div className="mb-5 flex items-start gap-2.5">
+      <div
+        className="w-0.5 h-full min-h-[28px] rounded-full mt-0.5 flex-shrink-0"
+        style={{ background: `linear-gradient(180deg, ${accent}, transparent)` }}
+      />
+      <div>
+        <h3 className="text-[13px] font-semibold text-[#E8ECF4] tracking-wide">{title}</h3>
+        {sub && <p className="text-[10px] text-[#6B7A99] font-mono mt-0.5">{sub}</p>}
+      </div>
     </div>
   );
 }
 
-// ─── Custom Pie Label ─────────────────────────────────────────────────────────
-interface PieLabelProps {
-  cx?: number;
-  cy?: number;
-  midAngle?: number;
-  innerRadius?: number;
-  outerRadius?: number;
-  percent?: number;
-  name?: string;
+// ─── Pie Legend ───────────────────────────────────────────────────────────────
+interface PieLegendProps {
+  data: MissionPie[];
+  total: number;
 }
 
-function CustomPieLabel({ cx = 0, cy = 0, midAngle = 0, innerRadius = 0, outerRadius = 0, percent = 0, name = "" }: PieLabelProps) {
-  const RADIAN = Math.PI / 180;
-  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-  const y = cy + radius * Math.sin(-midAngle * RADIAN);
-  if (percent < 0.06) return null;
+function PieLegend({ data, total }: PieLegendProps) {
   return (
-    <text x={x} y={y} fill="#E8ECF4" textAnchor="middle" dominantBaseline="central" fontSize={9} fontFamily="JetBrains Mono">
-      {`${(percent * 100).toFixed(0)}%`}
-      {"\n"}
-      {name}
-    </text>
+    <div className="flex flex-col gap-2 justify-center min-w-[120px]">
+      {data.map((d, i) => {
+        const pct = total > 0 ? Math.round((d.value / total) * 100) : 0;
+        return (
+          <div key={d.name} className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <div
+                className="w-2 h-2 rounded-full flex-shrink-0"
+                style={{ background: CHART_COLORS[i % CHART_COLORS.length] }}
+              />
+              <span className="text-[11px] text-[#6B7A99] truncate">{d.name}</span>
+            </div>
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <span
+                className="text-[12px] font-bold font-mono"
+                style={{ color: CHART_COLORS[i % CHART_COLORS.length] }}
+              >
+                {d.value}
+              </span>
+              <span className="text-[9px] text-[#4A5570] font-mono">{pct}%</span>
+            </div>
+          </div>
+        );
+      })}
+      <div className="pt-2 border-t border-white/[0.06]">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] text-[#6B7A99]">Total</span>
+          <span className="text-[13px] font-bold font-mono text-[#E8ECF4]">{total}</span>
+        </div>
+      </div>
+    </div>
   );
 }
 
-// ─── Activity Item ────────────────────────────────────────────────────────────
-const TYPE_CONFIG = {
-  success: { dot: "#00E5A0", icon: "✓" },
-  info: { dot: "#00D4FF", icon: "ℹ" },
-  warning: { dot: "#FFB800", icon: "⚠" },
-  error: { dot: "#FF4757", icon: "✕" },
-};
+// ─── Timeline Item ────────────────────────────────────────────────────────────
+const NOTIF_CFG = {
+  success: { dot: "#00E5A0", bg: "#00E5A018", label: "OK" },
+  info: { dot: "#00D4FF", bg: "#00D4FF18", label: "INF" },
+  warning: { dot: "#FFB800", bg: "#FFB80018", label: "WAR" },
+  error: { dot: "#FF4757", bg: "#FF475718", label: "ERR" },
+} as const;
 
-interface ActivityItemProps {
+type NotifType = keyof typeof NOTIF_CFG;
+
+interface TimelineItemProps {
   title: string;
   message: string;
-  type: keyof typeof TYPE_CONFIG;
+  type: NotifType;
   timestamp: string;
   index: number;
 }
 
-function ActivityItem({ title, message, type, timestamp, index }: ActivityItemProps) {
-  const cfg = TYPE_CONFIG[type] ?? TYPE_CONFIG.info;
+function TimelineItem({ title, message, type, timestamp, index }: TimelineItemProps) {
+  const cfg = NOTIF_CFG[type];
   const d = new Date(timestamp);
   const hhmm = d.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" });
+  const mmdd = d.toLocaleDateString("es", { day: "2-digit", month: "2-digit" });
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: -12 }}
+      initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.3, delay: 0.05 + index * 0.04 }}
-      className="flex items-start gap-3 py-2.5 border-b border-[#1A2744]/40 last:border-0"
+      transition={{ duration: 0.3, delay: 0.05 + index * 0.035, ease: [0.16, 1, 0.3, 1] }}
+      className="flex-shrink-0 w-56 rounded-xl p-3.5 border border-white/[0.05]"
+      style={{ background: "rgba(10,15,31,0.85)" }}
     >
-      <div
-        className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center text-[9px] mt-0.5"
-        style={{ background: `${cfg.dot}18`, border: `1px solid ${cfg.dot}40`, color: cfg.dot }}
-      >
-        {cfg.icon}
+      <div className="flex items-center gap-2 mb-2">
+        <div
+          className="w-5 h-5 rounded flex items-center justify-center text-[8px] font-bold font-mono flex-shrink-0"
+          style={{ background: cfg.bg, color: cfg.dot, border: `1px solid ${cfg.dot}30` }}
+        >
+          {cfg.label}
+        </div>
+        <span className="text-[10px] text-[#4A5570] font-mono ml-auto flex-shrink-0">
+          {mmdd} {hhmm}
+        </span>
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-[12px] font-semibold text-[#E8ECF4] truncate">{title}</p>
-        <p className="text-[11px] text-[#6B7A99] truncate">{message}</p>
-      </div>
-      <span className="text-[10px] text-[#4A5570] font-mono flex-shrink-0 mt-0.5">{hhmm}</span>
+      <p className="text-[12px] font-semibold text-[#E8ECF4] leading-tight mb-0.5 line-clamp-1">
+        {title}
+      </p>
+      <p className="text-[10px] text-[#6B7A99] leading-snug line-clamp-2">{message}</p>
     </motion.div>
   );
 }
 
 // ─── Period Selector ──────────────────────────────────────────────────────────
-const PERIODS: { key: Period; label: string }[] = [
-  { key: "today", label: "Hoy" },
-  { key: "7d", label: "7 días" },
-  { key: "30d", label: "30 días" },
-  { key: "all", label: "Todos" },
-];
+interface PeriodSelectorProps {
+  value: Period;
+  onChange: (p: Period) => void;
+}
 
-function PeriodSelector({ value, onChange }: { value: Period; onChange: (p: Period) => void }) {
+function PeriodSelector({ value, onChange }: PeriodSelectorProps) {
   return (
-    <div className="flex gap-1 p-1 rounded-xl border border-[#1A2744]/60 bg-[#060B1A]/50">
+    <div className="flex gap-0.5 p-1 rounded-xl border border-white/[0.07] bg-[#060B1A]/70">
       {PERIODS.map((p) => (
         <button
           key={p.key}
           onClick={() => onChange(p.key)}
-          className="px-3 py-1 rounded-lg text-[11px] font-mono transition-all"
+          className="relative px-3.5 py-1.5 rounded-lg text-[11px] font-mono transition-all duration-200"
           style={{
-            background: value === p.key ? "rgba(0,212,255,0.12)" : "transparent",
             color: value === p.key ? "#00D4FF" : "#6B7A99",
-            border: value === p.key ? "1px solid rgba(0,212,255,0.2)" : "1px solid transparent",
           }}
         >
-          {p.label}
+          {value === p.key && (
+            <motion.div
+              layoutId="period-pill"
+              className="absolute inset-0 rounded-lg"
+              style={{
+                background: "rgba(0,212,255,0.1)",
+                border: "1px solid rgba(0,212,255,0.2)",
+              }}
+              transition={{ type: "spring", bounce: 0.2, duration: 0.35 }}
+            />
+          )}
+          <span className="relative z-10">{p.label}</span>
         </button>
       ))}
     </div>
   );
 }
 
+// ─── Chart Card Wrapper ───────────────────────────────────────────────────────
+interface ChartCardProps {
+  children: React.ReactNode;
+  delay?: number;
+  className?: string;
+}
+
+function ChartCard({ children, delay = 0, className = "" }: ChartCardProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, delay, ease: [0.16, 1, 0.3, 1] }}
+      className={`rounded-2xl p-5 border border-white/[0.06] ${className}`}
+      style={{
+        background: "linear-gradient(135deg, rgba(10,15,31,0.9) 0%, rgba(6,11,26,0.95) 100%)",
+        boxShadow: "0 0 0 1px rgba(255,255,255,0.03) inset",
+      }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 // ─── Analytics Page ───────────────────────────────────────────────────────────
 export default function Analytics() {
   const { agents, missions, metrics, memory, workflows, notifications } = useAstraeo();
-  const [period, setPeriod] = useState<Period>("today");
+  const [period, setPeriod] = useState<Period>("7d");
 
-  // ── Derived metrics from real store data ──────────────────────────────────
+  // ── Derived scalars ───────────────────────────────────────────────────────
   const totalTokens = useMemo(
     () => agents.reduce((s, a) => s + a.tokensUsed, 0),
     [agents]
   );
+
   const totalTasks = useMemo(
     () => agents.reduce((s, a) => s + a.tasksCompleted, 0),
     [agents]
   );
+
   const avgLatency = useMemo(() => {
     const active = agents.filter((a) => a.avgResponseMs > 0);
     if (active.length === 0) return metrics.apiLatency;
     return Math.round(active.reduce((s, a) => s + a.avgResponseMs, 0) / active.length);
   }, [agents, metrics.apiLatency]);
-  const onlineAgents = useMemo(() => agents.filter((a) => a.status === "online").length, [agents]);
-  const activeMissions = useMemo(
-    () => missions.filter((m) => m.status === "active").length,
-    [missions]
-  );
-  const totalWorkflowRuns = useMemo(
-    () => workflows.reduce((s, w) => s + w.runs, 0),
-    [workflows]
-  );
-  const pinnedMemory = useMemo(() => memory.filter((m) => m.pinned).length, [memory]);
 
-  // ── KPIs ──────────────────────────────────────────────────────────────────
-  const kpis = [
-    {
-      label: "Tokens usados",
-      value: totalTokens > 1000
-        ? `${(totalTokens / 1000).toFixed(1)}k`
-        : totalTokens.toLocaleString(),
-      sub: "acumulado",
-      color: "#00D4FF",
-    },
-    {
-      label: "Requests hoy",
-      value: metrics.requestsToday.toLocaleString(),
-      sub: `éxito ${metrics.successRate}%`,
-      color: "#00E5A0",
-    },
-    {
-      label: "Latencia media",
-      value: avgLatency > 0 ? `${avgLatency}ms` : "—",
-      sub: "última medición",
-      color: "#7B61FF",
-    },
-    {
-      label: "Agentes online",
-      value: `${onlineAgents}/${agents.length}`,
-      sub: `${activeMissions} misiones activas`,
-      color: "#FFB800",
-    },
-  ];
-
-  // ── Mission distribution ──────────────────────────────────────────────────
-  const missionsByStatus = [
-    { name: "Backlog", value: missions.filter((m) => m.status === "backlog").length },
-    { name: "Activas", value: missions.filter((m) => m.status === "active").length },
-    { name: "Revisión", value: missions.filter((m) => m.status === "review").length },
-    { name: "Listas", value: missions.filter((m) => m.status === "done").length },
-  ];
-
-  // ── Agent usage (sorted by tokens) ───────────────────────────────────────
-  const agentUsage = useMemo(
-    () =>
-      [...agents]
-        .sort((a, b) => b.tokensUsed - a.tokensUsed)
-        .map((a) => ({
-          name: a.name.length > 8 ? a.name.slice(0, 8) : a.name,
-          tokens: Math.round(a.tokensUsed / 1000),
-          tasks: a.tasksCompleted,
-          latency: a.avgResponseMs,
-        })),
+  const onlineCount = useMemo(
+    () => agents.filter((a) => a.status === "online").length,
     [agents]
   );
 
-  // ── Latency history from store ────────────────────────────────────────────
-  const latencyData = useMemo(
-    () =>
-      metrics.latencyHistory.map((p) => ({
-        v: Math.round(p.value),
-        t: new Date(p.time).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" }),
-      })),
-    [metrics.latencyHistory]
+  // ── KPIs ──────────────────────────────────────────────────────────────────
+  const kpis: KpiData[] = useMemo(
+    () => [
+      {
+        label: "Total Tareas",
+        value: totalTasks,
+        display: totalTasks.toLocaleString(),
+        sub: `${onlineCount} agentes online`,
+        color: "#00D4FF",
+        unit: "n",
+      },
+      {
+        label: "Tokens Usados",
+        value: totalTokens,
+        display:
+          totalTokens > 999
+            ? `${(totalTokens / 1000).toFixed(1)}k`
+            : totalTokens.toLocaleString(),
+        sub: `${metrics.tokensPerMinute > 0 ? metrics.tokensPerMinute : "—"} tok/min`,
+        color: "#7B61FF",
+        unit: "k",
+      },
+      {
+        label: "Tasa Éxito",
+        value: Math.round(metrics.successRate),
+        display: `${metrics.successRate}%`,
+        sub: `${metrics.requestsToday.toLocaleString()} req hoy`,
+        color: "#00E5A0",
+        unit: "%",
+      },
+      {
+        label: "Latencia Media",
+        value: avgLatency,
+        display: `${avgLatency}ms`,
+        sub: "objetivo < 1000ms",
+        color: "#FFB800",
+        unit: "ms",
+      },
+    ],
+    [totalTasks, onlineCount, totalTokens, metrics, avgLatency]
   );
 
-  const tokensData = useMemo(
+  // ── Chart data ────────────────────────────────────────────────────────────
+  const tokensData: TimelinePoint[] = useMemo(
     () =>
       metrics.tokensHistory.map((p) => ({
         v: Math.round(p.value),
@@ -268,301 +425,354 @@ export default function Analytics() {
     [metrics.tokensHistory]
   );
 
-  // ── Notifications filtered by period ─────────────────────────────────────
+  const latencyData: TimelinePoint[] = useMemo(
+    () =>
+      metrics.latencyHistory.map((p) => ({
+        v: Math.round(p.value),
+        t: new Date(p.time).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" }),
+      })),
+    [metrics.latencyHistory]
+  );
+
+  const agentBars: AgentBar[] = useMemo(
+    () =>
+      [...agents]
+        .filter((a) => a.tokensUsed > 0 || a.tasksCompleted > 0)
+        .sort((a, b) => b.tokensUsed - a.tokensUsed)
+        .slice(0, 7)
+        .map((a) => ({
+          name: a.name.length > 9 ? `${a.name.slice(0, 8)}…` : a.name,
+          tokens: Math.round(a.tokensUsed / 1000),
+          tasks: a.tasksCompleted,
+        })),
+    [agents]
+  );
+
+  const missionPie: MissionPie[] = useMemo(
+    () => [
+      { name: "Backlog", value: missions.filter((m) => m.status === "backlog").length },
+      { name: "Activas", value: missions.filter((m) => m.status === "active").length },
+      { name: "Revisión", value: missions.filter((m) => m.status === "review").length },
+      { name: "Listas", value: missions.filter((m) => m.status === "done").length },
+    ],
+    [missions]
+  );
+
+  // ── Period-filtered notifications ─────────────────────────────────────────
+  const periodMs = useMemo(() => {
+    const days = PERIODS.find((p) => p.key === period)?.days ?? 7;
+    return days * 86_400_000;
+  }, [period]);
+
   const filteredNotifs = useMemo(() => {
     const now = Date.now();
-    const msMap: Record<Period, number> = {
-      today: 86_400_000,
-      "7d": 7 * 86_400_000,
-      "30d": 30 * 86_400_000,
-      all: Infinity,
-    };
-    const cutoff = msMap[period];
     return notifications
-      .filter((n) => now - new Date(n.timestamp).getTime() <= cutoff)
-      .slice(0, 10);
-  }, [notifications, period]);
+      .filter((n) => now - new Date(n.timestamp).getTime() <= periodMs)
+      .slice(0, 15);
+  }, [notifications, periodMs]);
 
-  // ── Summary stats ─────────────────────────────────────────────────────────
-  const summaryStats = [
-    { label: "Total agentes", value: agents.length, color: "#00D4FF" },
-    { label: "Tareas completadas", value: totalTasks, color: "#00E5A0" },
-    { label: "Memorias guardadas", value: memory.length, color: "#7B61FF" },
-    { label: "Memorias fijadas", value: pinnedMemory, color: "#A78BFA" },
-    { label: "Workflows activos", value: workflows.filter((w) => w.active).length, color: "#FF6B9D" },
-    { label: "Total workflow runs", value: totalWorkflowRuns, color: "#FFB800" },
-  ];
+  // ── Period-scoped summary stats ───────────────────────────────────────────
+  const summaryStats = useMemo(
+    () => [
+      { label: "Eficiencia", value: `${metrics.efficiency}%`, color: "#00E5A0" },
+      { label: "Agentes totales", value: agents.length, color: "#00D4FF" },
+      { label: "Memorias", value: memory.length, color: "#7B61FF" },
+      { label: "Workflows activos", value: workflows.filter((w) => w.active).length, color: "#FF6B9D" },
+      {
+        label: "Workflow runs",
+        value: workflows.reduce((s, w) => s + w.runs, 0),
+        color: "#FFB800",
+      },
+    ],
+    [metrics.efficiency, agents.length, memory.length, workflows]
+  );
 
   const lastSync = new Date().toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" });
 
   return (
-    <div className="p-6 space-y-6 overflow-y-auto h-full animate-fade-in">
-      {/* Page header */}
-      <div className="flex items-center justify-between">
+    <div className="p-6 space-y-5 overflow-y-auto h-full animate-fade-in">
+      {/* ── Page header ──────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between gap-4">
         <div>
           <h2 className="text-[15px] font-bold tracking-wide text-[#E8ECF4]">
-            Analytics · Centro de Comando
+            Mission Analytics
           </h2>
           <p className="text-[11px] text-[#6B7A99] font-mono">
-            Métricas en tiempo real del sistema · última sync {lastSync}
+            Real-time Intelligence Dashboard · sync {lastSync}
           </p>
         </div>
         <PeriodSelector value={period} onChange={setPeriod} />
       </div>
 
-      {/* KPI row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* ── KPI row ──────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {kpis.map((k, i) => (
-          <KpiCard key={k.label} {...k} index={i} />
+          <KpiCard key={k.label} kpi={k} index={i} />
         ))}
       </div>
 
-      {/* Charts row 1: tokens + latency */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.97 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className="glass-card rounded-2xl p-5 border border-[#1A2744]/50"
-        >
-          <SectionHeader
-            title="Tokens por minuto"
-            sub={`${metrics.tokensPerMinute > 0 ? metrics.tokensPerMinute : "—"} tok/min live`}
-          />
-          <ResponsiveContainer width="100%" height={160}>
-            <AreaChart data={tokensData}>
-              <defs>
-                <linearGradient id="tokGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#00D4FF" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#00D4FF" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(26,39,68,0.4)" />
-              <XAxis dataKey="t" tick={{ fill: "#6B7A99", fontSize: 9 }} axisLine={false} tickLine={false} interval={4} />
-              <YAxis tick={{ fill: "#6B7A99", fontSize: 9 }} axisLine={false} tickLine={false} width={35} />
-              <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v: unknown) => [`${v} tok/min`]} />
-              <Area
-                type="monotone"
-                dataKey="v"
-                stroke="#00D4FF"
-                strokeWidth={2}
-                fill="url(#tokGrad)"
-                dot={false}
-                name="Tokens/min"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </motion.div>
+      {/* ── Token usage — full-width area chart ──────────────────────────── */}
+      <ChartCard delay={0.12}>
+        <SectionHeader
+          title="Token Usage"
+          sub={`${metrics.tokensPerMinute > 0 ? metrics.tokensPerMinute : "—"} tok/min · live stream`}
+          accent="#00D4FF"
+        />
+        <ResponsiveContainer width="100%" height={148}>
+          <AreaChart data={tokensData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+            <defs>
+              <linearGradient id="tokGradPremium" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#00D4FF" stopOpacity={0.22} />
+                <stop offset="100%" stopColor="#00D4FF" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="rgba(255,255,255,0.05)"
+              vertical={false}
+            />
+            <XAxis
+              dataKey="t"
+              tick={{ fill: "#4A5570", fontSize: 9, fontFamily: "JetBrains Mono" }}
+              axisLine={false}
+              tickLine={false}
+              interval={4}
+            />
+            <YAxis
+              tick={{ fill: "#4A5570", fontSize: 9, fontFamily: "JetBrains Mono" }}
+              axisLine={false}
+              tickLine={false}
+              width={38}
+            />
+            <Tooltip content={makeGlassTooltip(" tok/min")} />
+            <Area
+              type="monotone"
+              dataKey="v"
+              stroke="#00D4FF"
+              strokeWidth={1.5}
+              fill="url(#tokGradPremium)"
+              dot={false}
+              name="Tokens/min"
+              activeDot={{ r: 4, fill: "#00D4FF", stroke: "rgba(0,212,255,0.3)", strokeWidth: 4 }}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </ChartCard>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.97 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.4, delay: 0.18 }}
-          className="glass-card rounded-2xl p-5 border border-[#1A2744]/50"
-        >
+      {/* ── Agent performance + Task distribution ────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        {/* Agent bar chart */}
+        <ChartCard delay={0.18}>
           <SectionHeader
-            title="Latencia API"
-            sub={`${metrics.apiLatency > 0 ? `${metrics.apiLatency}ms` : "—"} actual · objetivo &lt;1000ms`}
+            title="Agent Performance"
+            sub="tokens (k) por agente · top 7"
+            accent="#7B61FF"
           />
-          <ResponsiveContainer width="100%" height={160}>
-            <AreaChart data={latencyData}>
-              <defs>
-                <linearGradient id="latGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#7B61FF" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#7B61FF" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(26,39,68,0.4)" />
-              <XAxis dataKey="t" tick={{ fill: "#6B7A99", fontSize: 9 }} axisLine={false} tickLine={false} interval={4} />
-              <YAxis tick={{ fill: "#6B7A99", fontSize: 9 }} axisLine={false} tickLine={false} width={40} />
-              <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v: unknown) => [`${v}ms`]} />
-              <Area
-                type="monotone"
-                dataKey="v"
-                stroke="#7B61FF"
-                strokeWidth={2}
-                fill="url(#latGrad)"
-                dot={false}
-                name="Latencia"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </motion.div>
-      </div>
-
-      {/* Charts row 2: agent bar + missions pie */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.97 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.4, delay: 0.24 }}
-          className="glass-card rounded-2xl p-5 border border-[#1A2744]/50"
-        >
-          <SectionHeader title="Uso por agente" sub="miles de tokens usados" />
-          {agentUsage.length === 0 ? (
-            <p className="text-[11px] text-[#6B7A99] text-center py-8">Sin datos de agentes</p>
+          {agentBars.length === 0 ? (
+            <div className="flex items-center justify-center h-32 text-[12px] text-[#4A5570] font-mono">
+              Sin datos de agentes
+            </div>
           ) : (
-            <ResponsiveContainer width="100%" height={Math.max(120, agentUsage.length * 36)}>
-              <BarChart data={agentUsage} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(26,39,68,0.4)" horizontal={false} />
+            <ResponsiveContainer width="100%" height={Math.max(120, agentBars.length * 38)}>
+              <BarChart
+                data={agentBars}
+                layout="vertical"
+                margin={{ top: 0, right: 8, bottom: 0, left: 0 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="rgba(255,255,255,0.05)"
+                  horizontal={false}
+                />
                 <XAxis
                   type="number"
-                  tick={{ fill: "#6B7A99", fontSize: 9 }}
+                  tick={{ fill: "#4A5570", fontSize: 9, fontFamily: "JetBrains Mono" }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
                   type="category"
                   dataKey="name"
-                  tick={{ fill: "#C8D0E0", fontSize: 10 }}
+                  tick={{ fill: "#C8D0E0", fontSize: 10, fontFamily: "JetBrains Mono" }}
                   axisLine={false}
                   tickLine={false}
-                  width={60}
+                  width={64}
                 />
                 <Tooltip
-                  contentStyle={TOOLTIP_STYLE}
+                  contentStyle={GLASS_TOOLTIP}
                   formatter={(v: unknown) => [`${v}k tokens`]}
+                  cursor={{ fill: "rgba(255,255,255,0.03)" }}
                 />
-                <Bar dataKey="tokens" radius={[0, 4, 4, 0]} name="Tokens (k)">
-                  {agentUsage.map((_, i) => (
-                    <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                <Bar dataKey="tokens" radius={[0, 4, 4, 0]} name="Tokens (k)" maxBarSize={18}>
+                  {agentBars.map((_, i) => (
+                    <Cell
+                      key={`agent-cell-${i}`}
+                      fill={CHART_COLORS[i % CHART_COLORS.length]}
+                      fillOpacity={0.85}
+                    />
                   ))}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
           )}
-        </motion.div>
+        </ChartCard>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.97 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.4, delay: 0.3 }}
-          className="glass-card rounded-2xl p-5 border border-[#1A2744]/50"
-        >
-          <SectionHeader title="Distribución de misiones" sub="por estado actual" />
-          <div className="flex items-center gap-6">
-            <ResponsiveContainer width={150} height={150}>
-              <PieChart>
-                <Pie
-                  data={missionsByStatus}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={32}
-                  outerRadius={60}
-                  dataKey="value"
-                  paddingAngle={3}
-                  labelLine={false}
-                  label={(props) => <CustomPieLabel {...props} />}
-                >
-                  {missionsByStatus.map((_, i) => (
-                    <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={TOOLTIP_STYLE} />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="flex-1 space-y-2">
-              {missionsByStatus.map((d, i) => (
-                <div key={d.name} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-2 h-2 rounded-full"
-                      style={{ background: CHART_COLORS[i % CHART_COLORS.length] }}
-                    />
-                    <span className="text-[11px] text-[#6B7A99]">{d.name}</span>
-                  </div>
-                  <span
-                    className="text-[12px] font-bold font-mono"
-                    style={{ color: CHART_COLORS[i % CHART_COLORS.length] }}
+        {/* Mission distribution pie */}
+        <ChartCard delay={0.22}>
+          <SectionHeader
+            title="Task Distribution"
+            sub="misiones por estado · actual"
+            accent="#00E5A0"
+          />
+          <div className="flex items-center gap-4">
+            <div className="flex-shrink-0">
+              <ResponsiveContainer width={148} height={148}>
+                <PieChart>
+                  <defs>
+                    {CHART_COLORS.map((c, i) => (
+                      <radialGradient key={`pie-grad-${i}`} id={`pieGrad${i}`} cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stopColor={c} stopOpacity={1} />
+                        <stop offset="100%" stopColor={c} stopOpacity={0.7} />
+                      </radialGradient>
+                    ))}
+                  </defs>
+                  <Pie
+                    data={missionPie}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={38}
+                    outerRadius={64}
+                    dataKey="value"
+                    paddingAngle={3}
+                    labelLine={false}
+                    strokeWidth={0}
                   >
-                    {d.value}
-                  </span>
-                </div>
-              ))}
-              <div className="pt-2 border-t border-[#1A2744]/40">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-[#6B7A99]">Total</span>
-                  <span className="text-[12px] font-bold font-mono text-[#E8ECF4]">
-                    {missions.length}
-                  </span>
-                </div>
+                    {missionPie.map((_, i) => (
+                      <Cell
+                        key={`pie-cell-${i}`}
+                        fill={`url(#pieGrad${i % CHART_COLORS.length})`}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={GLASS_TOOLTIP} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <PieLegend data={missionPie} total={missions.length} />
+          </div>
+        </ChartCard>
+      </div>
+
+      {/* ── API Latency area + Summary stats ─────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        {/* Latency area — spans 2 cols */}
+        <ChartCard delay={0.26} className="lg:col-span-2">
+          <SectionHeader
+            title="API Latency"
+            sub={`${metrics.apiLatency > 0 ? `${metrics.apiLatency}ms` : "—"} actual · objetivo < 1000ms`}
+            accent="#7B61FF"
+          />
+          <ResponsiveContainer width="100%" height={120}>
+            <AreaChart data={latencyData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+              <defs>
+                <linearGradient id="latGradPremium" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#7B61FF" stopOpacity={0.2} />
+                  <stop offset="100%" stopColor="#7B61FF" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="rgba(255,255,255,0.05)"
+                vertical={false}
+              />
+              <XAxis
+                dataKey="t"
+                tick={{ fill: "#4A5570", fontSize: 9, fontFamily: "JetBrains Mono" }}
+                axisLine={false}
+                tickLine={false}
+                interval={4}
+              />
+              <YAxis
+                tick={{ fill: "#4A5570", fontSize: 9, fontFamily: "JetBrains Mono" }}
+                axisLine={false}
+                tickLine={false}
+                width={42}
+              />
+              <Tooltip content={makeGlassTooltip("ms")} />
+              <Area
+                type="monotone"
+                dataKey="v"
+                stroke="#7B61FF"
+                strokeWidth={1.5}
+                fill="url(#latGradPremium)"
+                dot={false}
+                name="Latencia"
+                activeDot={{ r: 4, fill: "#7B61FF", stroke: "rgba(123,97,255,0.3)", strokeWidth: 4 }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        {/* Summary stats */}
+        <ChartCard delay={0.3}>
+          <SectionHeader title="System Summary" accent="#FFB800" />
+          <div className="space-y-2.5">
+            {summaryStats.map((s) => (
+              <div key={s.label} className="flex items-center justify-between gap-2">
+                <span className="text-[11px] text-[#6B7A99]">{s.label}</span>
+                <span
+                  className="text-[13px] font-bold font-mono tabular-nums"
+                  style={{ color: s.color }}
+                >
+                  {s.value}
+                </span>
+              </div>
+            ))}
+            <div className="pt-2.5 border-t border-white/[0.06] space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-[#6B7A99]">Success rate</span>
+                <span className="text-[13px] font-bold font-mono text-[#00D4FF]">
+                  {metrics.successRate}%
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-[#6B7A99]">Req hoy</span>
+                <span className="text-[13px] font-bold font-mono text-[#E8ECF4]">
+                  {metrics.requestsToday.toLocaleString()}
+                </span>
               </div>
             </div>
           </div>
-        </motion.div>
+        </ChartCard>
       </div>
 
-      {/* Summary stats + Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Summary */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, delay: 0.35 }}
-          className="glass-card rounded-2xl p-5 border border-[#1A2744]/50 space-y-3"
-        >
-          <SectionHeader title="Resumen del sistema" />
-          {summaryStats.map((s) => (
-            <div key={s.label} className="flex items-center justify-between">
-              <span className="text-[12px] text-[#6B7A99]">{s.label}</span>
-              <span
-                className="text-[13px] font-bold font-mono"
-                style={{ color: s.color }}
-              >
-                {s.value}
-              </span>
-            </div>
-          ))}
-          <div className="pt-2 border-t border-[#1A2744]/40 space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="text-[12px] text-[#6B7A99]">Eficiencia</span>
-              <span className="text-[13px] font-bold font-mono text-[#00E5A0]">
-                {metrics.efficiency}%
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[12px] text-[#6B7A99]">Tasa éxito</span>
-              <span className="text-[13px] font-bold font-mono text-[#00D4FF]">
-                {metrics.successRate}%
-              </span>
-            </div>
+      {/* ── Activity Timeline — horizontal scroll ─────────────────────────── */}
+      <ChartCard delay={0.34}>
+        <SectionHeader
+          title="Activity Timeline"
+          sub={`Últimos ${filteredNotifs.length} eventos · periodo ${PERIODS.find((p) => p.key === period)?.label}`}
+          accent="#FF6B9D"
+        />
+        {filteredNotifs.length === 0 ? (
+          <div className="flex items-center justify-center py-8 gap-2 opacity-40">
+            <span className="text-2xl">◌</span>
+            <p className="text-[12px] text-[#6B7A99] font-mono">Sin eventos en este periodo</p>
           </div>
-        </motion.div>
-
-        {/* Activity timeline */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, delay: 0.4 }}
-          className="glass-card rounded-2xl p-5 border border-[#1A2744]/50 lg:col-span-2"
-        >
-          <SectionHeader
-            title="Actividad reciente"
-            sub={`Últimos ${filteredNotifs.length} eventos · periodo: ${PERIODS.find((p) => p.key === period)?.label}`}
-          />
-          {filteredNotifs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 gap-2 opacity-50">
-              <span className="text-3xl">◌</span>
-              <p className="text-[12px] text-[#6B7A99]">
-                Sin eventos en este periodo
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-y-auto max-h-64">
-              {filteredNotifs.map((n, i) => (
-                <ActivityItem
-                  key={n.id}
-                  title={n.title}
-                  message={n.message}
-                  type={n.type}
-                  timestamp={n.timestamp}
-                  index={i}
-                />
-              ))}
-            </div>
-          )}
-        </motion.div>
-      </div>
+        ) : (
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
+            {filteredNotifs.map((n, i) => (
+              <TimelineItem
+                key={n.id}
+                title={n.title}
+                message={n.message}
+                type={n.type}
+                timestamp={n.timestamp}
+                index={i}
+              />
+            ))}
+          </div>
+        )}
+      </ChartCard>
     </div>
   );
 }

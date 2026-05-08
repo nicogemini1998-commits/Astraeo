@@ -1,13 +1,22 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAstraeo } from "@/store/astraeo";
-import type { ChatMessage } from "@/lib/types";
+import type { ChatMessage, Agent } from "@/lib/types";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 
-// ─── Copy Button ─────────────────────────────────────────────────────────────
-function CopyButton({ text, style }: { text: string; style?: React.CSSProperties }) {
+// ─── Design tokens ────────────────────────────────────────────────────────────
+const C = {
+  cyan: "#00D4FF", purple: "#7B61FF", emerald: "#00E5A0",
+  amber: "#FFB800", coral: "#FF6B9D", red: "#FF4757",
+  bg: "#050810", surface: "#0D1120", surfaceHover: "#111828",
+  border: "rgba(255,255,255,0.06)", text: "#E8ECF8", muted: "#3A4560",
+} as const;
+
+// ─── CopyButton ───────────────────────────────────────────────────────────────
+function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
   const copy = () => {
     navigator.clipboard.writeText(text).then(() => {
@@ -19,16 +28,17 @@ function CopyButton({ text, style }: { text: string; style?: React.CSSProperties
     <button
       onClick={copy}
       style={{
-        background: "rgba(0,212,255,0.1)",
-        border: "1px solid rgba(0,212,255,0.2)",
-        color: copied ? "#00E5A0" : "#6B7A99",
-        borderRadius: 4,
+        background: copied ? "rgba(0,229,160,0.12)" : "rgba(0,212,255,0.08)",
+        border: `1px solid ${copied ? "rgba(0,229,160,0.25)" : "rgba(0,212,255,0.18)"}`,
+        color: copied ? C.emerald : C.muted,
+        borderRadius: 5,
         padding: "2px 8px",
-        fontSize: 10,
+        fontSize: 9,
         cursor: "pointer",
-        fontFamily: "JetBrains Mono, monospace",
-        transition: "all 0.2s",
-        ...style,
+        fontFamily: "'JetBrains Mono', monospace",
+        transition: "all 0.18s",
+        letterSpacing: "0.04em",
+        fontWeight: 600,
       }}
     >
       {copied ? "✓ copiado" : "copiar"}
@@ -36,11 +46,16 @@ function CopyButton({ text, style }: { text: string; style?: React.CSSProperties
   );
 }
 
-// ─── Markdown Renderer ────────────────────────────────────────────────────────
-function MessageContent({ content, role }: { content: string; role: string }) {
+// ─── MessageContent ───────────────────────────────────────────────────────────
+interface MessageContentProps {
+  content: string;
+  role: string;
+}
+
+function MessageContent({ content, role }: MessageContentProps) {
   if (role === "user") {
     return (
-      <p style={{ whiteSpace: "pre-wrap", margin: 0, fontSize: 13, lineHeight: 1.6 }}>
+      <p style={{ whiteSpace: "pre-wrap", margin: 0, fontSize: 13, lineHeight: 1.65 }}>
         {content}
       </p>
     );
@@ -52,22 +67,24 @@ function MessageContent({ content, role }: { content: string; role: string }) {
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeHighlight]}
         components={{
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          code({ inline, className, children, ...props }: any) {
-            const match = /language-(\w+)/.exec(className || "");
-            if (!inline && match) {
+          code(props) {
+            const { children, className } = props;
+            const match = /language-(\w+)/.exec(className ?? "");
+            const isBlock = match !== null;
+            if (isBlock) {
               return (
                 <div style={{ position: "relative", margin: "8px 0" }}>
                   <div
                     style={{
                       position: "absolute",
-                      right: 72,
+                      right: 76,
                       top: 8,
                       zIndex: 1,
                       fontSize: 9,
-                      color: "#6B7A99",
-                      fontFamily: "JetBrains Mono, monospace",
-                      letterSpacing: "0.05em",
+                      color: C.muted,
+                      fontFamily: "'JetBrains Mono', monospace",
+                      letterSpacing: "0.07em",
+                      fontWeight: 700,
                     }}
                   >
                     {match[1].toUpperCase()}
@@ -79,17 +96,16 @@ function MessageContent({ content, role }: { content: string; role: string }) {
                     className={className}
                     style={{
                       display: "block",
-                      background: "rgba(10,15,31,0.85)",
-                      border: "1px solid rgba(26,39,68,0.8)",
-                      borderRadius: 8,
+                      background: "rgba(5,8,16,0.9)",
+                      border: `1px solid rgba(255,255,255,0.07)`,
+                      borderRadius: 10,
                       padding: "12px 16px",
-                      paddingTop: 32,
-                      fontSize: "0.82em",
-                      fontFamily: "JetBrains Mono, monospace",
+                      paddingTop: 34,
+                      fontSize: "0.8em",
+                      fontFamily: "'JetBrains Mono', monospace",
                       overflowX: "auto",
-                      lineHeight: 1.6,
+                      lineHeight: 1.65,
                     }}
-                    {...props}
                   >
                     {children}
                   </code>
@@ -102,145 +118,89 @@ function MessageContent({ content, role }: { content: string; role: string }) {
                   background: "rgba(0,212,255,0.08)",
                   padding: "2px 6px",
                   borderRadius: 4,
-                  fontFamily: "JetBrains Mono, monospace",
-                  fontSize: "0.88em",
-                  color: "#00D4FF",
-                  border: "1px solid rgba(0,212,255,0.15)",
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: "0.87em",
+                  color: C.cyan,
+                  border: `1px solid rgba(0,212,255,0.15)`,
                 }}
-                {...props}
               >
                 {children}
               </code>
             );
           },
-          p({ children }: { children?: React.ReactNode }) {
-            return (
-              <p style={{ margin: "0 0 8px 0", lineHeight: 1.65, fontSize: 13 }}>{children}</p>
-            );
+          p({ children }) {
+            return <p style={{ margin: "0 0 8px 0", lineHeight: 1.65, fontSize: 13 }}>{children}</p>;
           },
-          h1({ children }: { children?: React.ReactNode }) {
+          h1({ children }) {
             return (
-              <h1
-                style={{
-                  fontSize: "1.15em",
-                  fontWeight: 700,
-                  color: "#00D4FF",
-                  margin: "14px 0 6px",
-                  paddingBottom: 4,
-                  borderBottom: "1px solid rgba(0,212,255,0.15)",
-                }}
-              >
+              <h1 style={{ fontSize: "1.15em", fontWeight: 700, color: C.cyan, margin: "14px 0 6px", paddingBottom: 4, borderBottom: `1px solid rgba(0,212,255,0.15)` }}>
                 {children}
               </h1>
             );
           },
-          h2({ children }: { children?: React.ReactNode }) {
+          h2({ children }) {
             return (
-              <h2
-                style={{ fontSize: "1.05em", fontWeight: 600, color: "#7B61FF", margin: "10px 0 4px" }}
-              >
+              <h2 style={{ fontSize: "1.05em", fontWeight: 600, color: C.purple, margin: "10px 0 4px" }}>
                 {children}
               </h2>
             );
           },
-          h3({ children }: { children?: React.ReactNode }) {
+          h3({ children }) {
             return (
-              <h3
-                style={{ fontSize: "0.95em", fontWeight: 600, color: "#E8ECF4", margin: "8px 0 4px" }}
-              >
+              <h3 style={{ fontSize: "0.95em", fontWeight: 600, color: C.text, margin: "8px 0 4px" }}>
                 {children}
               </h3>
             );
           },
-          ul({ children }: { children?: React.ReactNode }) {
-            return (
-              <ul style={{ margin: "4px 0 8px 0", paddingLeft: 20, listStyleType: "disc" }}>
-                {children}
-              </ul>
-            );
+          ul({ children }) {
+            return <ul style={{ margin: "4px 0 8px 0", paddingLeft: 20, listStyleType: "disc" }}>{children}</ul>;
           },
-          ol({ children }: { children?: React.ReactNode }) {
-            return (
-              <ol style={{ margin: "4px 0 8px 0", paddingLeft: 20, listStyleType: "decimal" }}>
-                {children}
-              </ol>
-            );
+          ol({ children }) {
+            return <ol style={{ margin: "4px 0 8px 0", paddingLeft: 20, listStyleType: "decimal" }}>{children}</ol>;
           },
-          li({ children }: { children?: React.ReactNode }) {
+          li({ children }) {
             return <li style={{ margin: "3px 0", lineHeight: 1.55 }}>{children}</li>;
           },
-          blockquote({ children }: { children?: React.ReactNode }) {
+          blockquote({ children }) {
             return (
-              <blockquote
-                style={{
-                  borderLeft: "3px solid #7B61FF",
-                  paddingLeft: 12,
-                  margin: "8px 0",
-                  color: "#8A9BBF",
-                  fontStyle: "italic",
-                }}
-              >
+              <blockquote style={{ borderLeft: `3px solid ${C.purple}`, paddingLeft: 12, margin: "8px 0", color: "#8A9BBF", fontStyle: "italic" }}>
                 {children}
               </blockquote>
             );
           },
-          strong({ children }: { children?: React.ReactNode }) {
-            return <strong style={{ color: "#E8ECF4", fontWeight: 700 }}>{children}</strong>;
+          strong({ children }) {
+            return <strong style={{ color: C.text, fontWeight: 700 }}>{children}</strong>;
           },
-          em({ children }: { children?: React.ReactNode }) {
+          em({ children }) {
             return <em style={{ color: "#A78BFA" }}>{children}</em>;
           },
           hr() {
-            return (
-              <hr style={{ border: "none", borderTop: "1px solid #1A2744", margin: "12px 0" }} />
-            );
+            return <hr style={{ border: "none", borderTop: `1px solid rgba(255,255,255,0.07)`, margin: "12px 0" }} />;
           },
-          table({ children }: { children?: React.ReactNode }) {
+          table({ children }) {
             return (
               <div style={{ overflowX: "auto", margin: "8px 0" }}>
-                <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.85em" }}>
-                  {children}
-                </table>
+                <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.85em" }}>{children}</table>
               </div>
             );
           },
-          th({ children }: { children?: React.ReactNode }) {
+          th({ children }) {
             return (
-              <th
-                style={{
-                  border: "1px solid #1A2744",
-                  padding: "6px 10px",
-                  background: "#0D1B3E",
-                  textAlign: "left",
-                  color: "#00D4FF",
-                  fontWeight: 600,
-                }}
-              >
+              <th style={{ border: `1px solid rgba(255,255,255,0.08)`, padding: "6px 10px", background: "rgba(0,212,255,0.06)", textAlign: "left", color: C.cyan, fontWeight: 600 }}>
                 {children}
               </th>
             );
           },
-          td({ children }: { children?: React.ReactNode }) {
+          td({ children }) {
             return (
-              <td
-                style={{
-                  border: "1px solid #1A2744",
-                  padding: "6px 10px",
-                  color: "#C8D0E0",
-                }}
-              >
+              <td style={{ border: `1px solid rgba(255,255,255,0.07)`, padding: "6px 10px", color: "#C8D0E0" }}>
                 {children}
               </td>
             );
           },
-          a({ href, children }: { href?: string; children?: React.ReactNode }) {
+          a({ href, children }) {
             return (
-              <a
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: "#00D4FF", textDecoration: "underline", textUnderlineOffset: 3 }}
-              >
+              <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: C.cyan, textDecoration: "underline", textUnderlineOffset: 3 }}>
                 {children}
               </a>
             );
@@ -253,42 +213,32 @@ function MessageContent({ content, role }: { content: string; role: string }) {
   );
 }
 
-// ─── Timestamp ────────────────────────────────────────────────────────────────
-function MessageTimestamp({ ts }: { ts: string }) {
-  const d = new Date(ts);
-  const hhmm = d.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" });
-  const full = d.toLocaleString("es", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
+// ─── MessageBubble ─────────────────────────────────────────────────────────
+interface MessageBubbleProps {
+  msg: ChatMessage;
+  agentColor: string;
+  agentIcon: string;
+  agentName: string;
+}
+
+function MessageBubble({ msg, agentColor, agentIcon, agentName }: MessageBubbleProps) {
+  const [hovered, setHovered] = useState(false);
+
+  const time = new Date(msg.timestamp).toLocaleTimeString("es", {
     hour: "2-digit",
     minute: "2-digit",
   });
-  return (
-    <span
-      title={full}
-      style={{ fontSize: 9, color: "#4A5570", fontFamily: "JetBrains Mono, monospace", cursor: "default" }}
-    >
-      {hhmm}
-    </span>
-  );
-}
-
-// ─── Message Bubble ───────────────────────────────────────────────────────────
-function MessageBubble({
-  msg,
-  agents,
-}: {
-  msg: ChatMessage;
-  agents: ReturnType<typeof useAstraeo.getState>["agents"];
-}) {
-  const [hovered, setHovered] = useState(false);
-  const agent = msg.agentId ? agents.find((a) => a.id === msg.agentId) : null;
 
   if (msg.role === "system") {
     return (
       <div className="flex justify-center">
-        <div className="text-[11px] text-[#6B7A99] px-4 py-2 rounded-full border border-[#1A2744]/60 border-dashed">
+        <div
+          className="text-[11px] px-4 py-2 rounded-full"
+          style={{
+            color: C.muted,
+            border: `1px dashed rgba(255,255,255,0.08)`,
+          }}
+        >
           {msg.content}
         </div>
       </div>
@@ -297,110 +247,265 @@ function MessageBubble({
 
   if (msg.role === "user") {
     return (
-      <div className="flex justify-end gap-2 items-end">
-        <div className="flex flex-col items-end gap-1">
+      <motion.div
+        initial={{ opacity: 0, x: 16 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="flex justify-end items-end gap-2"
+      >
+        <div className="flex flex-col items-end gap-1 max-w-[72%]">
           <div
-            className="max-w-[72%] px-4 py-3 rounded-2xl rounded-br-sm text-[13px] leading-relaxed text-white"
-            style={{ background: "linear-gradient(135deg, #7B61FF, #00D4FF)" }}
+            className="px-4 py-3 rounded-2xl rounded-br-sm text-[13px] leading-relaxed text-white"
+            style={{ background: `linear-gradient(135deg, ${agentColor}cc, ${agentColor}66)` }}
           >
             <MessageContent content={msg.content} role="user" />
           </div>
-          <div className="flex items-center gap-2 mr-1">
-            {msg.tokens && (
-              <span className="text-[9px] text-[#4A5570] font-mono">{msg.tokens} tok</span>
+          <div className="flex items-center gap-2 mr-0.5">
+            {msg.tokens != null && msg.tokens > 0 && (
+              <span className="text-[9px] font-mono" style={{ color: `${C.muted}80` }}>
+                {msg.tokens} tok
+              </span>
             )}
-            <MessageTimestamp ts={msg.timestamp} />
+            <span className="text-[9px] font-mono" style={{ color: C.muted }}>{time}</span>
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
-  // agent message
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, x: -16 }}
+      animate={{ opacity: 1, x: 0 }}
       className="flex gap-3"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {agent && (
+      <div
+        className="w-8 h-8 rounded-xl flex items-center justify-center text-sm flex-shrink-0 mt-1"
+        style={{
+          background: `${agentColor}12`,
+          border: `1px solid ${agentColor}30`,
+        }}
+      >
+        {agentIcon}
+      </div>
+      <div className="flex-1 min-w-0 max-w-[78%]">
+        <p className="text-[10px] mb-1.5 ml-0.5 font-semibold tracking-wider uppercase" style={{ color: agentColor, fontSize: 9 }}>
+          {agentName}
+        </p>
         <div
-          className="w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0 mt-1"
-          style={{ background: `${agent.color}15`, border: `1px solid ${agent.color}30` }}
+          className="relative px-4 py-3 rounded-2xl rounded-tl-sm"
+          style={{
+            background: C.surface,
+            border: `1px solid rgba(255,255,255,0.06)`,
+            color: "#C8D0E0",
+          }}
+        >
+          <AnimatePresence>
+            {hovered && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                style={{ position: "absolute", top: 8, right: 10, zIndex: 10 }}
+              >
+                <CopyButton text={msg.content} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <MessageContent content={msg.content} role="agent" />
+        </div>
+        <div className="flex items-center gap-2 ml-0.5 mt-1">
+          {msg.tokens != null && msg.tokens > 0 && (
+            <span className="text-[9px] font-mono" style={{ color: `${C.muted}80` }}>
+              {msg.tokens} tok
+            </span>
+          )}
+          <span className="text-[9px] font-mono" style={{ color: C.muted }}>{time}</span>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// ─── TypingIndicator ──────────────────────────────────────────────────────────
+function TypingIndicator({ agentIcon, agentColor }: { agentIcon: string; agentColor: string }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -16 }}
+      animate={{ opacity: 1, x: 0 }}
+      className="flex gap-3"
+    >
+      <div
+        className="w-8 h-8 rounded-xl flex items-center justify-center text-sm flex-shrink-0"
+        style={{ background: `${agentColor}12`, border: `1px solid ${agentColor}30` }}
+      >
+        {agentIcon}
+      </div>
+      <div
+        className="px-4 py-3 rounded-2xl rounded-tl-sm"
+        style={{ background: C.surface, border: `1px solid rgba(255,255,255,0.06)` }}
+      >
+        <div className="flex gap-1.5 items-center" style={{ height: 18 }}>
+          {[0, 0.2, 0.4].map((delay, i) => (
+            <motion.div
+              key={i}
+              className="w-1.5 h-1.5 rounded-full"
+              style={{ background: agentColor }}
+              animate={{ scale: [0.6, 1, 0.6], opacity: [0.4, 1, 0.4] }}
+              transition={{ duration: 1.2, repeat: Infinity, delay, ease: "easeInOut" }}
+            />
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// ─── EmptyConversation ────────────────────────────────────────────────────────
+interface EmptyConversationProps {
+  agent: Agent;
+}
+
+function EmptyConversation({ agent }: EmptyConversationProps) {
+  return (
+    <div className="flex flex-col items-center justify-center h-full gap-5 text-center px-8">
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: "spring", stiffness: 200, damping: 20 }}
+        className="relative"
+      >
+        <div
+          className="w-20 h-20 rounded-2xl flex items-center justify-center text-4xl"
+          style={{
+            background: `${agent.color}10`,
+            border: `1px solid ${agent.color}30`,
+            boxShadow: `0 0 40px ${agent.color}18`,
+          }}
         >
           {agent.icon}
         </div>
-      )}
-      <div className="max-w-[78%] min-w-0">
-        {agent && (
-          <p className="text-[10px] text-[#6B7A99] mb-1 ml-1 font-semibold tracking-wide">
-            {agent.name}
-          </p>
-        )}
         <div
-          className="glass-card px-4 py-3 rounded-2xl rounded-tl-sm border border-[#1A2744]/60 relative"
-          style={{ color: "#C8D0E0" }}
-        >
-          {hovered && (
-            <div style={{ position: "absolute", top: 8, right: 10, zIndex: 10 }}>
-              <CopyButton text={msg.content} />
-            </div>
-          )}
-          <MessageContent content={msg.content} role="agent" />
-        </div>
-        <div className="flex items-center gap-2 ml-1 mt-1">
-          {msg.tokens && (
-            <span className="text-[9px] text-[#4A5570] font-mono">{msg.tokens} tok</span>
-          )}
-          <MessageTimestamp ts={msg.timestamp} />
-        </div>
-      </div>
+          className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2"
+          style={{
+            background: agent.status === "online" ? C.emerald : C.muted,
+            borderColor: C.bg,
+          }}
+        />
+      </motion.div>
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.12 }}
+      >
+        <p className="text-[16px] font-bold mb-1" style={{ color: C.text }}>{agent.name}</p>
+        <p className="text-[13px] mb-1" style={{ color: C.muted }}>{agent.role}</p>
+        <p className="text-[11px] font-mono" style={{ color: `${C.muted}80` }}>
+          Inicia una conversación con {agent.name}
+        </p>
+      </motion.div>
     </div>
   );
 }
 
-// ─── Empty State ──────────────────────────────────────────────────────────────
+// ─── EmptyState (no session selected) ─────────────────────────────────────────
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center h-full gap-6 px-8 text-center">
+    <div className="flex flex-col items-center justify-center h-full gap-5 px-8 text-center">
       <div
         style={{
-          width: 72,
-          height: 72,
-          borderRadius: 20,
+          width: 64,
+          height: 64,
+          borderRadius: 18,
           background: "rgba(0,212,255,0.05)",
-          border: "1px solid rgba(0,212,255,0.12)",
+          border: `1px solid rgba(0,212,255,0.1)`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: 32,
+          fontSize: 28,
         }}
       >
         ◎
       </div>
       <div>
-        <p className="text-[15px] font-semibold text-[#E8ECF4] mb-2">Sin conversaciones</p>
-        <p className="text-[12px] text-[#6B7A99] leading-relaxed max-w-xs">
-          Selecciona un agente y crea una nueva sesión para comenzar a conversar con el equipo de IA.
+        <p className="text-[15px] font-semibold mb-1.5" style={{ color: C.text }}>Sin conversaciones</p>
+        <p className="text-[12px] leading-relaxed max-w-xs" style={{ color: C.muted }}>
+          Selecciona un agente y crea una nueva sesión para comenzar.
         </p>
-      </div>
-      <div className="grid grid-cols-1 gap-2 w-full max-w-xs">
-        {["Analiza datos de ventas", "Redacta un email de seguimiento", "Planifica una campaña"].map(
-          (hint) => (
-            <div
-              key={hint}
-              className="px-3 py-2 rounded-lg border border-[#1A2744]/60 text-[11px] text-[#6B7A99] hover:text-[#E8ECF4] hover:border-[#00D4FF]/20 transition-all cursor-default"
-            >
-              {hint}
-            </div>
-          )
-        )}
       </div>
     </div>
   );
 }
 
-// ─── Main Chat Page ───────────────────────────────────────────────────────────
+// ─── Status dot style ─────────────────────────────────────────────────────────
+function statusColor(status: string): string {
+  const map: Record<string, string> = {
+    online: C.emerald,
+    busy: C.amber,
+    offline: C.muted,
+    error: C.red,
+  };
+  return map[status] ?? C.muted;
+}
+
+// ─── SessionItem ──────────────────────────────────────────────────────────────
+interface SessionItemProps {
+  sessionId: string;
+  title: string;
+  msgCount: number;
+  agentIcon: string;
+  agentColor: string;
+  isActive: boolean;
+  onClick: () => void;
+  onDelete: (e: React.MouseEvent) => void;
+}
+
+function SessionItem({ sessionId: _sessionId, title, msgCount, agentIcon, agentColor, isActive, onClick, onDelete }: SessionItemProps) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full text-left p-2.5 rounded-xl transition-all group relative"
+      style={{
+        background: isActive ? `${agentColor}0c` : "transparent",
+        border: `1px solid ${isActive ? agentColor + "28" : "transparent"}`,
+      }}
+      onMouseEnter={(e) => {
+        if (!isActive) {
+          (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.03)";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!isActive) {
+          (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+        }
+      }}
+    >
+      <div className="flex items-center gap-2">
+        <span className="text-sm flex-shrink-0">{agentIcon}</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-[11px] font-semibold truncate" style={{ color: isActive ? C.text : "#8A9BBF" }}>
+            {title}
+          </p>
+          <p className="text-[9px] font-mono mt-0.5" style={{ color: C.muted }}>
+            {msgCount} msgs
+          </p>
+        </div>
+      </div>
+      <button
+        onClick={onDelete}
+        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-[10px]"
+        style={{ color: C.muted }}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = C.red; }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = C.muted; }}
+      >
+        ✕
+      </button>
+    </button>
+  );
+}
+
+// ─── Main Chat Page ────────────────────────────────────────────────────────────
 export default function Chat() {
   const {
     chatSessions,
@@ -415,6 +520,7 @@ export default function Chat() {
   const [sending, setSending] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
   const [selectedAgent, setSelectedAgent] = useState(agents[0]?.id ?? "");
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const session = chatSessions.find((c) => c.id === activeChatId);
@@ -425,7 +531,15 @@ export default function Chat() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [session?.messages.length]);
 
-  const handleSend = async (overrideText?: string) => {
+  // Auto-grow textarea
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 128)}px`;
+  }, [input]);
+
+  const handleSend = useCallback(async (overrideText?: string) => {
     const txt = (overrideText ?? input).trim();
     if (!txt || !session || sending) return;
     if (!overrideText) setInput("");
@@ -438,7 +552,7 @@ export default function Chat() {
     } finally {
       setSending(false);
     }
-  };
+  }, [input, session, sending, sendMessage]);
 
   const handleRetry = () => {
     if (!session) return;
@@ -453,193 +567,284 @@ export default function Chat() {
     }
   };
 
+  const agentColor = currentAgent?.color ?? C.cyan;
+  const agentIcon = currentAgent?.icon ?? "◉";
+  const agentName = currentAgent?.name ?? "Agente";
+  const charCount = input.length;
+
   return (
-    <div className="flex h-full animate-fade-in">
-      {/* Sessions list */}
-      <div className="w-60 border-r border-[#1A2744]/60 flex flex-col flex-shrink-0">
-        <div className="p-4 border-b border-[#1A2744]/60 flex-shrink-0">
-          <h3 className="text-[12px] font-semibold text-[#E8ECF4] tracking-wider uppercase mb-3">
+    <div className="flex h-full overflow-hidden" style={{ background: C.bg }}>
+      {/* ── Sessions sidebar ── */}
+      <div
+        className="w-60 flex flex-col flex-shrink-0"
+        style={{ borderRight: `1px solid rgba(255,255,255,0.06)` }}
+      >
+        <div
+          className="p-4 flex-shrink-0"
+          style={{ borderBottom: `1px solid rgba(255,255,255,0.06)` }}
+        >
+          <p className="text-[9px] font-bold tracking-widest uppercase font-mono mb-3" style={{ color: C.muted }}>
             Conversaciones
-          </h3>
+          </p>
           <div className="space-y-2">
             <select
               value={selectedAgent}
               onChange={(e) => setSelectedAgent(e.target.value)}
-              className="astraeo-input py-1.5 text-[11px]"
+              className="w-full text-[11px] rounded-lg outline-none transition-all"
+              style={{
+                background: C.surface,
+                border: `1px solid rgba(255,255,255,0.07)`,
+                color: C.text,
+                padding: "7px 10px",
+              }}
             >
               {agents.map((a) => (
-                <option key={a.id} value={a.id} style={{ background: "#0A0F1F" }}>
+                <option key={a.id} value={a.id} style={{ background: C.surface }}>
                   {a.icon} {a.name}
                 </option>
               ))}
             </select>
             <button
               onClick={() => createChatSession(selectedAgent)}
-              className="btn-primary w-full py-1.5 text-[11px] justify-center"
+              className="w-full text-[11px] py-2 rounded-lg font-semibold transition-all text-white"
+              style={{
+                background: `linear-gradient(135deg, ${C.purple}cc, ${C.cyan}99)`,
+                border: "transparent",
+              }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = "0.85"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = "1"; }}
             >
               + Nueva sesión
             </button>
           </div>
         </div>
+
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
           {chatSessions.length === 0 && (
-            <p className="text-[10px] text-[#6B7A99] text-center mt-6 px-2">
+            <p className="text-[10px] text-center mt-6 px-2" style={{ color: C.muted }}>
               No hay sesiones aún
             </p>
           )}
           {chatSessions.map((c) => {
             const ag = agents.find((a) => a.id === c.agentId);
             return (
-              <div
+              <SessionItem
                 key={c.id}
+                sessionId={c.id}
+                title={c.title}
+                msgCount={c.messages.length}
+                agentIcon={ag?.icon ?? "◉"}
+                agentColor={ag?.color ?? C.cyan}
+                isActive={activeChatId === c.id}
                 onClick={() => setActiveChat(c.id)}
-                className={`p-2.5 rounded-xl cursor-pointer transition-all group relative ${
-                  activeChatId === c.id
-                    ? "bg-[#00D4FF]/08 border border-[#00D4FF]/20"
-                    : "hover:bg-white/[0.03] border border-transparent"
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">{ag?.icon ?? "◉"}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-semibold text-[#E8ECF4] truncate">{c.title}</p>
-                    <p className="text-[10px] text-[#6B7A99] font-mono">{c.messages.length} msgs</p>
-                  </div>
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deleteChat(c.id);
-                  }}
-                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-[10px] text-[#6B7A99] hover:text-[#FF4757] transition-all"
-                >
-                  ✕
-                </button>
-              </div>
+                onDelete={(e) => { e.stopPropagation(); deleteChat(c.id); }}
+              />
             );
           })}
         </div>
       </div>
 
-      {/* Chat main */}
+      {/* ── Chat main ── */}
       <div className="flex-1 flex flex-col min-w-0">
-        {session ? (
+        {session && currentAgent ? (
           <>
-            {/* Header */}
-            <div className="h-12 border-b border-[#1A2744]/60 px-5 flex items-center gap-3 flex-shrink-0">
-              {currentAgent && (
-                <>
-                  <div
-                    className="w-7 h-7 rounded-lg flex items-center justify-center text-sm"
+            {/* Agent header */}
+            <div
+              className="flex items-center gap-3.5 px-5 py-3 flex-shrink-0"
+              style={{
+                borderBottom: `1px solid rgba(255,255,255,0.06)`,
+                background: "rgba(5,8,16,0.9)",
+              }}
+            >
+              <div className="relative">
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center text-base"
+                  style={{
+                    background: `${agentColor}12`,
+                    border: `1px solid ${agentColor}30`,
+                    boxShadow: `0 0 16px ${agentColor}18`,
+                  }}
+                >
+                  {agentIcon}
+                </div>
+                <div
+                  className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2"
+                  style={{
+                    background: statusColor(currentAgent.status),
+                    borderColor: C.bg,
+                  }}
+                />
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-[13px] font-bold tracking-wider" style={{ color: C.text }}>
+                    {currentAgent.name}
+                  </p>
+                  <span
+                    className="text-[9px] px-2 py-0.5 rounded-full font-semibold tracking-wider uppercase"
                     style={{
-                      background: `${currentAgent.color}15`,
-                      border: `1px solid ${currentAgent.color}30`,
+                      background: `${agentColor}12`,
+                      color: agentColor,
+                      border: `1px solid ${agentColor}28`,
                     }}
                   >
-                    {currentAgent.icon}
-                  </div>
-                  <div>
-                    <p className="text-[12px] font-semibold text-[#E8ECF4]">{currentAgent.name}</p>
-                    <p className="text-[10px] text-[#6B7A99]">{currentAgent.role}</p>
-                  </div>
-                  <div className="ml-auto flex items-center gap-3">
-                    <span className="text-[10px] text-[#4A5570] font-mono">
-                      {session.messages.length} msgs
-                      {totalTokens > 0 && ` · ${totalTokens.toLocaleString()} tok`}
-                    </span>
-                    <div className="flex items-center gap-1.5 text-[10px] text-[#6B7A99]">
-                      <div
-                        className={`w-1.5 h-1.5 rounded-full status-${currentAgent.status ?? "offline"}`}
-                      />
-                      <span className="capitalize font-mono">{currentAgent.status}</span>
-                    </div>
-                  </div>
-                </>
-              )}
+                    {currentAgent.model.includes("opus") ? "Opus" : currentAgent.model.includes("haiku") ? "Haiku" : "Sonnet"}
+                  </span>
+                </div>
+                <p className="text-[10px] mt-0.5 truncate" style={{ color: C.muted }}>
+                  {currentAgent.role}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-4 text-[10px] font-mono" style={{ color: C.muted }}>
+                <span>{session.messages.length} msgs</span>
+                {totalTokens > 0 && (
+                  <span>{totalTokens.toLocaleString()} tok</span>
+                )}
+                <div className="flex items-center gap-1.5">
+                  <div
+                    className="w-1.5 h-1.5 rounded-full"
+                    style={{ background: statusColor(currentAgent.status) }}
+                  />
+                  <span className="capitalize">{currentAgent.status}</span>
+                </div>
+              </div>
             </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+            {/* Messages area */}
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
               {session.messages.length === 0 && (
-                <div className="flex flex-col items-center justify-center h-full text-center gap-3 opacity-60">
-                  <span className="text-4xl">{currentAgent?.icon}</span>
-                  <p className="text-[13px] text-[#6B7A99]">
-                    Inicia una conversación con {currentAgent?.name}
-                  </p>
-                  <p className="text-[10px] text-[#4A5570] font-mono">
-                    Responde con markdown: **negrita**, `código`, listas y más
-                  </p>
-                </div>
+                <EmptyConversation agent={currentAgent} />
               )}
+
               {session.messages.map((msg) => (
                 <MessageBubble
                   key={msg.id}
                   msg={msg}
-                  agents={useAstraeo.getState().agents}
+                  agentColor={agentColor}
+                  agentIcon={agentIcon}
+                  agentName={agentName}
                 />
               ))}
+
               {sending && (
-                <div className="flex gap-3">
-                  <div
-                    className="w-7 h-7 rounded-lg bg-[#00D4FF]/10 flex items-center justify-center text-sm border border-[#00D4FF]/20 flex-shrink-0"
-                  >
-                    {currentAgent?.icon}
-                  </div>
-                  <div className="glass-card rounded-2xl rounded-tl-sm px-4 py-3 border border-[#1A2744]/60">
-                    <div className="flex gap-1.5 items-center h-4">
-                      {[0, 0.16, 0.32].map((d, i) => (
-                        <div
-                          key={i}
-                          className="w-1.5 h-1.5 rounded-full bg-[#00D4FF]"
-                          style={{
-                            animation: "bounceTyping 1.4s infinite ease-in-out both",
-                            animationDelay: `${-d}s`,
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                <TypingIndicator agentIcon={agentIcon} agentColor={agentColor} />
               )}
+
               {lastError && !sending && (
-                <div className="flex justify-center">
-                  <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl border border-[#FF4757]/30 bg-[#FF4757]/05 text-[11px] text-[#FF4757]">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex justify-center"
+                >
+                  <div
+                    className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px]"
+                    style={{
+                      background: "rgba(255,71,87,0.06)",
+                      border: `1px solid rgba(255,71,87,0.25)`,
+                      color: C.red,
+                    }}
+                  >
                     <span>Error al enviar mensaje</span>
                     <button
                       onClick={handleRetry}
-                      className="px-3 py-1 rounded-lg border border-[#FF4757]/40 hover:bg-[#FF4757]/10 transition-all font-semibold"
+                      className="px-3 py-1 rounded-lg font-semibold transition-all"
+                      style={{
+                        border: `1px solid rgba(255,71,87,0.35)`,
+                        color: C.red,
+                      }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,71,87,0.1)"; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
                     >
                       Reintentar
                     </button>
                   </div>
-                </div>
+                </motion.div>
               )}
+
               <div ref={bottomRef} />
             </div>
 
-            {/* Input */}
-            <div className="p-4 border-t border-[#1A2744]/60 flex-shrink-0">
+            {/* Input bar */}
+            <div
+              className="px-4 py-3 flex-shrink-0"
+              style={{
+                borderTop: `1px solid rgba(255,255,255,0.06)`,
+                background: "rgba(5,8,16,0.95)",
+              }}
+            >
               <div className="flex gap-3 items-end">
-                <textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder={`Mensaje para ${currentAgent?.name ?? "el agente"}...`}
-                  rows={1}
-                  className="astraeo-input flex-1 resize-none max-h-32"
-                  style={{ minHeight: 42 }}
-                />
-                <button
+                <div className="flex-1 relative">
+                  <textarea
+                    ref={inputRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder={`Mensaje para ${agentName}...`}
+                    rows={1}
+                    className="w-full resize-none outline-none transition-all text-[13px]"
+                    style={{
+                      background: C.surface,
+                      border: `1px solid rgba(255,255,255,0.08)`,
+                      borderRadius: 12,
+                      padding: "10px 14px",
+                      paddingBottom: 28,
+                      color: C.text,
+                      minHeight: 42,
+                      maxHeight: 128,
+                      caretColor: agentColor,
+                    }}
+                    onFocus={(e) => {
+                      (e.target as HTMLTextAreaElement).style.borderColor = `${agentColor}50`;
+                      (e.target as HTMLTextAreaElement).style.boxShadow = `0 0 0 2px ${agentColor}12`;
+                    }}
+                    onBlur={(e) => {
+                      (e.target as HTMLTextAreaElement).style.borderColor = "rgba(255,255,255,0.08)";
+                      (e.target as HTMLTextAreaElement).style.boxShadow = "none";
+                    }}
+                  />
+                  {/* Character count + hint */}
+                  <div
+                    className="absolute bottom-2 left-3 right-3 flex justify-between items-center pointer-events-none"
+                    style={{ fontSize: 9, fontFamily: "monospace" }}
+                  >
+                    <span style={{ color: `${C.muted}70` }}>Shift+Enter para nueva línea</span>
+                    <span style={{ color: charCount > 0 ? `${C.muted}90` : "transparent" }}>
+                      {charCount}
+                    </span>
+                  </div>
+                </div>
+
+                <motion.button
                   onClick={() => handleSend()}
                   disabled={!input.trim() || sending}
-                  className="btn-primary px-4 py-2.5 flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="flex items-center justify-center flex-shrink-0 transition-all"
+                  style={{
+                    width: 42,
+                    height: 42,
+                    borderRadius: 12,
+                    background: input.trim() && !sending ? `linear-gradient(135deg, ${agentColor}dd, ${agentColor}88)` : C.surface,
+                    border: `1px solid ${input.trim() && !sending ? "transparent" : "rgba(255,255,255,0.08)"}`,
+                    color: input.trim() && !sending ? "#fff" : C.muted,
+                    cursor: input.trim() && !sending ? "pointer" : "not-allowed",
+                    fontSize: 14,
+                  }}
+                  whileTap={input.trim() && !sending ? { scale: 0.92 } : {}}
                 >
-                  ▶
-                </button>
+                  {sending ? (
+                    <motion.span
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      style={{ display: "block" }}
+                    >
+                      ◌
+                    </motion.span>
+                  ) : (
+                    <span style={{ transform: "rotate(-45deg)", display: "block", marginTop: -2 }}>➤</span>
+                  )}
+                </motion.button>
               </div>
-              <p className="text-[10px] text-[#4A5570] mt-2 ml-1">
-                Enter para enviar · Shift+Enter para nueva línea
-              </p>
             </div>
           </>
         ) : (

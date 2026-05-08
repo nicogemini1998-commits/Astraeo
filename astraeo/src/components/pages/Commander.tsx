@@ -1,10 +1,19 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAstraeo } from "@/store/astraeo";
 import { nanoid } from "nanoid";
 import type { AgentStatus, MissionPriority, MissionStatus, MemoryType } from "@/lib/types";
 
-// ─── Tool definitions for Claude ─────────────────────────────────────────────
+// ─── Design tokens ────────────────────────────────────────────────────────────
+const C = {
+  cyan: "#00D4FF", purple: "#7B61FF", emerald: "#00E5A0",
+  amber: "#FFB800", coral: "#FF6B9D", red: "#FF4757",
+  bg: "#050810", surface: "#0D1120", surfaceHover: "#111828",
+  border: "rgba(255,255,255,0.06)", text: "#E8ECF8", muted: "#3A4560",
+} as const;
+
+// ─── Tool definitions for Claude ──────────────────────────────────────────────
 const COMMANDER_TOOLS = [
   {
     name: "create_agent",
@@ -152,7 +161,7 @@ function executeTool(toolName: string, input: Record<string, unknown>): ToolResu
 
   switch (toolName) {
     case "create_agent": {
-      const colors = ["#00D4FF", "#7B61FF", "#FF6B9D", "#00E5A0", "#FFB800"];
+      const colors = [C.cyan, C.purple, C.coral, C.emerald, C.amber];
       store.addAgent({
         name: String(input.name ?? ""),
         role: String(input.role ?? ""),
@@ -203,7 +212,7 @@ function executeTool(toolName: string, input: Record<string, unknown>): ToolResu
         x: 60 + i * 160,
         y: 120,
         config: step.agentId ? { agentId: step.agentId } : {},
-        color: { trigger: "#00E5A0", agent: "#00D4FF", condition: "#FFB800", action: "#7B61FF", output: "#FF6B9D" }[step.type] ?? "#6B7A99",
+        color: ({ trigger: C.emerald, agent: C.cyan, condition: C.amber, action: C.purple, output: C.coral } as Record<string, string>)[step.type] ?? "#6B7A99",
       }));
       const edges = nodes.slice(0, -1).map((n, i) => ({ id: `e${i + 1}`, from: n.id, to: nodes[i + 1].id }));
       store.addWorkflow({
@@ -234,11 +243,11 @@ function executeTool(toolName: string, input: Record<string, unknown>): ToolResu
     case "list_resources": {
       const r = input.resource as string;
       const s = useAstraeo.getState();
-      let data: unknown;
-      if (r === "agents" || r === "all") data = s.agents.map((a) => ({ id: a.id, name: a.name, role: a.role, status: a.status }));
-      if (r === "missions" || r === "all") data = { ...(data as object ?? {}), missions: s.missions.map((m) => ({ id: m.id, title: m.title, status: m.status, priority: m.priority })) };
-      if (r === "memory" || r === "all") data = { ...(data as object ?? {}), memory: s.memory.map((m) => ({ id: m.id, title: m.title, type: m.type })) };
-      if (r === "workflows" || r === "all") data = { ...(data as object ?? {}), workflows: s.workflows.map((w) => ({ id: w.id, name: w.name, active: w.active })) };
+      let data: Record<string, unknown> = {};
+      if (r === "agents" || r === "all") data.agents = s.agents.map((a) => ({ id: a.id, name: a.name, role: a.role, status: a.status }));
+      if (r === "missions" || r === "all") data.missions = s.missions.map((m) => ({ id: m.id, title: m.title, status: m.status, priority: m.priority }));
+      if (r === "memory" || r === "all") data.memory = s.memory.map((m) => ({ id: m.id, title: m.title, type: m.type }));
+      if (r === "workflows" || r === "all") data.workflows = s.workflows.map((w) => ({ id: w.id, name: w.name, active: w.active }));
       return { success: true, message: `Recursos listados.`, data };
     }
 
@@ -301,17 +310,284 @@ function buildSystemPrompt(): string {
 ${companyBlock}`.trim();
 }
 
-// ─── Markdown renderer simple ───────────────────────────────────────────────
+// ─── Inline markdown renderer ────────────────────────────────────────────────
 function renderMarkdown(text: string): string {
   return text
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\*(.+?)\*/g, "<em>$1</em>")
-    .replace(/`(.+?)`/g, '<code style="background:rgba(0,212,255,0.1);padding:1px 4px;border-radius:3px;font-family:monospace;font-size:11px">$1</code>')
-    .replace(/^- (.+)$/gm, "• $1")
+    .replace(/\*\*(.+?)\*\*/g, `<strong style="color:${C.text}">$1</strong>`)
+    .replace(/\*(.+?)\*/g, `<em style="color:#A78BFA">$1</em>`)
+    .replace(/`(.+?)`/g, `<code style="background:rgba(0,212,255,0.1);padding:1px 5px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:11px;color:${C.cyan};border:1px solid rgba(0,212,255,0.15)">$1</code>`)
+    .replace(/^### (.+)$/gm, `<strong style="display:block;color:${C.text};font-size:12px;margin:8px 0 3px;letter-spacing:0.05em">$1</strong>`)
+    .replace(/^## (.+)$/gm, `<strong style="display:block;color:${C.cyan};font-size:12px;margin:10px 0 4px;padding-bottom:3px;border-bottom:1px solid rgba(0,212,255,0.15)">$1</strong>`)
+    .replace(/^- (.+)$/gm, `<span style="display:block;padding-left:12px;color:#8A9BBF">• $1</span>`)
     .replace(/\n/g, "<br/>");
 }
 
-// ─── Component ───────────────────────────────────────────────────────────────
+// ─── Tool meta ───────────────────────────────────────────────────────────────
+const TOOL_META: Record<string, { label: string; icon: string; color: string }> = {
+  create_agent:   { label: "Agente creado",      icon: "◉", color: C.cyan },
+  create_mission: { label: "Misión creada",       icon: "◆", color: C.amber },
+  create_memory:  { label: "Memoria guardada",    icon: "◍", color: C.purple },
+  create_workflow:{ label: "Workflow creado",     icon: "◫", color: C.coral },
+  update_agent:   { label: "Agente actualizado",  icon: "✎", color: C.emerald },
+  update_mission: { label: "Misión actualizada",  icon: "✎", color: C.amber },
+  delete_mission: { label: "Misión eliminada",    icon: "✕", color: C.red },
+  list_resources: { label: "Recursos consultados",icon: "◷", color: C.muted },
+};
+
+// ─── ToolCallBadge ───────────────────────────────────────────────────────────
+function ToolCallBadge({ name, result }: { name: string; result: ToolResult }) {
+  const meta = TOOL_META[name] ?? { label: name, icon: "⚙", color: C.muted };
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -8 }}
+      animate={{ opacity: 1, x: 0 }}
+      className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
+      style={{
+        background: result.success ? `${meta.color}10` : "rgba(255,71,87,0.08)",
+        border: `1px solid ${result.success ? meta.color + "28" : "rgba(255,71,87,0.25)"}`,
+        color: result.success ? meta.color : C.red,
+      }}
+    >
+      <span className="text-[12px]">{meta.icon}</span>
+      <span>{meta.label}</span>
+      <span className="ml-auto font-mono text-[9px] opacity-70">
+        {result.success ? "✓ OK" : "✗ ERR"}
+      </span>
+    </motion.div>
+  );
+}
+
+// ─── MessageRow ──────────────────────────────────────────────────────────────
+function MessageRow({ msg }: { msg: CmdMessage }) {
+  const time = new Date(msg.timestamp).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" });
+
+  if (msg.role === "system") {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative rounded-xl px-4 py-3"
+        style={{
+          background: "rgba(0,212,255,0.04)",
+          border: `1px solid rgba(0,212,255,0.12)`,
+          borderLeft: `3px solid ${C.cyan}`,
+        }}
+      >
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-[9px] font-bold tracking-widest uppercase font-mono" style={{ color: C.cyan }}>
+            SYS
+          </span>
+          <span className="text-[9px] font-mono" style={{ color: C.muted }}>{time}</span>
+        </div>
+        <div
+          className="text-[12px] leading-relaxed"
+          style={{ color: "#B0C0DC" }}
+          dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }}
+        />
+      </motion.div>
+    );
+  }
+
+  if (msg.role === "user") {
+    return (
+      <motion.div
+        initial={{ opacity: 0, x: 16 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="flex justify-end"
+      >
+        <div className="max-w-[72%]">
+          <div
+            className="px-4 py-3 rounded-2xl rounded-br-sm text-[13px] leading-relaxed text-white"
+            style={{ background: `linear-gradient(135deg, ${C.purple}, ${C.cyan})` }}
+          >
+            {msg.content}
+          </div>
+          <p className="text-right text-[9px] mt-1 mr-1 font-mono" style={{ color: C.muted }}>{time}</p>
+        </div>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -16 }}
+      animate={{ opacity: 1, x: 0 }}
+      className="flex gap-3"
+    >
+      <div
+        className="w-8 h-8 rounded-xl flex items-center justify-center text-sm flex-shrink-0 mt-1"
+        style={{ background: "rgba(0,212,255,0.08)", border: `1px solid rgba(0,212,255,0.2)` }}
+      >
+        <span style={{ fontSize: 14 }}>🌟</span>
+      </div>
+      <div className="flex-1 min-w-0 space-y-2">
+        {msg.toolCalls && msg.toolCalls.length > 0 && (
+          <div className="space-y-1.5">
+            {msg.toolCalls.map((tc, i) => (
+              <ToolCallBadge key={i} name={tc.name} result={tc.result} />
+            ))}
+          </div>
+        )}
+        <div
+          className="rounded-2xl rounded-tl-sm px-4 py-3 border text-[13px] leading-relaxed"
+          style={{
+            background: C.surface,
+            border: `1px solid rgba(255,255,255,0.06)`,
+            color: "#C8D0E0",
+          }}
+          dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }}
+        />
+        <p className="text-[9px] ml-1 font-mono" style={{ color: C.muted }}>{time}</p>
+      </div>
+    </motion.div>
+  );
+}
+
+// ─── ThinkingIndicator ───────────────────────────────────────────────────────
+function ThinkingIndicator() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -16 }}
+      animate={{ opacity: 1, x: 0 }}
+      className="flex gap-3"
+    >
+      <div
+        className="w-8 h-8 rounded-xl flex items-center justify-center text-sm flex-shrink-0"
+        style={{ background: "rgba(0,212,255,0.08)", border: `1px solid rgba(0,212,255,0.2)` }}
+      >
+        🌟
+      </div>
+      <div
+        className="px-4 py-3 rounded-2xl rounded-tl-sm border"
+        style={{ background: C.surface, border: `1px solid rgba(255,255,255,0.06)` }}
+      >
+        <div className="flex gap-1.5 items-center" style={{ height: 18 }}>
+          {[0, 0.2, 0.4].map((delay, i) => (
+            <motion.div
+              key={i}
+              className="w-1.5 h-1.5 rounded-full"
+              style={{ background: C.cyan }}
+              animate={{ scale: [0.6, 1, 0.6], opacity: [0.4, 1, 0.4] }}
+              transition={{ duration: 1.2, repeat: Infinity, delay, ease: "easeInOut" }}
+            />
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// ─── ActionLog ───────────────────────────────────────────────────────────────
+function ActionLog({ messages }: { messages: CmdMessage[] }) {
+  const allActions = messages.flatMap((m) =>
+    (m.toolCalls ?? []).map((tc) => ({ ...tc, timestamp: m.timestamp }))
+  );
+
+  return (
+    <div
+      className="w-60 flex flex-col flex-shrink-0"
+      style={{ borderLeft: `1px solid rgba(255,255,255,0.06)` }}
+    >
+      <div
+        className="px-4 py-3.5 flex-shrink-0"
+        style={{ borderBottom: `1px solid rgba(255,255,255,0.06)` }}
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-[9px] font-bold tracking-widest uppercase font-mono" style={{ color: C.cyan }}>
+            LOG DE ACCIONES
+          </span>
+        </div>
+        <p className="text-[10px] mt-0.5 font-mono" style={{ color: C.muted }}>
+          {allActions.length} ejecutadas
+        </p>
+      </div>
+      <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        {allActions.length === 0 && (
+          <div className="text-center pt-10">
+            <div className="text-2xl mb-2" style={{ opacity: 0.2 }}>◎</div>
+            <p className="text-[10px]" style={{ color: C.muted }}>Sin acciones aún</p>
+          </div>
+        )}
+        {[...allActions].reverse().map((a, i) => {
+          const meta = TOOL_META[a.name] ?? { label: a.name, icon: "⚙", color: C.muted };
+          return (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-2.5 rounded-xl"
+              style={{
+                background: C.surface,
+                border: `1px solid rgba(255,255,255,0.05)`,
+              }}
+            >
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="text-[11px]" style={{ color: meta.color }}>{meta.icon}</span>
+                <span className="text-[10px] font-semibold" style={{ color: meta.color }}>{meta.label}</span>
+                {a.result.success
+                  ? <span className="ml-auto text-[9px]" style={{ color: C.emerald }}>✓</span>
+                  : <span className="ml-auto text-[9px]" style={{ color: C.red }}>✗</span>}
+              </div>
+              <p className="text-[10px] line-clamp-2" style={{ color: C.muted }}>{a.result.message}</p>
+              <p className="text-[9px] mt-1 font-mono" style={{ color: `${C.muted}80` }}>
+                {new Date(a.timestamp).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}
+              </p>
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── SystemPromptPanel ────────────────────────────────────────────────────────
+function SystemPromptPanel() {
+  const [open, setOpen] = useState(false);
+  const prompt = buildSystemPrompt();
+
+  return (
+    <div style={{ borderTop: `1px solid rgba(255,255,255,0.06)` }}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-4 py-2.5 text-[11px] font-semibold transition-colors"
+        style={{ color: C.muted }}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = C.text; }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = C.muted; }}
+      >
+        <span className="flex items-center gap-2">
+          <span style={{ color: C.purple }}>◈</span>
+          <span className="tracking-wider uppercase" style={{ fontSize: 10 }}>System Prompt</span>
+        </span>
+        <span style={{ fontSize: 9, fontFamily: "monospace" }}>{open ? "▲" : "▼"}</span>
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22 }}
+            className="overflow-hidden"
+          >
+            <pre
+              className="px-4 pb-3 text-[10px] leading-relaxed overflow-x-auto"
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                color: "#6B7A99",
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
+              }}
+            >
+              {prompt}
+            </pre>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ─── Main Commander Component ─────────────────────────────────────────────────
 export default function Commander() {
   const { settings } = useAstraeo();
   const [messages, setMessages] = useState<CmdMessage[]>([
@@ -332,14 +608,32 @@ export default function Commander() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
 
+  // Auto-grow textarea
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+  }, [input]);
+
   const suggestions = [
     "Crea un agente llamado ZEUS especializado en ventas B2B con modelo Opus",
     "Nueva misión crítica: preparar demo para cliente enterprise esta semana",
     "Guarda en memoria: los clientes enterprise prefieren demos los jueves",
     "Crea un workflow de seguimiento post-demo con LYRA y ORION",
     "Lista todos los agentes y misiones activas del sistema",
-    "Actualiza el sistema prompt de ORION para incluir análisis de competencia",
+    "Actualiza el system prompt de ORION para incluir análisis de competencia",
   ];
+
+  const clearHistory = () => {
+    setMessages([{
+      id: nanoid(),
+      role: "system",
+      content: "**Historial limpiado.** Sesión reiniciada.",
+      timestamp: new Date().toISOString(),
+    }]);
+    setShowSuggestions(true);
+  };
 
   const sendToCommander = async (userText: string) => {
     if (!userText.trim() || loading) return;
@@ -360,7 +654,6 @@ export default function Commander() {
     setShowSuggestions(false);
     setLoading(true);
 
-    // Build message history for API (last 10 exchanges)
     const history = messages
       .filter((m) => m.role === "user" || m.role === "assistant")
       .slice(-10)
@@ -386,39 +679,37 @@ export default function Commander() {
         });
 
         if (!res.ok) {
-          const errData = await res.json().catch(() => ({ error: res.statusText }));
+          const errData = await res.json().catch(() => ({ error: res.statusText })) as { error?: string };
           throw new Error(errData.error ?? `Error del servidor ${res.status}`);
         }
 
-        const data = await res.json();
+        const data = await res.json() as {
+          stop_reason: string;
+          content: Array<{ type: string; id?: string; name?: string; input?: Record<string, unknown>; text?: string }>;
+        };
 
         if (data.stop_reason === "tool_use") {
-          // Execute all tool calls
-          const toolUseBlocks = data.content.filter((b: { type: string }) => b.type === "tool_use");
+          const toolUseBlocks = data.content.filter((b) => b.type === "tool_use");
           const toolResults: Array<{ type: string; tool_use_id: string; content: string }> = [];
 
           for (const block of toolUseBlocks) {
-            const result = executeTool(block.name, block.input as Record<string, unknown>);
-            toolCallsAccum?.push({ name: block.name, input: block.input as Record<string, unknown>, result });
+            const result = executeTool(block.name ?? "", block.input ?? {});
+            toolCallsAccum?.push({ name: block.name ?? "", input: block.input ?? {}, result });
             toolResults.push({
               type: "tool_result",
-              tool_use_id: block.id,
+              tool_use_id: block.id ?? "",
               content: JSON.stringify({ success: result.success, message: result.message, data: result.data }),
             });
           }
 
-          // Add assistant message + tool results to context
           iterMessages = [
             ...iterMessages,
             { role: "assistant", content: data.content },
             { role: "user", content: toolResults },
           ] as typeof iterMessages;
-
         } else {
-          // Final response
-          const textBlock = data.content?.find((b: { type: string }) => b.type === "text");
+          const textBlock = data.content?.find((b) => b.type === "text");
           const responseText = textBlock?.text ?? "Listo.";
-
           setMessages((m) => [...m, {
             id: nanoid(),
             role: "assistant",
@@ -445,80 +736,167 @@ export default function Commander() {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendToCommander(input); }
   };
 
+  const modelBadge = settings.claudeModel.includes("opus") ? "Opus" : settings.claudeModel.includes("haiku") ? "Haiku" : "Sonnet";
+
   return (
-    <div className="flex h-full animate-fade-in overflow-hidden">
-      {/* Left: chat */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-[#1A2744]/60 flex items-center justify-between flex-shrink-0">
+    <div className="flex h-full overflow-hidden" style={{ background: C.bg }}>
+      {/* Scan-line texture overlay */}
+      <div
+        className="pointer-events-none absolute inset-0 z-0"
+        style={{
+          backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px)",
+          backgroundSize: "100% 4px",
+        }}
+      />
+
+      {/* ── Left: chat column ── */}
+      <div className="relative z-10 flex-1 flex flex-col min-w-0">
+        {/* Header bar */}
+        <div
+          className="px-5 py-3 flex items-center gap-4 flex-shrink-0"
+          style={{ borderBottom: `1px solid rgba(255,255,255,0.06)`, background: "rgba(5,8,16,0.9)" }}
+        >
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg"
-              style={{ background: "rgba(0,212,255,0.1)", border: "1px solid rgba(0,212,255,0.25)" }}>
-              🌟
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{
+                background: "rgba(0,212,255,0.08)",
+                border: `1px solid rgba(0,212,255,0.2)`,
+                boxShadow: `0 0 16px rgba(0,212,255,0.12)`,
+              }}
+            >
+              <span style={{ fontSize: 16 }}>🌟</span>
             </div>
             <div>
-              <h2 className="text-[14px] font-bold text-[#E8ECF4] tracking-wide">Comandante ASTRAEO</h2>
-              <p className="text-[10px] text-[#6B7A99] font-mono">Control total del sistema · Claude {settings.claudeModel.split("-")[1]}</p>
+              <h2 className="text-[13px] font-bold tracking-widest uppercase" style={{ color: C.text, letterSpacing: "0.12em" }}>
+                Commander
+              </h2>
+              <p className="text-[9px] font-mono" style={{ color: C.muted }}>
+                Control total del sistema
+              </p>
             </div>
           </div>
-          <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold border ${
-            settings.claudeApiKey
-              ? "bg-[#00E5A0]/08 border-[#00E5A0]/25 text-[#00E5A0]"
-              : "bg-[#FF4757]/08 border-[#FF4757]/25 text-[#FF4757]"
-          }`}>
-            <div className={`w-1.5 h-1.5 rounded-full ${settings.claudeApiKey ? "bg-[#00E5A0] animate-pulse" : "bg-[#FF4757]"}`} />
+
+          {/* Model badge */}
+          <div
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-semibold font-mono"
+            style={{
+              background: "rgba(123,97,255,0.1)",
+              border: `1px solid rgba(123,97,255,0.25)`,
+              color: C.purple,
+            }}
+          >
+            ◈ {modelBadge}
+          </div>
+
+          {/* Status dot */}
+          <div
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-semibold"
+            style={{
+              background: settings.claudeApiKey ? "rgba(0,229,160,0.08)" : "rgba(255,71,87,0.08)",
+              border: `1px solid ${settings.claudeApiKey ? "rgba(0,229,160,0.25)" : "rgba(255,71,87,0.25)"}`,
+              color: settings.claudeApiKey ? C.emerald : C.red,
+            }}
+          >
+            <motion.div
+              className="w-1.5 h-1.5 rounded-full"
+              style={{ background: settings.claudeApiKey ? C.emerald : C.red }}
+              animate={settings.claudeApiKey ? { opacity: [1, 0.4, 1] } : {}}
+              transition={{ duration: 2, repeat: Infinity }}
+            />
             {settings.claudeApiKey ? "Activo" : "Sin API Key"}
           </div>
+
+          <div className="flex-1" />
+
+          {/* Clear button */}
+          <button
+            onClick={clearHistory}
+            className="text-[10px] font-semibold px-3 py-1.5 rounded-lg transition-all"
+            style={{
+              color: C.muted,
+              border: `1px solid rgba(255,255,255,0.06)`,
+              background: "transparent",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.color = C.text;
+              (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.12)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.color = C.muted;
+              (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.06)";
+            }}
+          >
+            ✕ Limpiar
+          </button>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           {messages.map((msg) => (
             <MessageRow key={msg.id} msg={msg} />
           ))}
 
           {/* Suggestions */}
-          {showSuggestions && (
-            <div className="space-y-2 animate-fade-in">
-              <p className="text-[11px] text-[#6B7A99] tracking-widest uppercase font-semibold">Sugerencias</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {suggestions.map((s, i) => (
-                  <button
-                    key={i}
-                    onClick={() => sendToCommander(s)}
-                    className="text-left text-[12px] p-3 rounded-xl transition-all group"
-                    style={{ background: "rgba(10,15,31,0.6)", border: "1px solid #1A2744" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(0,212,255,0.2)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#1A2744"; }}
-                  >
-                    <span className="text-[#6B7A99] group-hover:text-[#E8ECF4] transition-colors">{s}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {loading && (
-            <div className="flex gap-3">
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center text-sm flex-shrink-0"
-                style={{ background: "rgba(0,212,255,0.1)", border: "1px solid rgba(0,212,255,0.2)" }}>
-                🌟
-              </div>
-              <div className="glass-card rounded-2xl rounded-tl-sm px-4 py-3 border border-[#1A2744]/60">
-                <div className="flex gap-1.5 items-center h-4">
-                  {[0, 0.16, 0.32].map((d, i) => (
-                    <div key={i} className="w-1.5 h-1.5 rounded-full bg-[#00D4FF]"
-                      style={{ animation: `bounceTyping 1.4s infinite ease-in-out both`, animationDelay: `-${d}s` }} />
+          <AnimatePresence>
+            {showSuggestions && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                className="space-y-2.5 pt-2"
+              >
+                <p className="text-[9px] tracking-widest uppercase font-bold font-mono" style={{ color: C.muted }}>
+                  Sugerencias de comandos
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {suggestions.map((s, i) => (
+                    <button
+                      key={i}
+                      onClick={() => sendToCommander(s)}
+                      className="text-left text-[12px] px-3.5 py-2.5 rounded-xl transition-all"
+                      style={{
+                        background: C.surface,
+                        border: `1px solid rgba(255,255,255,0.06)`,
+                        color: C.muted,
+                      }}
+                      onMouseEnter={(e) => {
+                        const el = e.currentTarget as HTMLButtonElement;
+                        el.style.borderColor = `rgba(0,212,255,0.25)`;
+                        el.style.color = C.text;
+                        el.style.background = "rgba(0,212,255,0.04)";
+                      }}
+                      onMouseLeave={(e) => {
+                        const el = e.currentTarget as HTMLButtonElement;
+                        el.style.borderColor = "rgba(255,255,255,0.06)";
+                        el.style.color = C.muted;
+                        el.style.background = C.surface;
+                      }}
+                    >
+                      <span className="font-mono text-[9px]" style={{ color: C.cyan, marginRight: 6 }}>›</span>
+                      {s}
+                    </button>
                   ))}
                 </div>
-              </div>
-            </div>
-          )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {loading && <ThinkingIndicator />}
           <div ref={bottomRef} />
         </div>
 
-        {/* Input */}
-        <div className="p-4 border-t border-[#1A2744]/60 flex-shrink-0">
+        {/* System prompt collapsible */}
+        <SystemPromptPanel />
+
+        {/* Input bar */}
+        <div
+          className="px-4 py-3 flex-shrink-0"
+          style={{
+            borderTop: `1px solid rgba(255,255,255,0.06)`,
+            background: "rgba(5,8,16,0.95)",
+          }}
+        >
           <div className="flex gap-3 items-end">
             <textarea
               ref={inputRef}
@@ -527,140 +905,55 @@ export default function Commander() {
               onKeyDown={handleKey}
               placeholder="Dime qué construir... (agentes, misiones, workflows, memorias)"
               rows={1}
-              className="astraeo-input flex-1 resize-none"
-              style={{ maxHeight: 120 }}
+              className="flex-1 resize-none text-[13px] leading-relaxed outline-none transition-all"
+              style={{
+                background: C.surface,
+                border: `1px solid rgba(255,255,255,0.08)`,
+                borderRadius: 12,
+                padding: "10px 14px",
+                color: C.text,
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: 12,
+                minHeight: 42,
+                maxHeight: 120,
+                caretColor: C.cyan,
+              }}
+              onFocus={(e) => { (e.target as HTMLTextAreaElement).style.borderColor = `rgba(0,212,255,0.3)`; }}
+              onBlur={(e) => { (e.target as HTMLTextAreaElement).style.borderColor = "rgba(255,255,255,0.08)"; }}
             />
             <button
               onClick={() => sendToCommander(input)}
               disabled={!input.trim() || loading}
-              className="btn-primary px-4 py-2.5 flex-shrink-0 disabled:opacity-40"
+              className="flex-shrink-0 flex items-center justify-center transition-all"
+              style={{
+                width: 42,
+                height: 42,
+                borderRadius: 12,
+                background: input.trim() && !loading ? `linear-gradient(135deg, ${C.purple}, ${C.cyan})` : C.surface,
+                border: `1px solid ${input.trim() && !loading ? "transparent" : "rgba(255,255,255,0.08)"}`,
+                color: input.trim() && !loading ? "#fff" : C.muted,
+                cursor: input.trim() && !loading ? "pointer" : "not-allowed",
+                fontSize: 14,
+              }}
             >
-              ▶
+              {loading ? (
+                <motion.span
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  style={{ display: "block" }}
+                >◌</motion.span>
+              ) : "▶"}
             </button>
           </div>
-          <p className="text-[10px] text-[#6B7A99] mt-1.5 ml-1">Enter para enviar · Shift+Enter nueva línea</p>
+          <p className="text-[9px] mt-1.5 ml-1 font-mono" style={{ color: `${C.muted}80` }}>
+            Enter para enviar · Shift+Enter nueva línea
+          </p>
         </div>
       </div>
 
-      {/* Right: action log */}
-      <ActionLog messages={messages} />
-    </div>
-  );
-}
-
-// ─── Message Row ─────────────────────────────────────────────────────────────
-function MessageRow({ msg }: { msg: CmdMessage }) {
-  if (msg.role === "system") {
-    return (
-      <div className="glass-card rounded-xl p-3.5 border border-[#1A2744]/40">
-        <div className="text-[12px] text-[#E8ECF4] leading-relaxed"
-          dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }} />
-      </div>
-    );
-  }
-
-  if (msg.role === "user") {
-    return (
-      <div className="flex justify-end">
-        <div className="max-w-[72%] px-4 py-3 rounded-2xl rounded-br-sm text-[13px] leading-relaxed text-white"
-          style={{ background: "linear-gradient(135deg, #7B61FF, #00D4FF)" }}>
-          {msg.content}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex gap-3">
-      <div className="w-8 h-8 rounded-xl flex items-center justify-center text-sm flex-shrink-0 mt-1"
-        style={{ background: "rgba(0,212,255,0.1)", border: "1px solid rgba(0,212,255,0.2)" }}>
-        🌟
-      </div>
-      <div className="flex-1 min-w-0 space-y-2">
-        {/* Tool calls */}
-        {msg.toolCalls && msg.toolCalls.length > 0 && (
-          <div className="space-y-1.5">
-            {msg.toolCalls.map((tc, i) => (
-              <ToolCallBadge key={i} name={tc.name} result={tc.result} />
-            ))}
-          </div>
-        )}
-        {/* Text response */}
-        <div className="glass-card rounded-2xl rounded-tl-sm px-4 py-3 border border-[#1A2744]/60 text-[13px] leading-relaxed text-[#E8ECF4]"
-          dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }} />
-        <p className="text-[9px] text-[#6B7A99] ml-1 font-mono">
-          {new Date(msg.timestamp).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-const TOOL_LABELS: Record<string, { label: string; icon: string; color: string }> = {
-  create_agent: { label: "Agente creado", icon: "◉", color: "#00D4FF" },
-  create_mission: { label: "Misión creada", icon: "◆", color: "#FFB800" },
-  create_memory: { label: "Memoria guardada", icon: "◍", color: "#7B61FF" },
-  create_workflow: { label: "Workflow creado", icon: "◫", color: "#FF6B9D" },
-  update_agent: { label: "Agente actualizado", icon: "✎", color: "#00E5A0" },
-  update_mission: { label: "Misión actualizada", icon: "✎", color: "#FFB800" },
-  delete_mission: { label: "Misión eliminada", icon: "✕", color: "#FF4757" },
-  list_resources: { label: "Recursos consultados", icon: "◷", color: "#6B7A99" },
-};
-
-function ToolCallBadge({ name, result }: { name: string; result: ToolResult }) {
-  const cfg = TOOL_LABELS[name] ?? { label: name, icon: "⚙", color: "#6B7A99" };
-  return (
-    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
-      style={{
-        background: result.success ? `${cfg.color}10` : "rgba(255,71,87,0.1)",
-        border: `1px solid ${result.success ? cfg.color + "25" : "rgba(255,71,87,0.25)"}`,
-        color: result.success ? cfg.color : "#FF4757",
-      }}>
-      <span>{cfg.icon}</span>
-      <span>{cfg.label}</span>
-      <span className="ml-auto opacity-60">
-        {result.success ? "✓" : "✗"}
-      </span>
-    </div>
-  );
-}
-
-// ─── Action Log (right panel) ─────────────────────────────────────────────────
-function ActionLog({ messages }: { messages: CmdMessage[] }) {
-  const allActions = messages.flatMap((m) =>
-    (m.toolCalls ?? []).map((tc) => ({ ...tc, timestamp: m.timestamp }))
-  );
-
-  return (
-    <div className="w-64 border-l border-[#1A2744]/60 flex flex-col flex-shrink-0">
-      <div className="px-4 py-4 border-b border-[#1A2744]/60 flex-shrink-0">
-        <h3 className="text-[11px] font-semibold text-[#E8ECF4] tracking-widest uppercase">Log de Acciones</h3>
-        <p className="text-[10px] text-[#6B7A99] mt-0.5">{allActions.length} acciones ejecutadas</p>
-      </div>
-      <div className="flex-1 overflow-y-auto p-3 space-y-2">
-        {allActions.length === 0 && (
-          <div className="text-center pt-8 opacity-30">
-            <p className="text-[11px] text-[#6B7A99]">Sin acciones aún</p>
-          </div>
-        )}
-        {[...allActions].reverse().map((a, i) => {
-          const cfg = TOOL_LABELS[a.name] ?? { label: a.name, icon: "⚙", color: "#6B7A99" };
-          return (
-            <div key={i} className="p-2.5 rounded-xl glass-card border border-[#1A2744]/40">
-              <div className="flex items-center gap-1.5 mb-1">
-                <span className="text-[11px]" style={{ color: cfg.color }}>{cfg.icon}</span>
-                <span className="text-[10px] font-semibold" style={{ color: cfg.color }}>{cfg.label}</span>
-                {a.result.success
-                  ? <span className="ml-auto text-[#00E5A0] text-[9px]">✓</span>
-                  : <span className="ml-auto text-[#FF4757] text-[9px]">✗</span>}
-              </div>
-              <p className="text-[10px] text-[#6B7A99] line-clamp-2">{a.result.message}</p>
-              <p className="text-[9px] text-[#6B7A99]/50 mt-1 font-mono">
-                {new Date(a.timestamp).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}
-              </p>
-            </div>
-          );
-        })}
+      {/* ── Right: action log ── */}
+      <div className="relative z-10">
+        <ActionLog messages={messages} />
       </div>
     </div>
   );

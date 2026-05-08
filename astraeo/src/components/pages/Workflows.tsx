@@ -13,11 +13,11 @@ const NODE_H = 64;
 const PORT_R = 6;
 
 const NODE_STYLES: Record<WorkflowNode["type"], { color: string; bg: string; icon: string; label: string }> = {
-  trigger:   { color: "#00E5A0", bg: "rgba(0,229,160,0.08)",   icon: "⚡", label: "Trigger" },
-  agent:     { color: "#00D4FF", bg: "rgba(0,212,255,0.08)",   icon: "◉",  label: "Agente" },
-  condition: { color: "#FFB800", bg: "rgba(255,184,0,0.08)",   icon: "◇",  label: "Condición" },
-  action:    { color: "#7B61FF", bg: "rgba(123,97,255,0.08)",  icon: "▶",  label: "Acción" },
-  output:    { color: "#FF6B9D", bg: "rgba(255,107,157,0.08)", icon: "◎",  label: "Salida" },
+  trigger:   { color: "#FFB800", bg: "rgba(255,184,0,0.10)",   icon: "⚡", label: "Trigger" },
+  agent:     { color: "#00D4FF", bg: "rgba(0,212,255,0.10)",   icon: "◉",  label: "Agente" },
+  condition: { color: "#7B61FF", bg: "rgba(123,97,255,0.10)",  icon: "◇",  label: "Condición" },
+  action:    { color: "#00E5A0", bg: "rgba(0,229,160,0.10)",   icon: "▶",  label: "Acción" },
+  output:    { color: "#FF6B9D", bg: "rgba(255,107,157,0.10)", icon: "◎",  label: "Salida" },
 };
 
 // ─── Canvas Types ──────────────────────────────────────────────────────────────
@@ -428,27 +428,71 @@ function RunModal({ workflow, agents, settings, onClose, onComplete }: RunModalP
   return (
     <motion.div
       className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: "rgba(5,8,16,0.85)", backdropFilter: "blur(8px)" }}
+      style={{ background: "rgba(3,5,14,0.92)", backdropFilter: "blur(16px)" }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <motion.div
-        className="glass-strong rounded-2xl border border-[#1A2744]/80 w-full max-w-xl mx-4 flex flex-col"
-        style={{ maxHeight: "85vh" }}
+        className="glass-strong rounded-2xl w-full max-w-xl mx-4 flex flex-col"
+        style={{
+          maxHeight: "85vh",
+          border: "1px solid rgba(0,212,255,0.15)",
+          boxShadow: "0 0 60px rgba(0,212,255,0.08), 0 0 120px rgba(0,212,255,0.04), inset 0 0 40px rgba(0,212,255,0.02)",
+        }}
         initial={{ scale: 0.94, opacity: 0, y: 12 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.94, opacity: 0, y: 12 }}
         transition={{ type: "spring", stiffness: 320, damping: 28 }}
       >
         {/* Header */}
-        <div className="px-6 py-4 border-b border-[#1A2744]/60 flex items-center justify-between flex-shrink-0">
+        <div
+          className="px-6 py-5 border-b flex items-center justify-between flex-shrink-0"
+          style={{
+            borderColor: "rgba(0,212,255,0.12)",
+            background: "linear-gradient(135deg, rgba(0,212,255,0.06) 0%, rgba(123,97,255,0.04) 100%)",
+          }}
+        >
           <div>
-            <h3 className="text-[14px] font-bold text-[#E8ECF4]">Ejecutar Workflow</h3>
-            <p className="text-[11px] text-[#6B7A99]">{workflow.name}</p>
+            <div className="flex items-center gap-2.5 mb-1">
+              {phase === "running" && (
+                <motion.span
+                  animate={{ opacity: [1, 0.3, 1] }}
+                  transition={{ repeat: Infinity, duration: 1.2 }}
+                  style={{ color: "#00D4FF", fontSize: 10 }}
+                >
+                  ●
+                </motion.span>
+              )}
+              {phase === "done" && <span style={{ color: "#00E5A0", fontSize: 10 }}>●</span>}
+              {phase === "input" && <span style={{ color: "#6B7A99", fontSize: 10 }}>●</span>}
+              <h3 className="text-[13px] font-bold text-[#E8ECF4] uppercase tracking-widest">
+                {phase === "running" ? "EJECUTANDO WORKFLOW" : phase === "done" ? "EJECUCIÓN COMPLETADA" : "EJECUTAR WORKFLOW"}
+              </h3>
+            </div>
+            <p className="text-[11px] font-mono" style={{ color: "#00D4FF", opacity: 0.7 }}>{workflow.name}</p>
           </div>
-          <button onClick={onClose} className="text-[#6B7A99] hover:text-[#E8ECF4] transition-colors text-lg">✕</button>
+          <button
+            onClick={onClose}
+            className="transition-all"
+            style={{
+              color: "#6B7A99",
+              fontSize: 18,
+              lineHeight: 1,
+              padding: "4px 8px",
+              borderRadius: 6,
+              border: "1px solid transparent",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.color = "#E8ECF4";
+              (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.1)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.color = "#6B7A99";
+              (e.currentTarget as HTMLElement).style.borderColor = "transparent";
+            }}
+          >✕</button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
@@ -484,6 +528,37 @@ function RunModal({ workflow, agents, settings, onClose, onComplete }: RunModalP
           {/* Running / done phase */}
           {(phase === "running" || phase === "done") && (
             <div className="space-y-2">
+              {phase === "running" && (
+                <motion.div
+                  className="rounded-xl p-3 mb-1"
+                  style={{
+                    background: "rgba(0,212,255,0.05)",
+                    border: "1px solid rgba(0,212,255,0.15)",
+                  }}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-bold text-[#6B7A99] uppercase tracking-widest">Progreso</span>
+                    <span className="text-[10px] font-mono text-[#00D4FF]">
+                      {Object.values(nodeStates).filter((s) => s === "done" || s === "error" || s === "skipped").length}
+                      /{workflow.nodes.length}
+                    </span>
+                  </div>
+                  <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(26,39,68,0.8)" }}>
+                    <motion.div
+                      className="h-full rounded-full"
+                      style={{
+                        background: "linear-gradient(90deg, #00D4FF, #7B61FF)",
+                        boxShadow: "0 0 8px rgba(0,212,255,0.6)",
+                      }}
+                      initial={{ width: "0%" }}
+                      animate={{
+                        width: `${(Object.values(nodeStates).filter((s) => s === "done" || s === "error" || s === "skipped").length / Math.max(workflow.nodes.length, 1)) * 100}%`,
+                      }}
+                      transition={{ duration: 0.4 }}
+                    />
+                  </div>
+                </motion.div>
+              )}
               {workflow.nodes.map((node) => {
                 const execState = nodeStates[node.id] ?? "pending";
                 const output = nodeOutputs[node.id] ?? "";
@@ -496,10 +571,10 @@ function RunModal({ workflow, agents, settings, onClose, onComplete }: RunModalP
                     key={node.id}
                     className="rounded-xl overflow-hidden"
                     style={{
-                      border: `1px solid ${execState === "running" ? cfg.color + "60" : "#1A2744"}`,
-                      background: execState === "running" ? cfg.bg : "rgba(10,15,31,0.6)",
+                      border: `1px solid ${execState === "running" ? cfg.color + "60" : execState === "done" ? cfg.color + "25" : "#1A2744"}`,
+                      background: execState === "running" ? cfg.bg : execState === "done" ? `${cfg.color}05` : "rgba(10,15,31,0.6)",
                     }}
-                    animate={execState === "running" ? { boxShadow: [`0 0 0px ${cfg.color}00`, `0 0 12px ${cfg.color}30`, `0 0 0px ${cfg.color}00`] } : {}}
+                    animate={execState === "running" ? { boxShadow: [`0 0 0px ${cfg.color}00`, `0 0 16px ${cfg.color}40`, `0 0 0px ${cfg.color}00`] } : {}}
                     transition={{ repeat: Infinity, duration: 1.4 }}
                   >
                     <button
@@ -574,23 +649,55 @@ function RunModal({ workflow, agents, settings, onClose, onComplete }: RunModalP
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-[#1A2744]/60 flex justify-end gap-3 flex-shrink-0">
+        <div
+          className="px-6 py-4 border-t flex justify-end gap-3 flex-shrink-0"
+          style={{ borderColor: "rgba(0,212,255,0.08)", background: "rgba(0,0,0,0.2)" }}
+        >
           {phase === "input" && (
             <>
               <button onClick={onClose} className="btn-ghost text-[12px]">Cancelar</button>
-              <button onClick={handleStart} className="btn-primary text-[12px]">
+              <button
+                onClick={handleStart}
+                className="text-[12px] font-bold px-5 py-2 rounded-xl transition-all"
+                style={{
+                  background: "linear-gradient(135deg, rgba(0,212,255,0.2), rgba(123,97,255,0.15))",
+                  border: "1px solid rgba(0,212,255,0.4)",
+                  color: "#00D4FF",
+                  boxShadow: "0 0 20px rgba(0,212,255,0.15)",
+                  letterSpacing: "0.05em",
+                  textTransform: "uppercase",
+                }}
+              >
                 ▶ Iniciar Ejecución
               </button>
             </>
           )}
           {phase === "running" && (
-            <span className="text-[11px] text-[#6B7A99] font-mono flex items-center gap-2">
-              <span style={{ animation: "spin 1s linear infinite", display: "inline-block" }}>◌</span>
-              Ejecutando…
-            </span>
+            <div className="flex items-center gap-3">
+              <motion.span
+                animate={{ opacity: [1, 0.3, 1] }}
+                transition={{ repeat: Infinity, duration: 1 }}
+                className="text-[11px] font-mono"
+                style={{ color: "#00D4FF" }}
+              >
+                ◌
+              </motion.span>
+              <span className="text-[11px] text-[#6B7A99] font-mono uppercase tracking-wider">Procesando nodos…</span>
+            </div>
           )}
           {phase === "done" && (
-            <button onClick={onClose} className="btn-primary text-[12px]">Cerrar</button>
+            <button
+              onClick={onClose}
+              className="text-[12px] font-bold px-5 py-2 rounded-xl transition-all uppercase tracking-wider"
+              style={{
+                background: "linear-gradient(135deg, rgba(0,229,160,0.15), rgba(0,212,255,0.1))",
+                border: "1px solid rgba(0,229,160,0.3)",
+                color: "#00E5A0",
+                boxShadow: "0 0 20px rgba(0,229,160,0.1)",
+              }}
+            >
+              ✓ Cerrar
+            </button>
           )}
         </div>
       </motion.div>
@@ -981,26 +1088,50 @@ function WorkflowCanvas({ workflow, agents, settings, onSave, onBack }: Workflow
     <div className="flex-1 flex flex-col min-w-0 h-full">
       {/* Toolbar */}
       <div
-        className="px-4 py-2.5 border-b border-[#1A2744]/60 flex items-center gap-3 flex-shrink-0"
-        style={{ background: "rgba(5,8,16,0.8)" }}
+        className="px-4 py-2.5 border-b flex items-center gap-3 flex-shrink-0"
+        style={{
+          background: "rgba(5,8,20,0.95)",
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
+          backdropFilter: "blur(20px)",
+        }}
       >
         <button onClick={onBack} className="btn-ghost text-[11px] py-1.5 px-3">← Volver</button>
-        <div className="h-4 w-px bg-[#1A2744]" />
-        <span className="text-[13px] font-bold text-[#E8ECF4] truncate max-w-48">{workflow.name}</span>
-        {dirty && <span className="text-[10px] text-[#FFB800] font-mono">● sin guardar</span>}
+        <div className="h-4 w-px" style={{ background: "rgba(255,255,255,0.08)" }} />
+        <div>
+          <span className="text-[13px] font-bold text-[#E8ECF4] truncate max-w-48 block">{workflow.name}</span>
+          <span className="text-[9px] font-mono uppercase tracking-widest" style={{ color: "rgba(0,212,255,0.5)" }}>
+            {canvasState.nodes.length} nodos · {canvasState.edges.length} conexiones
+          </span>
+        </div>
+        {dirty && (
+          <span
+            className="text-[9px] font-mono px-2 py-0.5 rounded-full"
+            style={{
+              color: "#FFB800",
+              background: "rgba(255,184,0,0.1)",
+              border: "1px solid rgba(255,184,0,0.2)",
+            }}
+          >
+            ● sin guardar
+          </span>
+        )}
         <div className="flex-1" />
         <div className="flex items-center gap-2">
           <button onClick={handleCenter} className="btn-ghost text-[11px] py-1.5 px-2.5" title="Centrar">🎯</button>
-          <button
-            onClick={() => dispatch({ type: "SET_ZOOM", zoom: canvasState.zoom - 0.1 })}
-            className="btn-ghost text-[11px] py-1 px-2"
-          >−</button>
-          <span className="text-[11px] font-mono text-[#6B7A99] w-10 text-center">{zoomPct}%</span>
-          <button
-            onClick={() => dispatch({ type: "SET_ZOOM", zoom: canvasState.zoom + 0.1 })}
-            className="btn-ghost text-[11px] py-1 px-2"
-          >+</button>
-          <div className="h-4 w-px bg-[#1A2744]" />
+          <div className="flex items-center rounded-lg overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.07)", background: "rgba(0,0,0,0.3)" }}>
+            <button
+              onClick={() => dispatch({ type: "SET_ZOOM", zoom: canvasState.zoom - 0.1 })}
+              className="text-[11px] px-2.5 py-1.5 transition-colors hover:text-white"
+              style={{ color: "#6B7A99" }}
+            >−</button>
+            <span className="text-[10px] font-mono w-9 text-center" style={{ color: "#00D4FF" }}>{zoomPct}%</span>
+            <button
+              onClick={() => dispatch({ type: "SET_ZOOM", zoom: canvasState.zoom + 0.1 })}
+              className="text-[11px] px-2.5 py-1.5 transition-colors hover:text-white"
+              style={{ color: "#6B7A99" }}
+            >+</button>
+          </div>
+          <div className="h-4 w-px" style={{ background: "rgba(255,255,255,0.08)" }} />
           <button
             onClick={() => {
               dispatch({ type: "LOAD", nodes: [], edges: [] });
@@ -1010,16 +1141,25 @@ function WorkflowCanvas({ workflow, agents, settings, onSave, onBack }: Workflow
           >
             ⌀ Limpiar
           </button>
-          <button onClick={handleSave} className="btn-primary text-[11px] py-1.5 px-3">
+          <button
+            onClick={handleSave}
+            className="text-[11px] py-1.5 px-4 rounded-xl font-semibold transition-all uppercase tracking-wider"
+            style={{
+              background: "rgba(0,212,255,0.08)",
+              border: "1px solid rgba(0,212,255,0.2)",
+              color: "#00D4FF",
+            }}
+          >
             ✓ Guardar
           </button>
           <button
             onClick={() => setShowRunModal(true)}
-            className="text-[11px] py-1.5 px-4 rounded-xl font-semibold transition-all"
+            className="text-[11px] py-1.5 px-4 rounded-xl font-bold transition-all uppercase tracking-wider"
             style={{
-              background: "linear-gradient(135deg, rgba(0,229,160,0.15), rgba(0,212,255,0.1))",
-              border: "1px solid rgba(0,229,160,0.3)",
+              background: "linear-gradient(135deg, rgba(0,229,160,0.18), rgba(0,212,255,0.12))",
+              border: "1px solid rgba(0,229,160,0.35)",
               color: "#00E5A0",
+              boxShadow: "0 0 16px rgba(0,229,160,0.12)",
             }}
           >
             ▶ Ejecutar
@@ -1033,9 +1173,9 @@ function WorkflowCanvas({ workflow, agents, settings, onSave, onBack }: Workflow
           ref={containerRef}
           className="flex-1 relative min-w-0 overflow-hidden"
           style={{
-            background: "#050810",
-            backgroundImage: "radial-gradient(rgba(26,39,68,0.8) 1px, transparent 1px)",
-            backgroundSize: "20px 20px",
+            background: "#07091A",
+            backgroundImage: "radial-gradient(rgba(0,212,255,0.18) 1px, transparent 1px)",
+            backgroundSize: "28px 28px",
             cursor: canvasState.isPanning
               ? "grabbing"
               : canvasState.connecting
@@ -1063,6 +1203,36 @@ function WorkflowCanvas({ workflow, agents, settings, onSave, onBack }: Workflow
               <marker id="arrowhead-selected" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
                 <polygon points="0 0, 10 3.5, 0 7" fill="#00D4FF" />
               </marker>
+              <filter id="glow-trigger" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="4" result="blur" />
+                <feFlood floodColor="#FFB800" floodOpacity="0.35" result="color" />
+                <feComposite in="color" in2="blur" operator="in" result="glow" />
+                <feMerge><feMergeNode in="glow" /><feMergeNode in="SourceGraphic" /></feMerge>
+              </filter>
+              <filter id="glow-agent" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="4" result="blur" />
+                <feFlood floodColor="#00D4FF" floodOpacity="0.35" result="color" />
+                <feComposite in="color" in2="blur" operator="in" result="glow" />
+                <feMerge><feMergeNode in="glow" /><feMergeNode in="SourceGraphic" /></feMerge>
+              </filter>
+              <filter id="glow-condition" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="4" result="blur" />
+                <feFlood floodColor="#7B61FF" floodOpacity="0.35" result="color" />
+                <feComposite in="color" in2="blur" operator="in" result="glow" />
+                <feMerge><feMergeNode in="glow" /><feMergeNode in="SourceGraphic" /></feMerge>
+              </filter>
+              <filter id="glow-action" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="4" result="blur" />
+                <feFlood floodColor="#00E5A0" floodOpacity="0.35" result="color" />
+                <feComposite in="color" in2="blur" operator="in" result="glow" />
+                <feMerge><feMergeNode in="glow" /><feMergeNode in="SourceGraphic" /></feMerge>
+              </filter>
+              <filter id="glow-output" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="4" result="blur" />
+                <feFlood floodColor="#FF6B9D" floodOpacity="0.35" result="color" />
+                <feComposite in="color" in2="blur" operator="in" result="glow" />
+                <feMerge><feMergeNode in="glow" /><feMergeNode in="SourceGraphic" /></feMerge>
+              </filter>
             </defs>
 
             <g transform={`translate(${canvasState.pan.x}, ${canvasState.pan.y}) scale(${canvasState.zoom})`}>
@@ -1144,7 +1314,7 @@ function WorkflowCanvas({ workflow, agents, settings, onSave, onBack }: Workflow
                 const inPort = getInputPortPos(node);
 
                 return (
-                  <g key={node.id}>
+                  <g key={node.id} filter={isSelected ? `url(#glow-${node.type})` : undefined}>
                     <foreignObject
                       x={node.x}
                       y={node.y}
@@ -1159,10 +1329,10 @@ function WorkflowCanvas({ workflow, agents, settings, onSave, onBack }: Workflow
                           height: NODE_H,
                           borderRadius: 10,
                           background: cfg.bg,
-                          border: `1.5px solid ${isSelected ? cfg.color : cfg.color + "40"}`,
+                          border: `1.5px solid ${isSelected ? cfg.color : cfg.color + "50"}`,
                           boxShadow: isSelected
-                            ? `0 0 0 1px ${cfg.color}30, 0 0 20px ${cfg.color}20, inset 0 0 10px ${cfg.color}08`
-                            : "none",
+                            ? `0 0 0 2px ${cfg.color}40, 0 0 24px ${cfg.color}30, inset 0 0 14px ${cfg.color}10`
+                            : `0 2px 12px rgba(0,0,0,0.4)`,
                           cursor: "grab",
                           userSelect: "none",
                           display: "flex",
@@ -1250,11 +1420,27 @@ function WorkflowCanvas({ workflow, agents, settings, onSave, onBack }: Workflow
           {canvasState.nodes.length === 0 && (
             <div
               className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
-              style={{ opacity: 0.25 }}
             >
-              <div className="text-5xl mb-3">◫</div>
-              <p className="text-[13px] text-[#6B7A99]">Doble click para agregar nodo</p>
-              <p className="text-[11px] text-[#6B7A99] mt-1">o arrastra desde la paleta</p>
+              <div
+                className="flex flex-col items-center gap-3"
+                style={{ opacity: 0.4 }}
+              >
+                <div
+                  className="rounded-2xl flex items-center justify-center"
+                  style={{
+                    width: 64,
+                    height: 64,
+                    background: "linear-gradient(135deg, rgba(0,212,255,0.1), rgba(123,97,255,0.08))",
+                    border: "1px solid rgba(0,212,255,0.15)",
+                  }}
+                >
+                  <span style={{ fontSize: 28 }}>◫</span>
+                </div>
+                <p className="text-[13px] font-semibold" style={{ color: "#6B7A99" }}>Doble click para agregar nodo</p>
+                <p className="text-[10px] font-mono uppercase tracking-widest" style={{ color: "rgba(0,212,255,0.5)" }}>
+                  o arrastra desde la paleta
+                </p>
+              </div>
             </div>
           )}
         </div>
@@ -1468,14 +1654,35 @@ export default function WorkflowsPage() {
     <div className="flex h-full">
       {/* Sidebar */}
       <div className="w-72 border-r border-[#1A2744]/60 flex flex-col flex-shrink-0">
-        <div className="px-5 py-4 border-b border-[#1A2744]/60 flex items-center justify-between flex-shrink-0">
+        <div
+          className="px-5 py-4 border-b flex items-center justify-between flex-shrink-0"
+          style={{
+            background: "rgba(5,8,20,0.95)",
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            backdropFilter: "blur(20px)",
+          }}
+        >
           <div>
-            <h2 className="text-[14px] font-bold tracking-wide text-[#E8ECF4]">Workflows</h2>
-            <p className="text-[10px] text-[#6B7A99] font-mono">
-              {workflows.filter((w) => w.active).length} activos
+            <h2
+              className="font-black tracking-widest uppercase"
+              style={{ fontSize: 15, color: "#E8ECF4", letterSpacing: "0.15em" }}
+            >
+              WORKFLOWS
+            </h2>
+            <p className="text-[10px] font-mono mt-0.5" style={{ color: "rgba(0,212,255,0.6)" }}>
+              Diseñador de flujos de trabajo con IA
             </p>
           </div>
-          <button onClick={() => setCreating(true)} className="btn-primary text-[11px] py-1.5 px-3">
+          <button
+            onClick={() => setCreating(true)}
+            className="text-[11px] font-bold py-1.5 px-4 rounded-xl transition-all uppercase tracking-wider"
+            style={{
+              background: "linear-gradient(135deg, rgba(0,212,255,0.15), rgba(123,97,255,0.1))",
+              border: "1px solid rgba(0,212,255,0.3)",
+              color: "#00D4FF",
+              boxShadow: "0 0 16px rgba(0,212,255,0.1)",
+            }}
+          >
             + Nuevo
           </button>
         </div>
@@ -1577,13 +1784,68 @@ export default function WorkflowsPage() {
       </div>
 
       {/* Empty state */}
-      <div className="flex-1 flex flex-col items-center justify-center gap-4 opacity-30">
-        <span className="text-6xl">◫</span>
-        <div className="text-center">
-          <p className="text-[15px] font-semibold text-[#E8ECF4] mb-1">Editor de Workflows</p>
-          <p className="text-[12px] text-[#6B7A99]">Selecciona un workflow para editar</p>
-          <p className="text-[11px] text-[#6B7A99] mt-1">o crea uno nuevo con + Nuevo</p>
-        </div>
+      <div
+        className="flex-1 flex flex-col items-center justify-center gap-6"
+        style={{
+          background: "#07091A",
+          backgroundImage: "radial-gradient(rgba(0,212,255,0.10) 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
+        }}
+      >
+        <motion.div
+          animate={{ y: [0, -8, 0] }}
+          transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut" }}
+          className="flex flex-col items-center gap-6"
+        >
+          {/* Icon */}
+          <div
+            className="relative flex items-center justify-center rounded-2xl"
+            style={{
+              width: 80,
+              height: 80,
+              background: "linear-gradient(135deg, rgba(0,212,255,0.12), rgba(123,97,255,0.08))",
+              border: "1px solid rgba(0,212,255,0.2)",
+              boxShadow: "0 0 40px rgba(0,212,255,0.12), 0 0 80px rgba(0,212,255,0.06)",
+            }}
+          >
+            <span style={{ fontSize: 36, filter: "drop-shadow(0 0 12px rgba(0,212,255,0.6))" }}>◫</span>
+          </div>
+
+          {/* Text */}
+          <div className="text-center space-y-2">
+            <p
+              className="font-black uppercase tracking-widest"
+              style={{ fontSize: 16, color: "#E8ECF4", letterSpacing: "0.12em" }}
+            >
+              Editor de Workflows
+            </p>
+            <p className="text-[13px]" style={{ color: "rgba(255,255,255,0.35)" }}>
+              Crea tu primer workflow con IA
+            </p>
+            <p className="text-[11px] font-mono" style={{ color: "rgba(0,212,255,0.4)" }}>
+              o selecciona uno de la lista
+            </p>
+          </div>
+
+          {/* CTA */}
+          {workflows.length === 0 && (
+            <motion.button
+              onClick={() => setCreating(true)}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="text-[12px] font-bold py-2.5 px-6 rounded-xl uppercase tracking-wider"
+              style={{
+                background: "linear-gradient(135deg, rgba(0,212,255,0.2), rgba(123,97,255,0.15))",
+                border: "1px solid rgba(0,212,255,0.35)",
+                color: "#00D4FF",
+                boxShadow: "0 0 24px rgba(0,212,255,0.15)",
+              }}
+            >
+              + Nuevo Workflow
+            </motion.button>
+          )}
+        </motion.div>
       </div>
     </div>
   );
