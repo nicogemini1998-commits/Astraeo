@@ -14,6 +14,8 @@ import {
   SettingsIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  ZapIcon,
+  ActivityIcon,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useAstraeo } from "@/store/astraeo";
@@ -36,7 +38,9 @@ const NAV_ITEMS: NavItem[] = [
   { id: "pixel-stage",   label: "NEXUS",          icon: Building2Icon, badge: "LIVE", badgeColor: "#00D4FF" },
   { id: "commander",     label: "Commander",      icon: TerminalIcon },
   { id: "agents",        label: "Agentes",        icon: BotIcon },
-  { id: "workflows",     label: "Workflows",      icon: Share2Icon, badge: "NEW", badgeColor: "#7B61FF" },
+  { id: "workflows",     label: "Workflows",      icon: Share2Icon },
+  { id: "skills",        label: "Habilidades",    icon: ZapIcon, badge: "NEW", badgeColor: "#FFB800" },
+  { id: "hooks",         label: "Hooks",          icon: ActivityIcon, badge: "NEW", badgeColor: "#00E5A0" },
   { id: "chat",          label: "Chat",           icon: MessageCircleIcon },
   { id: "analytics",     label: "Analytics",      icon: BarChart2Icon },
   { id: "memory",        label: "Memory",         icon: DatabaseIcon },

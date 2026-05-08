@@ -9,7 +9,9 @@ export type Page =
   | "memory"
   | "analytics"
   | "integrations"
-  | "settings";
+  | "settings"
+  | "skills"
+  | "hooks";
 
 export type AgentStatus = "online" | "busy" | "offline" | "error";
 
@@ -146,4 +148,46 @@ export interface AppSettings {
   starfieldDensity: number;
   compactMode: boolean;
   companyContext: string;
+}
+
+// ─── Skills ───────────────────────────────────────────────────────────────────
+export type SkillCategory = "research" | "writing" | "code" | "data" | "visual" | "communication" | "automation";
+export type SkillDifficulty = "beginner" | "intermediate" | "advanced";
+
+export interface Skill {
+  id: string;
+  name: string;
+  description: string;
+  category: SkillCategory;
+  difficulty: SkillDifficulty;
+  icon: string;
+  tags: string[];
+  agentIds: string[];
+  usageCount: number;
+  successRate: number;
+  avgDurationMs: number;
+  active: boolean;
+  builtIn: boolean;
+  createdAt: string;
+}
+
+// ─── Hooks ────────────────────────────────────────────────────────────────────
+export type HookTrigger = "pre-message" | "post-message" | "agent-start" | "agent-end" | "workflow-start" | "workflow-end" | "schedule" | "webhook" | "error" | "success";
+export type HookAction = "notify" | "log" | "transform" | "webhook" | "email" | "slack" | "stop" | "branch";
+
+export interface Hook {
+  id: string;
+  name: string;
+  description: string;
+  trigger: HookTrigger;
+  triggerConfig: Record<string, unknown>;
+  action: HookAction;
+  actionConfig: Record<string, unknown>;
+  active: boolean;
+  runCount: number;
+  lastRun?: string;
+  successCount: number;
+  failCount: number;
+  color: string;
+  createdAt: string;
 }

@@ -17,6 +17,8 @@ import Analytics from "@/components/pages/Analytics";
 import Integrations from "@/components/pages/Integrations";
 import SettingsPage from "@/components/pages/Settings";
 import Commander from "@/components/pages/Commander";
+import SkillsPage from "@/components/pages/Skills";
+import HooksPage from "@/components/pages/Hooks";
 
 import type { Variants } from "framer-motion";
 
@@ -100,6 +102,8 @@ function PageContent() {
     integrations: <Integrations />,
     settings: <SettingsPage />,
     commander: <Commander />,
+    skills: <SkillsPage />,
+    hooks: <HooksPage />,
   };
 
   return (

@@ -19,6 +19,8 @@ import {
   ZapIcon,
   KeyIcon,
   SwordsIcon,
+  SparklesIcon,
+  WebhookIcon,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useAstraeo } from "@/store/astraeo";
@@ -47,6 +49,8 @@ const PAGE_META: Record<Page, { label: string; icon: LucideIcon; color: string }
   integrations:  { label: "Integraciones",  icon: PlugIcon,            color: "#FFB800" },
   settings:      { label: "Config",         icon: SettingsIcon,        color: "#6A7898" },
   missions:      { label: "Misiones",       icon: SwordsIcon,          color: "#FF4757" },
+  skills:        { label: "Skills",         icon: SparklesIcon,        color: "#00E5A0" },
+  hooks:         { label: "Hooks",          icon: WebhookIcon,         color: "#FF6B9D" },
 };
 
 const SEARCH_PLACEHOLDERS = [

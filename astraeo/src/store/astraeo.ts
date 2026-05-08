@@ -5,11 +5,12 @@ import { nanoid } from "nanoid";
 import type {
   Page, Agent, Mission, ChatSession, ChatMessage,
   MemoryEntry, Workflow, Integration, Notification,
-  AppSettings, MetricPoint, AgentStatus
+  AppSettings, MetricPoint, AgentStatus, Skill, Hook
 } from "@/lib/types";
 import {
   seedAgents, seedMissions, seedMemory, seedWorkflows,
-  seedIntegrations, seedNotifications, seedChatSessions
+  seedIntegrations, seedNotifications, seedChatSessions,
+  seedSkills, seedHooks
 } from "@/lib/seeds";
 
 interface RealtimeMetrics {
@@ -91,6 +92,21 @@ interface AstraeoState {
   // Metrics (real-time)
   tickMetrics: () => void;
 
+  skills: Skill[];
+  hooks: Hook[];
+
+  // Skills
+  addSkill: (s: Omit<Skill, "id" | "createdAt" | "usageCount" | "successRate" | "avgDurationMs">) => void;
+  updateSkill: (id: string, patch: Partial<Skill>) => void;
+  deleteSkill: (id: string) => void;
+  toggleSkill: (id: string) => void;
+
+  // Hooks
+  addHook: (h: Omit<Hook, "id" | "createdAt" | "runCount" | "successCount" | "failCount">) => void;
+  updateHook: (id: string, patch: Partial<Hook>) => void;
+  deleteHook: (id: string) => void;
+  toggleHook: (id: string) => void;
+
   // Toasts
   showToast: (message: string, type?: "success" | "error" | "info" | "warning") => void;
   dismissToast: (id: string) => void;
@@ -168,6 +184,8 @@ export const useAstraeo = create<AstraeoState>()(
       notifPanelOpen: false,
       modalOpen: false,
       toasts: [],
+      skills: seedSkills,
+      hooks: seedHooks,
       metrics: {
         apiLatency: 0,
         efficiency: 92,
@@ -455,6 +473,20 @@ export const useAstraeo = create<AstraeoState>()(
           };
         });
       },
+
+      addSkill: (s) => set((state) => ({
+        skills: [{ ...s, id: nanoid(), createdAt: new Date().toISOString(), usageCount: 0, successRate: 100, avgDurationMs: 0 }, ...state.skills]
+      })),
+      updateSkill: (id, patch) => set((state) => ({ skills: state.skills.map((s) => s.id === id ? { ...s, ...patch } : s) })),
+      deleteSkill: (id) => set((state) => ({ skills: state.skills.filter((s) => s.id !== id) })),
+      toggleSkill: (id) => set((state) => ({ skills: state.skills.map((s) => s.id === id ? { ...s, active: !s.active } : s) })),
+
+      addHook: (h) => set((state) => ({
+        hooks: [{ ...h, id: nanoid(), createdAt: new Date().toISOString(), runCount: 0, successCount: 0, failCount: 0 }, ...state.hooks]
+      })),
+      updateHook: (id, patch) => set((state) => ({ hooks: state.hooks.map((h) => h.id === id ? { ...h, ...patch } : h) })),
+      deleteHook: (id) => set((state) => ({ hooks: state.hooks.filter((h) => h.id !== id) })),
+      toggleHook: (id) => set((state) => ({ hooks: state.hooks.map((h) => h.id === id ? { ...h, active: !h.active } : h) })),
 
       showToast: (message, type = "info") => {
         const id = nanoid();
