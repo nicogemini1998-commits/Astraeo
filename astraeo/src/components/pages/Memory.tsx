@@ -49,7 +49,7 @@ function highlightText(text: string, query: string): React.ReactNode {
         <mark
           key={i}
           style={{
-            background: "rgba(0,212,255,0.22)",
+            background: "rgba(74,142,184,0.22)",
             color: C.cyan,
             borderRadius: 2,
             padding: "0 2px",
@@ -109,8 +109,8 @@ function MemoryForm({ initialData, isEditing, onChange, onSave, onCancel }: Memo
       className="rounded-2xl p-5 col-span-full md:col-span-2 xl:col-span-1"
       style={{
         background: C.surface,
-        border: `1px solid rgba(0,212,255,0.2)`,
-        boxShadow: `0 0 32px rgba(0,212,255,0.06)`,
+        border: `1px solid rgba(74,142,184,0.2)`,
+        boxShadow: `0 1px 4px rgba(74,142,184,0.06)`,
       }}
     >
       <div className="flex items-center gap-2 mb-4">
@@ -130,7 +130,7 @@ function MemoryForm({ initialData, isEditing, onChange, onSave, onCancel }: Memo
           placeholder="Título"
           value={initialData.title}
           onChange={(e) => onChange({ ...initialData, title: e.target.value })}
-          onFocus={(e) => { (e.target as HTMLInputElement).style.borderColor = `rgba(0,212,255,0.3)`; }}
+          onFocus={(e) => { (e.target as HTMLInputElement).style.borderColor = `rgba(74,142,184,0.3)`; }}
           onBlur={(e) => { (e.target as HTMLInputElement).style.borderColor = "rgba(255,255,255,0.07)"; }}
         />
         <textarea
@@ -144,7 +144,7 @@ function MemoryForm({ initialData, isEditing, onChange, onSave, onCancel }: Memo
           placeholder="Contenido..."
           value={initialData.content}
           onChange={(e) => onChange({ ...initialData, content: e.target.value })}
-          onFocus={(e) => { (e.target as HTMLTextAreaElement).style.borderColor = `rgba(0,212,255,0.3)`; }}
+          onFocus={(e) => { (e.target as HTMLTextAreaElement).style.borderColor = `rgba(74,142,184,0.3)`; }}
           onBlur={(e) => { (e.target as HTMLTextAreaElement).style.borderColor = "rgba(255,255,255,0.07)"; }}
         />
         <div className="grid grid-cols-2 gap-2">
@@ -329,7 +329,7 @@ function MemoryCard({ entry, search, isSelected, onToggleSelect, onEdit, onDelet
       </h4>
 
       {/* Content preview */}
-      <p className="text-[12px] line-clamp-3 leading-relaxed flex-1" style={{ color: "#8A8A97" }}>
+      <p className="text-[12px] line-clamp-3 leading-relaxed flex-1" style={{ color: "var(--text-muted)" }}>
         {highlightText(entry.content, search)}
       </p>
 
@@ -526,9 +526,9 @@ export default function MemoryPage() {
             <div
               className="w-8 h-8 rounded-xl flex items-center justify-center"
               style={{
-                background: "rgba(123,97,255,0.1)",
-                border: `1px solid rgba(123,97,255,0.25)`,
-                boxShadow: `0 0 16px rgba(123,97,255,0.12)`,
+                background: "rgba(102,85,204,0.1)",
+                border: `1px solid rgba(102,85,204,0.25)`,
+                boxShadow: `0 0 16px rgba(102,85,204,0.12)`,
               }}
             >
               <span style={{ fontSize: 14 }}>◍</span>
@@ -641,7 +641,7 @@ export default function MemoryPage() {
               placeholder="Buscar memorias..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              onFocus={(e) => { (e.target as HTMLInputElement).style.borderColor = `rgba(0,212,255,0.3)`; }}
+              onFocus={(e) => { (e.target as HTMLInputElement).style.borderColor = `rgba(74,142,184,0.3)`; }}
               onBlur={(e) => { (e.target as HTMLInputElement).style.borderColor = "rgba(255,255,255,0.07)"; }}
             />
           </div>
@@ -664,9 +664,9 @@ export default function MemoryPage() {
               onClick={() => setFilterType("all")}
               className="text-[9px] px-2.5 py-1.5 rounded-lg font-semibold tracking-wider uppercase transition-all"
               style={{
-                background: filterType === "all" ? "rgba(0,212,255,0.1)" : "transparent",
+                background: filterType === "all" ? "rgba(74,142,184,0.1)" : "transparent",
                 color: filterType === "all" ? C.cyan : C.muted,
-                border: `1px solid ${filterType === "all" ? "rgba(0,212,255,0.25)" : "rgba(255,255,255,0.06)"}`,
+                border: `1px solid ${filterType === "all" ? "rgba(74,142,184,0.25)" : "rgba(255,255,255,0.06)"}`,
               }}
             >
               Todas
@@ -703,8 +703,8 @@ export default function MemoryPage() {
             transition={{ duration: 0.18 }}
             className="mx-5 mt-3 flex items-center gap-3 px-4 py-2.5 rounded-xl flex-shrink-0"
             style={{
-              background: "rgba(0,212,255,0.06)",
-              border: `1px solid rgba(0,212,255,0.18)`,
+              background: "rgba(74,142,184,0.06)",
+              border: `1px solid rgba(74,142,184,0.18)`,
             }}
           >
             <span className="text-[12px] font-semibold" style={{ color: C.cyan }}>
@@ -794,7 +794,7 @@ export default function MemoryPage() {
                 ◎
               </div>
               <div className="text-center">
-                <p className="text-[14px] font-semibold mb-1" style={{ color: "#8A8A97" }}>
+                <p className="text-[14px] font-semibold mb-1" style={{ color: "var(--text-muted)" }}>
                   {search ? `Sin resultados para "${search}"` : "No hay memorias"}
                 </p>
                 {!search && (

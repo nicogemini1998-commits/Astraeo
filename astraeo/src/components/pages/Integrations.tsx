@@ -101,7 +101,7 @@ const CATALOG: IntegrationMeta[] = [
     name: "Notion",
     icon: "◻",
     category: "Productividad",
-    color: "#F0EDE6",
+    color: "var(--text-primary)",
     description: "Exporta informes, planes y documentación de agentes a Notion.",
     beta: true,
   },
@@ -260,10 +260,10 @@ export default function IntegrationsPage() {
         {/* Title row */}
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16 }}>
           <div>
-            <p style={{ fontSize: 11, color: "#4A5568", fontFamily: "monospace", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 3 }}>
+            <p style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "monospace", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 3 }}>
               Ecosistema
             </p>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: "#F0EDE6", letterSpacing: "-0.02em" }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
               Integraciones
             </h2>
           </div>
@@ -273,7 +273,7 @@ export default function IntegrationsPage() {
             <StatusPill color="#3D8A60" pulse>
               {connectedCount} conectadas
             </StatusPill>
-            <StatusPill color="#8A8A97">
+            <StatusPill color="var(--text-muted)">
               {merged.length - connectedCount} disponibles
             </StatusPill>
             {betaCount > 0 && (
@@ -302,10 +302,10 @@ export default function IntegrationsPage() {
                 style={{
                   padding: "7px 13px",
                   borderRadius: "8px 8px 0 0",
-                  border: `1px solid ${active ? "rgba(0,212,255,0.3)" : "rgba(26,39,68,0.5)"}`,
+                  border: `1px solid ${active ? "rgba(74,142,184,0.3)" : "rgba(20,18,14,0.5)"}`,
                   borderBottom: active ? "1px solid transparent" : "1px solid rgba(26,39,68,0.5)",
-                  background: active ? "rgba(0,212,255,0.08)" : "transparent",
-                  color: active ? "#4A8EB8" : "#8A8A97",
+                  background: active ? "rgba(74,142,184,0.08)" : "transparent",
+                  color: active ? "#4A8EB8" : "var(--text-muted)",
                   fontSize: 11,
                   fontWeight: active ? 600 : 400,
                   cursor: "pointer",
@@ -326,8 +326,8 @@ export default function IntegrationsPage() {
                       fontSize: 9,
                       padding: "1px 5px",
                       borderRadius: 4,
-                      background: active ? "rgba(0,212,255,0.15)" : "rgba(107,122,153,0.12)",
-                      color: active ? "#4A8EB8" : "#8A8A97",
+                      background: active ? "rgba(74,142,184,0.15)" : "rgba(107,122,153,0.12)",
+                      color: active ? "#4A8EB8" : "var(--text-muted)",
                       fontWeight: 600,
                     }}
                   >
@@ -384,7 +384,7 @@ export default function IntegrationsPage() {
               }}
             >
               <span style={{ fontSize: 36 }}>◍</span>
-              <p style={{ fontSize: 14, color: "#8A8A97" }}>Sin integraciones en esta categoría</p>
+              <p style={{ fontSize: 14, color: "var(--text-muted)" }}>Sin integraciones en esta categoría</p>
             </div>
           )}
         </motion.div>
@@ -452,7 +452,7 @@ export default function IntegrationsPage() {
                   </div>
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <h3 style={{ fontSize: 16, fontWeight: 700, color: "#F0EDE6" }}>
+                      <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>
                         {configuring.name}
                       </h3>
                       {configuring.beta && (
@@ -461,9 +461,9 @@ export default function IntegrationsPage() {
                             fontSize: 9,
                             padding: "2px 7px",
                             borderRadius: 4,
-                            background: "rgba(123,97,255,0.12)",
+                            background: "rgba(102,85,204,0.12)",
                             color: "#6655CC",
-                            border: "1px solid rgba(123,97,255,0.25)",
+                            border: "1px solid rgba(102,85,204,0.25)",
                             fontWeight: 700,
                             textTransform: "uppercase",
                           }}
@@ -472,7 +472,7 @@ export default function IntegrationsPage() {
                         </span>
                       )}
                     </div>
-                    <p style={{ fontSize: 11, color: "#8A8A97", marginTop: 2 }}>{configuring.category}</p>
+                    <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{configuring.category}</p>
                   </div>
                 </div>
                 <button
@@ -482,8 +482,8 @@ export default function IntegrationsPage() {
                     height: 28,
                     borderRadius: 7,
                     border: "1px solid rgba(26,39,68,0.7)",
-                    background: "rgba(10,15,31,0.5)",
-                    color: "#8A8A97",
+                    background: "rgba(14,12,10,0.5)",
+                    color: "var(--text-muted)",
                     cursor: "pointer",
                     fontSize: 12,
                     display: "flex",
@@ -496,13 +496,13 @@ export default function IntegrationsPage() {
               </div>
 
               {/* Description */}
-              <p style={{ fontSize: 12, color: "#8A8A97", lineHeight: 1.6, padding: "0 2px" }}>
+              <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.6, padding: "0 2px" }}>
                 {configuring.description}
               </p>
 
               {/* API Key field */}
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <label style={{ fontSize: 11, color: "#8A8A97", letterSpacing: "0.04em" }}>
+                <label style={{ fontSize: 11, color: "var(--text-muted)", letterSpacing: "0.04em" }}>
                   API Key <span style={{ color: "#A83C50" }}>*</span>
                 </label>
                 <div style={{ position: "relative" }}>
@@ -512,8 +512,8 @@ export default function IntegrationsPage() {
                       padding: "10px 40px 10px 12px",
                       borderRadius: 8,
                       border: "1px solid rgba(26,39,68,0.7)",
-                      background: "rgba(10,15,31,0.5)",
-                      color: "#F0EDE6",
+                      background: "rgba(14,12,10,0.5)",
+                      color: "var(--text-primary)",
                       fontSize: 12,
                       fontFamily: "monospace",
                       outline: "none",
@@ -538,7 +538,7 @@ export default function IntegrationsPage() {
                       transform: "translateY(-50%)",
                       background: "none",
                       border: "none",
-                      color: "#8A8A97",
+                      color: "var(--text-muted)",
                       cursor: "pointer",
                       fontSize: 13,
                       padding: 0,
@@ -555,8 +555,8 @@ export default function IntegrationsPage() {
               {/* Webhook URL (optional) */}
               {configuring.webhookField && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  <label style={{ fontSize: 11, color: "#8A8A97", letterSpacing: "0.04em" }}>
-                    Webhook URL <span style={{ color: "#4A5568" }}>(opcional)</span>
+                  <label style={{ fontSize: 11, color: "var(--text-muted)", letterSpacing: "0.04em" }}>
+                    Webhook URL <span style={{ color: "var(--text-muted)" }}>(opcional)</span>
                   </label>
                   <input
                     style={{
@@ -564,8 +564,8 @@ export default function IntegrationsPage() {
                       padding: "10px 12px",
                       borderRadius: 8,
                       border: "1px solid rgba(26,39,68,0.7)",
-                      background: "rgba(10,15,31,0.5)",
-                      color: "#F0EDE6",
+                      background: "rgba(14,12,10,0.5)",
+                      color: "var(--text-primary)",
                       fontSize: 12,
                       fontFamily: "monospace",
                       outline: "none",
@@ -590,7 +590,7 @@ export default function IntegrationsPage() {
                     borderRadius: 7,
                     border: "1px solid rgba(26,39,68,0.7)",
                     background: "transparent",
-                    color: "#8A8A97",
+                    color: "var(--text-muted)",
                     fontSize: 11,
                     fontWeight: 500,
                     cursor: "pointer",
@@ -636,7 +636,7 @@ export default function IntegrationsPage() {
                     borderRadius: 9,
                     border: "1px solid rgba(26,39,68,0.7)",
                     background: "transparent",
-                    color: "#8A8A97",
+                    color: "var(--text-muted)",
                     fontSize: 12,
                     fontWeight: 500,
                     cursor: "pointer",
@@ -687,18 +687,18 @@ function IntegrationCard({
   onConfigure: () => void;
 }) {
   const statusStyle = item.connected
-    ? { bg: "rgba(0,229,160,0.08)", border: "rgba(0,229,160,0.25)", color: "#3D8A60", label: "Conectado" }
-    : { bg: "rgba(107,122,153,0.06)", border: "rgba(26,39,68,0.6)", color: "#8A8A97", label: "Disponible" };
+    ? { bg: "rgba(61,138,96,0.08)", border: "rgba(61,138,96,0.25)", color: "#3D8A60", label: "Conectado" }
+    : { bg: "rgba(107,122,153,0.06)", border: "rgba(20,18,14,0.6)", color: "var(--text-muted)", label: "Disponible" };
 
   return (
     <motion.div
       whileHover={{ y: -2, boxShadow: `0 8px 32px ${item.color}14` }}
       style={{
         borderRadius: 14,
-        border: `1px solid ${item.connected ? item.color + "30" : "rgba(26,39,68,0.55)"}`,
+        border: `1px solid ${item.connected ? item.color + "30" : "rgba(20,18,14,0.55)"}`,
         background: item.connected
           ? `${item.color}04`
-          : "rgba(10,15,31,0.35)",
+          : "rgba(14,12,10,0.35)",
         padding: "16px",
         display: "flex",
         flexDirection: "column",
@@ -730,7 +730,7 @@ function IntegrationCard({
           </div>
           <div style={{ minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-              <p style={{ fontSize: 13, fontWeight: 600, color: "#F0EDE6", whiteSpace: "nowrap" }}>
+              <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", whiteSpace: "nowrap" }}>
                 {item.name}
               </p>
               {item.beta && (
@@ -739,9 +739,9 @@ function IntegrationCard({
                     fontSize: 8,
                     padding: "2px 6px",
                     borderRadius: 4,
-                    background: "rgba(123,97,255,0.12)",
+                    background: "rgba(102,85,204,0.12)",
                     color: "#6655CC",
-                    border: "1px solid rgba(123,97,255,0.22)",
+                    border: "1px solid rgba(102,85,204,0.22)",
                     fontWeight: 700,
                     textTransform: "uppercase",
                     letterSpacing: "0.05em",
@@ -751,7 +751,7 @@ function IntegrationCard({
                 </span>
               )}
             </div>
-            <p style={{ fontSize: 10, color: "#8A8A97", marginTop: 1 }}>{item.category}</p>
+            <p style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 1 }}>{item.category}</p>
           </div>
         </div>
 
@@ -800,7 +800,7 @@ function IntegrationCard({
                 borderRadius: 8,
                 border: "1px solid rgba(26,39,68,0.6)",
                 background: "transparent",
-                color: "#8A8A97",
+                color: "var(--text-muted)",
                 fontSize: 11,
                 fontWeight: 500,
                 cursor: "pointer",

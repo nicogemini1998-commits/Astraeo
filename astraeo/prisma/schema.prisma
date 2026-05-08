@@ -50,13 +50,74 @@ model ChatSession {
 }
 
 model Settings {
-  id               String  @id @default(cuid())
-  companyName      String  @default("Cliender")
-  companyContext   String  @default("")
-  anthropicApiKey  String? // Encrypted in production
-  theme            String  @default("dark")
-  language         String  @default("es")
+  id               String   @id @default(cuid())
+  companyName      String   @default("Cliender")
+  companyContext   String   @default("")
+  anthropicApiKey  String?
+  theme            String   @default("dark")
+  language         String   @default("es")
   updatedAt        DateTime @updatedAt
 
   @@map("settings")
+}
+
+// ─── Multi-agent memory system ────────────────────────────────────────────────
+
+model AgentMemory {
+  id        String   @id @default(cuid())
+  agentId   String
+  key       String
+  value     Json
+  ttlAt     DateTime? // null = permanent
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([agentId, key])
+  @@index([agentId])
+  @@index([ttlAt])
+  @@map("agent_memory")
+}
+
+model SharedContext {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  writtenBy String   // agentId of last writer
+  ttlAt     DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ttlAt])
+  @@map("shared_context")
+}
+
+model AgentMessage {
+  id         String   @id @default(cuid())
+  fromAgent  String
+  toAgent    String
+  channel    String   @default("general") // general, task, memory, alert
+  content    Json
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([toAgent, read])
+  @@index([fromAgent])
+  @@index([createdAt])
+  @@map("agent_messages")
+}
+
+model TaskLog {
+  id          String   @id @default(cuid())
+  agentId     String
+  taskHash    String   // SHA-256 of task description for dedup
+  description String
+  status      String   @default("pending") // pending, running, done, failed
+  result      Json?
+  startedAt   DateTime @default(now())
+  finishedAt  DateTime?
+
+  @@unique([agentId, taskHash])
+  @@index([agentId])
+  @@index([status])
+  @@map("task_log")
 }

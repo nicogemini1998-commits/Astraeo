@@ -1,6 +1,23 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest } from "next/server";
+import { z, ZodError } from "zod";
 import type { WorkflowNode, WorkflowEdge, Workflow, Agent } from "@/lib/types";
+import { checkRateLimit, LIMITS, requestKey } from "@/lib/rate-limit";
+import { err, validationError, handleRouteError } from "@/lib/errors";
+import { buildAgentContext, formatContextBlock } from "@/lib/agent-context";
+
+const ExecuteBodySchema = z.object({
+  workflow: z.object({
+    id: z.string().optional(),
+    nodes: z.array(z.unknown()).min(1).max(50),
+    edges: z.array(z.unknown()).max(200),
+  }),
+  agents: z.array(z.unknown()).max(20).default([]),
+  triggerInput: z.string().min(1).max(32_000),
+  apiKey: z.string().min(10).max(256),
+  model: z.string().max(64).optional(),
+  agentId: z.string().cuid().optional(),
+});
 
 // ─── Request Body ─────────────────────────────────────────────────────────────
 interface ExecuteRequestBody {
@@ -81,27 +98,76 @@ function topoSort(nodes: WorkflowNode[], edges: WorkflowEdge[]): WorkflowNode[] 
 
 // ─── Safe condition evaluator ─────────────────────────────────────────────────
 function evaluateCondition(expression: string, context: Record<string, unknown>): boolean {
+  const expr = expression.trim();
+  if (!expr) return true;
+  const output = String(context.output ?? context.prevOutput ?? "");
   try {
-    const keys = Object.keys(context);
-    const vals = Object.values(context);
-    // eslint-disable-next-line @typescript-eslint/no-implied-eval
-    const fn = new Function(...keys, `"use strict"; return !!(${expression});`);
-    return Boolean(fn(...vals));
+    if (expr === "true") return true;
+    if (expr === "false") return false;
+    if (expr === "output") return output.length > 0;
+    if (expr === "!output") return output.length === 0;
+
+    let m: RegExpMatchArray | null;
+
+    m = expr.match(/^output\.includes\(['"](.+)['"]\)$/);
+    if (m) return output.includes(m[1]);
+
+    m = expr.match(/^!output\.includes\(['"](.+)['"]\)$/);
+    if (m) return !output.includes(m[1]);
+
+    m = expr.match(/^output\.startsWith\(['"](.+)['"]\)$/);
+    if (m) return output.startsWith(m[1]);
+
+    m = expr.match(/^output\.endsWith\(['"](.+)['"]\)$/);
+    if (m) return output.endsWith(m[1]);
+
+    m = expr.match(/^output\.length\s*(>|>=|<|<=|===?|!==?)\s*(\d+)$/);
+    if (m) {
+      const n = parseInt(m[2], 10);
+      if (m[1] === ">" ) return output.length >  n;
+      if (m[1] === ">=") return output.length >= n;
+      if (m[1] === "<" ) return output.length <  n;
+      if (m[1] === "<=") return output.length <= n;
+      return output.length === n;
+    }
+
+    m = expr.match(/^output\s*(===?|!==?)\s*['"](.*)['"]$/);
+    if (m) return m[1].startsWith("!") ? output !== m[2] : output === m[2];
+
+    return false;
   } catch {
-    return true; // default: pass-through
+    return false;
   }
 }
 
 // ─── Route Handler ────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
-  const body = (await req.json()) as ExecuteRequestBody;
-  const { workflow, agents, triggerInput, apiKey, model } = body;
-
-  if (!apiKey) {
-    return Response.json({ error: "API key requerida" }, { status: 401 });
+  try {
+    const rl = await checkRateLimit(requestKey(req, "workflow"), LIMITS.workflow);
+    if (!rl.allowed) return err("Too many requests — slow down", 429, "RATE_LIMITED");
+  } catch {
+    // Redis unavailable — continue
   }
-  if (!workflow || !workflow.nodes || workflow.nodes.length === 0) {
-    return Response.json({ error: "Workflow inválido o sin nodos" }, { status: 400 });
+
+  let parsedBody: ExecuteRequestBody;
+  try {
+    const raw = await req.json();
+    parsedBody = ExecuteBodySchema.parse(raw) as ExecuteRequestBody;
+  } catch (e) {
+    if (e instanceof ZodError) return validationError(e);
+    return handleRouteError(e);
+  }
+
+  const { workflow, agents, triggerInput, apiKey, model, agentId } = parsedBody as ExecuteRequestBody & { agentId?: string };
+
+  let sharedCtxBlock = "";
+  if (agentId) {
+    try {
+      const snapshot = await buildAgentContext({ agentId, includeShared: true });
+      sharedCtxBlock = formatContextBlock(snapshot);
+    } catch {
+      // Non-fatal
+    }
   }
 
   const client = new Anthropic({ apiKey });
@@ -150,7 +216,10 @@ export async function POST(req: NextRequest) {
                     ? node.config.prompt
                     : node.label;
 
-                const systemPrompt = targetAgent?.systemPrompt ?? "Eres un asistente útil.";
+                const baseSystem = targetAgent?.systemPrompt ?? "Eres un asistente útil.";
+                const systemPrompt = sharedCtxBlock
+                  ? `${baseSystem}\n\n${sharedCtxBlock}`
+                  : baseSystem;
                 const userContent = [
                   lastOutput ? `Contexto previo:\n${lastOutput}` : "",
                   `Tarea: ${nodePrompt}`,

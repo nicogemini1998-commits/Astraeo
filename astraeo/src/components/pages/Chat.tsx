@@ -35,8 +35,8 @@ function CopyButton({ text }: { text: string }) {
     <button
       onClick={copy}
       style={{
-        background: copied ? "rgba(0,229,160,0.12)" : "rgba(0,212,255,0.08)",
-        border: `1px solid ${copied ? "rgba(0,229,160,0.25)" : "rgba(0,212,255,0.18)"}`,
+        background: copied ? "rgba(61,138,96,0.12)" : "rgba(74,142,184,0.08)",
+        border: `1px solid ${copied ? "rgba(61,138,96,0.25)" : "rgba(74,142,184,0.18)"}`,
         color: copied ? C.emerald : C.muted,
         borderRadius: 5,
         padding: "2px 8px",
@@ -122,13 +122,13 @@ function MessageContent({ content, role }: MessageContentProps) {
             return (
               <code
                 style={{
-                  background: "rgba(0,212,255,0.08)",
+                  background: "rgba(74,142,184,0.08)",
                   padding: "2px 6px",
                   borderRadius: 4,
                   fontFamily: "'JetBrains Mono', monospace",
                   fontSize: "0.87em",
                   color: C.cyan,
-                  border: `1px solid rgba(0,212,255,0.15)`,
+                  border: `1px solid rgba(74,142,184,0.15)`,
                 }}
               >
                 {children}
@@ -140,7 +140,7 @@ function MessageContent({ content, role }: MessageContentProps) {
           },
           h1({ children }) {
             return (
-              <h1 style={{ fontSize: "1.15em", fontWeight: 700, color: C.cyan, margin: "14px 0 6px", paddingBottom: 4, borderBottom: `1px solid rgba(0,212,255,0.15)` }}>
+              <h1 style={{ fontSize: "1.15em", fontWeight: 700, color: C.cyan, margin: "14px 0 6px", paddingBottom: 4, borderBottom: `1px solid rgba(74,142,184,0.15)` }}>
                 {children}
               </h1>
             );
@@ -170,7 +170,7 @@ function MessageContent({ content, role }: MessageContentProps) {
           },
           blockquote({ children }) {
             return (
-              <blockquote style={{ borderLeft: `3px solid ${C.purple}`, paddingLeft: 12, margin: "8px 0", color: "#8A9BBF", fontStyle: "italic" }}>
+              <blockquote style={{ borderLeft: `3px solid ${C.purple}`, paddingLeft: 12, margin: "8px 0", color: "var(--text-muted)", fontStyle: "italic" }}>
                 {children}
               </blockquote>
             );
@@ -193,14 +193,14 @@ function MessageContent({ content, role }: MessageContentProps) {
           },
           th({ children }) {
             return (
-              <th style={{ border: `1px solid rgba(255,255,255,0.08)`, padding: "6px 10px", background: "rgba(0,212,255,0.06)", textAlign: "left", color: C.cyan, fontWeight: 600 }}>
+              <th style={{ border: `1px solid rgba(255,255,255,0.08)`, padding: "6px 10px", background: "rgba(74,142,184,0.06)", textAlign: "left", color: C.cyan, fontWeight: 600 }}>
                 {children}
               </th>
             );
           },
           td({ children }) {
             return (
-              <td style={{ border: `1px solid rgba(255,255,255,0.07)`, padding: "6px 10px", color: "#C8D0E0" }}>
+              <td style={{ border: `1px solid rgba(255,255,255,0.07)`, padding: "6px 10px", color: "var(--text-secondary)" }}>
                 {children}
               </td>
             );
@@ -305,7 +305,7 @@ function MessageBubble({ msg, agentColor, agentIcon, agentName }: MessageBubbleP
           style={{
             background: C.surface,
             border: `1px solid rgba(255,255,255,0.06)`,
-            color: "#C8D0E0",
+            color: "var(--text-secondary)",
           }}
         >
           <AnimatePresence>
@@ -425,8 +425,8 @@ function EmptyState() {
           width: 64,
           height: 64,
           borderRadius: 18,
-          background: "rgba(0,212,255,0.05)",
-          border: `1px solid rgba(0,212,255,0.1)`,
+          background: "rgba(74,142,184,0.05)",
+          border: `1px solid rgba(74,142,184,0.1)`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -491,7 +491,7 @@ function SessionItem({ sessionId: _sessionId, title, msgCount, agentIcon, agentC
       <div className="flex items-center gap-2">
         <span className="text-sm flex-shrink-0">{agentIcon}</span>
         <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-semibold truncate" style={{ color: isActive ? C.text : "#8A9BBF" }}>
+          <p className="text-[11px] font-semibold truncate" style={{ color: isActive ? C.text : "var(--text-muted)" }}>
             {title}
           </p>
           <p className="text-[9px] font-mono mt-0.5" style={{ color: C.muted }}>

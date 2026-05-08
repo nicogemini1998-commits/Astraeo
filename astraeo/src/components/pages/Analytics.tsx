@@ -63,13 +63,13 @@ const PERIODS: { key: Period; label: string; days: number }[] = [
 ];
 
 const GLASS_TOOLTIP: React.CSSProperties = {
-  background: "rgba(6,11,26,0.92)",
-  backdropFilter: "blur(16px)",
-  border: "1px solid rgba(0,212,255,0.15)",
+  background: "rgba(12,10,8,0.96)",
+  backdropFilter: "blur(20px)",
+  border: "1px solid rgba(240,237,230,0.08)",
   borderRadius: 10,
   fontSize: 11,
-  color: "#C8D0E0",
-  boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+  color: "var(--text-primary)",
+  boxShadow: "0 12px 32px rgba(0,0,0,0.5)",
   padding: "8px 12px",
 };
 
@@ -140,33 +140,84 @@ function KpiCard({ kpi, index }: KpiCardProps) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
-      className="relative overflow-hidden rounded-2xl p-5 border border-white/[0.06]"
+      transition={{ duration: 0.5, delay: index * 0.07, ease: [0.16, 1, 0.3, 1] }}
+      className="relative overflow-hidden rounded-2xl"
       style={{
-        background: "linear-gradient(135deg, rgba(10,15,31,0.9) 0%, rgba(6,11,26,0.95) 100%)",
-        boxShadow: `0 1px 0 0 ${kpi.color}18 inset, 0 0 40px -12px ${kpi.color}20`,
+        background: "var(--bg-surface)",
+        border: "1px solid var(--border-subtle)",
+        boxShadow: `inset 0 1px 0 ${kpi.color}22`,
       }}
     >
+      {/* Top accent line */}
       <div
-        className="absolute top-0 left-0 right-0 h-px"
-        style={{ background: `linear-gradient(90deg, transparent, ${kpi.color}40, transparent)` }}
+        style={{
+          position: "absolute",
+          top: 0, left: 0, right: 0, height: 2,
+          background: `linear-gradient(90deg, transparent 0%, ${kpi.color}70 40%, ${kpi.color}90 60%, transparent 100%)`,
+        }}
       />
+      {/* Ambient glow blob */}
       <div
-        className="absolute -top-8 -right-8 w-24 h-24 rounded-full opacity-[0.06] blur-2xl"
-        style={{ background: kpi.color }}
+        style={{
+          position: "absolute",
+          top: -32, right: -32,
+          width: 100, height: 100,
+          borderRadius: "50%",
+          background: kpi.color,
+          opacity: 0.04,
+          filter: "blur(28px)",
+          pointerEvents: "none",
+        }}
       />
-      <div className="text-[11px] font-semibold text-[#6B7A99] tracking-widest uppercase mb-3">
-        {kpi.label}
+      <div style={{ padding: "20px 22px 18px" }}>
+        {/* Label row */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+          <span style={{
+            fontSize: 9,
+            fontWeight: 700,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            color: "var(--text-muted)",
+            fontFamily: "var(--font-mono)",
+          }}>
+            {kpi.label}
+          </span>
+          <div style={{
+            width: 28, height: 28, borderRadius: 8,
+            background: `${kpi.color}12`,
+            border: `1px solid ${kpi.color}22`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 13,
+          }}>
+            ◎
+          </div>
+        </div>
+
+        {/* Value — Fraunces serif for editorial feel */}
+        <div style={{
+          fontFamily: "var(--font-display)",
+          fontSize: 36,
+          fontWeight: 600,
+          color: kpi.color,
+          lineHeight: 1,
+          marginBottom: 8,
+          letterSpacing: "-0.02em",
+        }}>
+          {kpi.value === 0 ? <span style={{ color: "var(--text-muted)", fontSize: 28 }}>—</span> : display}
+        </div>
+
+        {/* Sub label */}
+        <p style={{
+          fontSize: 10,
+          color: "var(--text-muted)",
+          fontFamily: "var(--font-mono)",
+          opacity: 0.7,
+        }}>
+          {kpi.sub}
+        </p>
       </div>
-      <div
-        className="text-[28px] font-bold font-mono tabular-nums leading-none mb-2"
-        style={{ color: kpi.color }}
-      >
-        {kpi.value === 0 ? "—" : display}
-      </div>
-      <div className="text-[10px] text-[#4A5570] font-mono">{kpi.sub}</div>
     </motion.div>
   );
 }
@@ -180,14 +231,33 @@ interface SectionHeaderProps {
 
 function SectionHeader({ title, sub, accent = "#4A8EB8" }: SectionHeaderProps) {
   return (
-    <div className="mb-5 flex items-start gap-2.5">
-      <div
-        className="w-0.5 h-full min-h-[28px] rounded-full mt-0.5 flex-shrink-0"
-        style={{ background: `linear-gradient(180deg, ${accent}, transparent)` }}
-      />
+    <div style={{ marginBottom: 20, display: "flex", alignItems: "flex-start", gap: 10 }}>
+      <div style={{
+        width: 2, minHeight: 28, borderRadius: 2, flexShrink: 0, marginTop: 2,
+        background: `linear-gradient(180deg, ${accent}cc, transparent)`,
+      }} />
       <div>
-        <h3 className="text-[13px] font-semibold text-[#E8ECF4] tracking-wide">{title}</h3>
-        {sub && <p className="text-[10px] text-[#6B7A99] font-mono mt-0.5">{sub}</p>}
+        <h3 style={{
+          fontSize: 14,
+          fontFamily: "var(--font-display)",
+          fontWeight: 600,
+          color: "var(--text-primary)",
+          letterSpacing: "0.01em",
+          margin: 0,
+        }}>
+          {title}
+        </h3>
+        {sub && (
+          <p style={{
+            fontSize: 10,
+            color: "var(--text-muted)",
+            fontFamily: "var(--font-mono)",
+            marginTop: 3,
+            margin: 0,
+          }}>
+            {sub}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -265,7 +335,7 @@ function TimelineItem({ title, message, type, timestamp, index }: TimelineItemPr
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3, delay: 0.05 + index * 0.035, ease: [0.16, 1, 0.3, 1] }}
       className="flex-shrink-0 w-56 rounded-xl p-3.5 border border-white/[0.05]"
-      style={{ background: "rgba(10,15,31,0.85)" }}
+      style={{ background: "rgba(14,12,10,0.85)" }}
     >
       <div className="flex items-center gap-2 mb-2">
         <div
@@ -301,7 +371,7 @@ function PeriodSelector({ value, onChange }: PeriodSelectorProps) {
           onClick={() => onChange(p.key)}
           className="relative px-3.5 py-1.5 rounded-lg text-[11px] font-mono transition-all duration-200"
           style={{
-            color: value === p.key ? "#4A8EB8" : "#8A8A97",
+            color: value === p.key ? "#4A8EB8" : "var(--text-muted)",
           }}
         >
           {value === p.key && (
@@ -309,8 +379,8 @@ function PeriodSelector({ value, onChange }: PeriodSelectorProps) {
               layoutId="period-pill"
               className="absolute inset-0 rounded-lg"
               style={{
-                background: "rgba(0,212,255,0.1)",
-                border: "1px solid rgba(0,212,255,0.2)",
+                background: "rgba(74,142,184,0.1)",
+                border: "1px solid rgba(74,142,184,0.2)",
               }}
               transition={{ type: "spring", bounce: 0.2, duration: 0.35 }}
             />
@@ -335,10 +405,11 @@ function ChartCard({ children, delay = 0, className = "" }: ChartCardProps) {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, delay, ease: [0.16, 1, 0.3, 1] }}
-      className={`rounded-2xl p-5 border border-white/[0.06] ${className}`}
+      className={`rounded-2xl ${className}`}
       style={{
-        background: "linear-gradient(135deg, rgba(10,15,31,0.9) 0%, rgba(6,11,26,0.95) 100%)",
-        boxShadow: "0 0 0 1px rgba(255,255,255,0.03) inset",
+        background: "var(--bg-surface)",
+        border: "1px solid var(--border-subtle)",
+        padding: "20px 22px",
       }}
     >
       {children}
@@ -494,11 +565,23 @@ export default function Analytics() {
       {/* ── Page header ──────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-[15px] font-bold tracking-wide text-[#E8ECF4]">
+          <h2 style={{
+            fontSize: 22,
+            fontFamily: "var(--font-display)",
+            fontWeight: 600,
+            color: "var(--text-primary)",
+            letterSpacing: "0.01em",
+            margin: 0,
+          }}>
             Mission Analytics
           </h2>
-          <p className="text-[11px] text-[#6B7A99] font-mono">
-            Real-time Intelligence Dashboard · sync {lastSync}
+          <p style={{
+            fontSize: 10,
+            color: "var(--text-muted)",
+            fontFamily: "var(--font-mono)",
+            marginTop: 4,
+          }}>
+            Intelligence Dashboard · sincronizado {lastSync}
           </p>
         </div>
         <PeriodSelector value={period} onChange={setPeriod} />
@@ -533,13 +616,13 @@ export default function Analytics() {
             />
             <XAxis
               dataKey="t"
-              tick={{ fill: "#4A5570", fontSize: 9, fontFamily: "JetBrains Mono" }}
+              tick={{ fill: "var(--text-muted)", fontSize: 9, fontFamily: "JetBrains Mono" }}
               axisLine={false}
               tickLine={false}
               interval={4}
             />
             <YAxis
-              tick={{ fill: "#4A5570", fontSize: 9, fontFamily: "JetBrains Mono" }}
+              tick={{ fill: "var(--text-muted)", fontSize: 9, fontFamily: "JetBrains Mono" }}
               axisLine={false}
               tickLine={false}
               width={38}
@@ -553,7 +636,7 @@ export default function Analytics() {
               fill="url(#tokGradPremium)"
               dot={false}
               name="Tokens/min"
-              activeDot={{ r: 4, fill: "#4A8EB8", stroke: "rgba(0,212,255,0.3)", strokeWidth: 4 }}
+              activeDot={{ r: 4, fill: "#4A8EB8", stroke: "rgba(74,142,184,0.3)", strokeWidth: 4 }}
             />
           </AreaChart>
         </ResponsiveContainer>
@@ -586,14 +669,14 @@ export default function Analytics() {
                 />
                 <XAxis
                   type="number"
-                  tick={{ fill: "#4A5570", fontSize: 9, fontFamily: "JetBrains Mono" }}
+                  tick={{ fill: "var(--text-muted)", fontSize: 9, fontFamily: "JetBrains Mono" }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
                   type="category"
                   dataKey="name"
-                  tick={{ fill: "#C8D0E0", fontSize: 10, fontFamily: "JetBrains Mono" }}
+                  tick={{ fill: "var(--text-secondary)", fontSize: 10, fontFamily: "JetBrains Mono" }}
                   axisLine={false}
                   tickLine={false}
                   width={64}
@@ -687,13 +770,13 @@ export default function Analytics() {
               />
               <XAxis
                 dataKey="t"
-                tick={{ fill: "#4A5570", fontSize: 9, fontFamily: "JetBrains Mono" }}
+                tick={{ fill: "var(--text-muted)", fontSize: 9, fontFamily: "JetBrains Mono" }}
                 axisLine={false}
                 tickLine={false}
                 interval={4}
               />
               <YAxis
-                tick={{ fill: "#4A5570", fontSize: 9, fontFamily: "JetBrains Mono" }}
+                tick={{ fill: "var(--text-muted)", fontSize: 9, fontFamily: "JetBrains Mono" }}
                 axisLine={false}
                 tickLine={false}
                 width={42}
@@ -707,7 +790,7 @@ export default function Analytics() {
                 fill="url(#latGradPremium)"
                 dot={false}
                 name="Latencia"
-                activeDot={{ r: 4, fill: "#6655CC", stroke: "rgba(123,97,255,0.3)", strokeWidth: 4 }}
+                activeDot={{ r: 4, fill: "#6655CC", stroke: "rgba(102,85,204,0.3)", strokeWidth: 4 }}
               />
             </AreaChart>
           </ResponsiveContainer>

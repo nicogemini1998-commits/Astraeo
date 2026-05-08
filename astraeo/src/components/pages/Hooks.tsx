@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ZapIcon, PlusIcon, XIcon, CheckIcon, PlayIcon,
@@ -14,30 +14,31 @@ import type { Hook, HookTrigger, HookAction } from "@/lib/types";
 // ─── Config maps ──────────────────────────────────────────────────────────────
 
 const TRIGGER_CONFIG: Record<HookTrigger, { label: string; desc: string; color: string; icon: typeof ZapIcon; group: string }> = {
-  "pre-message":      { label: "Pre-Mensaje",      desc: "Antes de enviar un mensaje",        color: "#6655CC", icon: ChevronRightIcon, group: "Mensajes" },
-  "post-message":     { label: "Post-Mensaje",     desc: "Después de recibir respuesta",      color: "#6655CC", icon: SendIcon,         group: "Mensajes" },
-  "agent-start":      { label: "Agente Iniciado",  desc: "Al activar un agente",              color: "#4A8EB8", icon: PlayIcon,         group: "Agentes" },
-  "agent-end":        { label: "Agente Terminado", desc: "Al finalizar sesión de agente",     color: "#4A8EB8", icon: StopCircleIcon,   group: "Agentes" },
-  "workflow-start":   { label: "Workflow Inicia",  desc: "Al comenzar un workflow",           color: "#3D8A60", icon: GitBranchIcon,    group: "Workflows" },
-  "workflow-end":     { label: "Workflow Completa",desc: "Al terminar un workflow",           color: "#3D8A60", icon: CheckIcon,        group: "Workflows" },
-  "schedule":         { label: "Programado",       desc: "En fecha/hora definida (cron)",     color: "#B88530", icon: ClockIcon,        group: "Tiempo" },
-  "webhook":          { label: "Webhook Entrante", desc: "Al recibir petición HTTP externa",  color: "#B04858", icon: HashIcon,         group: "Externo" },
-  "error":            { label: "Error",            desc: "Cuando ocurre un error",            color: "#A83C50", icon: AlertTriangleIcon,group: "Sistema" },
-  "success":          { label: "Éxito",            desc: "Cuando una acción tiene éxito",     color: "#3D8A60", icon: CheckIcon,        group: "Sistema" },
+  "pre-message":    { label: "Pre-Mensaje",      desc: "Antes de enviar un mensaje",       color: "#6655CC", icon: ChevronRightIcon, group: "Mensajes" },
+  "post-message":   { label: "Post-Mensaje",     desc: "Después de recibir respuesta",     color: "#6655CC", icon: SendIcon,         group: "Mensajes" },
+  "agent-start":    { label: "Agente Iniciado",  desc: "Al activar un agente",             color: "#4A8EB8", icon: PlayIcon,         group: "Agentes" },
+  "agent-end":      { label: "Agente Terminado", desc: "Al finalizar sesión de agente",    color: "#4A8EB8", icon: StopCircleIcon,   group: "Agentes" },
+  "workflow-start": { label: "Workflow Inicia",  desc: "Al comenzar un workflow",          color: "#3D8A60", icon: GitBranchIcon,    group: "Workflows" },
+  "workflow-end":   { label: "Workflow Completa",desc: "Al terminar un workflow",          color: "#3D8A60", icon: CheckIcon,        group: "Workflows" },
+  "schedule":       { label: "Programado",       desc: "En fecha/hora definida (cron)",    color: "#B88530", icon: ClockIcon,        group: "Tiempo" },
+  "webhook":        { label: "Webhook Entrante", desc: "Al recibir petición HTTP externa", color: "#B04858", icon: HashIcon,         group: "Externo" },
+  "error":          { label: "Error",            desc: "Cuando ocurre un error",           color: "#A83C50", icon: AlertTriangleIcon,group: "Sistema" },
+  "success":        { label: "Éxito",            desc: "Cuando una acción tiene éxito",    color: "#3D8A60", icon: CheckIcon,        group: "Sistema" },
 };
 
 const ACTION_CONFIG: Record<HookAction, { label: string; desc: string; color: string; icon: typeof ZapIcon }> = {
-  notify:    { label: "Notificar",    desc: "Envía notificación in-app",        color: "#4A8EB8", icon: BellIcon },
-  log:       { label: "Registrar",   desc: "Guarda en logs del sistema",        color: "#6655CC", icon: CodeIcon },
-  transform: { label: "Transformar", desc: "Modifica datos del payload",        color: "#B88530", icon: RotateCcwIcon },
-  webhook:   { label: "Webhook",     desc: "Envía datos a URL externa",         color: "#3D8A60", icon: SendIcon },
-  email:     { label: "Email",       desc: "Envía email al destinatario",       color: "#B04858", icon: MailIcon },
-  slack:     { label: "Slack",       desc: "Publica mensaje en canal Slack",    color: "#4A154B", icon: HashIcon },
-  stop:      { label: "Detener",     desc: "Para la ejecución del flujo",       color: "#A83C50", icon: StopCircleIcon },
-  branch:    { label: "Bifurcar",    desc: "Dirige a rama condicional",         color: "#B88530", icon: GitBranchIcon },
+  notify:    { label: "Notificar",    desc: "Envía notificación in-app",       color: "#4A8EB8", icon: BellIcon },
+  log:       { label: "Registrar",   desc: "Guarda en logs del sistema",       color: "#6655CC", icon: CodeIcon },
+  transform: { label: "Transformar", desc: "Modifica datos del payload",       color: "#B88530", icon: RotateCcwIcon },
+  webhook:   { label: "Webhook",     desc: "Envía datos a URL externa",        color: "#3D8A60", icon: SendIcon },
+  email:     { label: "Email",       desc: "Envía email al destinatario",      color: "#B04858", icon: MailIcon },
+  slack:     { label: "Slack",       desc: "Publica mensaje en canal Slack",   color: "#4A154B", icon: HashIcon },
+  stop:      { label: "Detener",     desc: "Para la ejecución del flujo",      color: "#A83C50", icon: StopCircleIcon },
+  branch:    { label: "Bifurcar",    desc: "Dirige a rama condicional",        color: "#B88530", icon: GitBranchIcon },
 };
 
 const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
+const HOOK_COLORS = ["#4A8EB8", "#6655CC", "#3D8A60", "#B88530", "#B04858", "#A83C50"];
 
 function relTime(ts?: string): string {
   if (!ts) return "—";
@@ -56,6 +57,7 @@ function HookItem({ hook, active, onSelect, onToggle }: {
   onSelect: () => void;
   onToggle: () => void;
 }) {
+  const [hovered, setHovered] = useState(false);
   const trig = TRIGGER_CONFIG[hook.trigger];
   const act = ACTION_CONFIG[hook.action];
   const TrigIcon = trig.icon;
@@ -65,45 +67,48 @@ function HookItem({ hook, active, onSelect, onToggle }: {
   return (
     <motion.div
       onClick={onSelect}
-      whileHover={{ x: 2 }}
+      onHoverStart={() => setHovered(true)}
+      onHoverEnd={() => setHovered(false)}
       transition={{ duration: 0.12 }}
       style={{
-        padding: "12px 14px",
-        borderRadius: 10,
-        border: `1px solid ${active ? `${hook.color}35` : "rgba(26,39,68,0.4)"}`,
-        background: active ? `${hook.color}05` : "rgba(8,12,26,0.5)",
+        padding: "11px 14px",
+        borderRadius: 12,
+        border: `1px solid ${active ? `${hook.color}35` : hovered ? `${hook.color}20` : "var(--border-subtle)"}`,
+        background: active ? `${hook.color}06` : hovered ? `${hook.color}04` : "var(--bg-surface)",
         cursor: "pointer",
         display: "flex",
         alignItems: "center",
         gap: 10,
         marginBottom: 4,
-        transition: "border-color 0.2s, background 0.2s",
+        transform: hovered ? "translateY(-1px)" : "translateY(0)",
+        boxShadow: hovered ? `0 4px 16px rgba(0,0,0,0.2)` : "none",
+        transition: "all 0.18s ease",
         position: "relative",
+        overflow: "hidden",
       }}
     >
-      {/* Active indicator */}
+      {/* Accent line top */}
       <div style={{
-        width: 3, height: "100%",
-        position: "absolute", left: 0, top: 0, bottom: 0,
-        borderRadius: "3px 0 0 3px",
-        background: active ? hook.color : "transparent",
-        boxShadow: active ? `0 0 6px ${hook.color}` : "none",
+        position: "absolute", top: 0, left: "15%", right: "15%", height: 1,
+        background: active
+          ? `linear-gradient(90deg, transparent, ${hook.color}70, ${hook.color}cc, ${hook.color}70, transparent)`
+          : "transparent",
+        transition: "background 0.2s",
       }} />
 
       {/* Status dot */}
-      <div style={{ paddingLeft: 6, flexShrink: 0 }}>
+      <div style={{ flexShrink: 0, paddingLeft: 2 }}>
         <div style={{
-          width: 8, height: 8, borderRadius: "50%",
-          background: hook.active ? hook.color : "#4A5568",
-          boxShadow: hook.active ? `0 0 6px ${hook.color}` : "none",
-          animation: hook.active ? "pulse 2s infinite" : "none",
+          width: 7, height: 7, borderRadius: "50%",
+          background: hook.active ? hook.color : "var(--text-muted)",
+          boxShadow: hook.active ? `0 0 5px ${hook.color}` : "none",
         }} />
       </div>
 
       {/* Trigger badge */}
       <div style={{
         display: "flex", alignItems: "center", gap: 4,
-        padding: "3px 7px", borderRadius: 5, flexShrink: 0,
+        padding: "2px 6px", borderRadius: 5, flexShrink: 0,
         background: `${trig.color}10`,
         border: `1px solid ${trig.color}22`,
       }}>
@@ -113,31 +118,35 @@ function HookItem({ hook, active, onSelect, onToggle }: {
         </span>
       </div>
 
-      {/* Name */}
+      {/* Name + stats */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{
-          fontSize: 12, fontWeight: 600, color: active ? "#F0EDE6" : "#B0BAD4",
+          fontSize: 12, fontWeight: 600,
+          color: active ? "var(--text-primary)" : "var(--text-secondary)",
           whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
           marginBottom: 2,
         }}>
           {hook.name}
         </p>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <span style={{ fontSize: 9, color: "#4A5568", fontFamily: "var(--font-mono)" }}>
+          <span style={{ fontSize: 9, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
             {hook.runCount.toLocaleString()} runs
           </span>
-          <span style={{ fontSize: 8, color: "#4A4A5A" }}>·</span>
-          <span style={{ fontSize: 9, color: successRate >= 95 ? "#3D8A60" : successRate >= 80 ? "#B88530" : "#A83C50", fontFamily: "var(--font-mono)" }}>
+          <span style={{ fontSize: 8, color: "var(--border-subtle)" }}>·</span>
+          <span style={{
+            fontSize: 9, fontFamily: "var(--font-mono)",
+            color: successRate >= 95 ? "#3D8A60" : successRate >= 80 ? "#B88530" : "#A83C50",
+          }}>
             {successRate}%
           </span>
         </div>
       </div>
 
       {/* Arrow + Action */}
-      <ChevronRightIcon size={10} color="#4A4A5A" style={{ flexShrink: 0 }} />
+      <ChevronRightIcon size={10} color="var(--text-muted)" style={{ flexShrink: 0 }} />
       <div style={{
         display: "flex", alignItems: "center", gap: 4,
-        padding: "3px 7px", borderRadius: 5, flexShrink: 0,
+        padding: "2px 6px", borderRadius: 5, flexShrink: 0,
         background: `${act.color}10`,
         border: `1px solid ${act.color}22`,
       }}>
@@ -153,8 +162,8 @@ function HookItem({ hook, active, onSelect, onToggle }: {
         whileTap={{ scale: 0.85 }}
         style={{
           width: 30, height: 17, borderRadius: 8.5, flexShrink: 0,
-          background: hook.active ? `${hook.color}25` : "rgba(26,39,68,0.8)",
-          border: `1px solid ${hook.active ? `${hook.color}50` : "rgba(26,39,68,0.9)"}`,
+          background: hook.active ? `${hook.color}25` : "var(--bg-base)",
+          border: `1px solid ${hook.active ? `${hook.color}50` : "var(--border-subtle)"}`,
           position: "relative", cursor: "pointer", padding: 0,
           transition: "all 0.2s",
         }}
@@ -165,7 +174,7 @@ function HookItem({ hook, active, onSelect, onToggle }: {
           style={{
             position: "absolute", top: 2,
             width: 11, height: 11, borderRadius: "50%",
-            background: hook.active ? hook.color : "#4A5568",
+            background: hook.active ? hook.color : "var(--text-muted)",
           }}
         />
       </motion.button>
@@ -188,45 +197,63 @@ function HookDetail({ hook, onClose, onToggle, onDelete }: {
   const successRate = hook.runCount > 0 ? ((hook.successCount / hook.runCount) * 100).toFixed(1) : "100.0";
   const failRate = hook.runCount > 0 ? ((hook.failCount / hook.runCount) * 100).toFixed(1) : "0.0";
 
+  useEffect(() => {
+    const handle = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handle);
+    return () => window.removeEventListener("keydown", handle);
+  }, [onClose]);
+
   return (
     <motion.div
       key={hook.id}
-      initial={{ opacity: 0, x: 20 }}
+      initial={{ opacity: 0, x: 16 }}
       animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 20 }}
+      exit={{ opacity: 0, x: 16 }}
       transition={{ duration: 0.22, ease: EASE }}
       style={{
         flex: 1, display: "flex", flexDirection: "column",
-        background: "rgba(8,12,26,0.5)",
-        borderRadius: 14,
+        background: "var(--bg-surface)",
+        borderRadius: 16,
         border: `1px solid ${hook.color}20`,
         overflow: "hidden",
       }}
     >
-      {/* Detail header */}
+      {/* Accent top line */}
+      <div style={{
+        height: 2,
+        background: `linear-gradient(90deg, transparent, ${hook.color}60, ${hook.color}cc, ${hook.color}60, transparent)`,
+      }} />
+
+      {/* Header */}
       <div style={{
         padding: "16px 20px 14px",
-        borderBottom: "1px solid rgba(255,255,255,0.05)",
-        background: `linear-gradient(135deg, ${hook.color}08 0%, transparent 60%)`,
+        borderBottom: `1px solid var(--border-subtle)`,
+        background: `linear-gradient(135deg, ${hook.color}06 0%, transparent 60%)`,
       }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
           <div style={{ flex: 1 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
               <div style={{
                 width: 8, height: 8, borderRadius: "50%",
-                background: hook.active ? hook.color : "#4A5568",
-                boxShadow: hook.active ? `0 0 8px ${hook.color}` : "none",
-                animation: hook.active ? "pulse 2s infinite" : "none",
+                background: hook.active ? hook.color : "var(--text-muted)",
+                boxShadow: hook.active ? `0 0 7px ${hook.color}` : "none",
               }} />
-              <h3 style={{ fontSize: 15, fontWeight: 700, color: "#F0EDE6" }}>{hook.name}</h3>
+              <h3 style={{
+                fontSize: 15, fontWeight: 700,
+                color: "var(--text-primary)",
+                fontFamily: "var(--font-display)",
+                letterSpacing: "0.01em",
+              }}>
+                {hook.name}
+              </h3>
             </div>
-            <p style={{ fontSize: 12, color: "#6A7898", lineHeight: 1.5 }}>{hook.description}</p>
+            <p style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>{hook.description}</p>
           </div>
           <button onClick={onClose} style={{
             width: 28, height: 28, borderRadius: 7, flexShrink: 0,
-            background: "rgba(255,255,255,0.05)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            cursor: "pointer", color: "#6A7898",
+            background: "var(--bg-surface-2)",
+            border: `1px solid var(--border-subtle)`,
+            cursor: "pointer", color: "var(--text-muted)",
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
             <XIcon size={12} />
@@ -239,9 +266,9 @@ function HookDetail({ hook, onClose, onToggle, onDelete }: {
         {/* Trigger → Action flow */}
         <div style={{
           display: "flex", alignItems: "center", gap: 8,
-          padding: "14px 16px", borderRadius: 10,
-          background: "rgba(10,15,31,0.6)",
-          border: "1px solid rgba(26,39,68,0.5)",
+          padding: "14px 16px", borderRadius: 12,
+          background: "var(--bg-base)",
+          border: `1px solid var(--border-subtle)`,
           marginBottom: 16,
         }}>
           <div style={{
@@ -253,14 +280,14 @@ function HookDetail({ hook, onClose, onToggle, onDelete }: {
             <TrigIcon size={15} color={trig.color} />
             <div>
               <p style={{ fontSize: 10, color: trig.color, fontWeight: 700, letterSpacing: "0.05em" }}>{trig.label}</p>
-              <p style={{ fontSize: 9, color: "#4A5568" }}>{trig.desc}</p>
+              <p style={{ fontSize: 9, color: "var(--text-muted)" }}>{trig.desc}</p>
             </div>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
-            <div style={{ width: 16, height: 1, background: "rgba(255,255,255,0.1)" }} />
-            <ZapIcon size={10} color="#4A5568" />
-            <div style={{ width: 16, height: 1, background: "rgba(255,255,255,0.1)" }} />
+            <div style={{ width: 14, height: 1, background: "var(--border-subtle)" }} />
+            <ZapIcon size={10} color="var(--text-muted)" />
+            <div style={{ width: 14, height: 1, background: "var(--border-subtle)" }} />
           </div>
 
           <div style={{
@@ -272,7 +299,7 @@ function HookDetail({ hook, onClose, onToggle, onDelete }: {
             <ActIcon size={15} color={act.color} />
             <div>
               <p style={{ fontSize: 10, color: act.color, fontWeight: 700, letterSpacing: "0.05em" }}>{act.label}</p>
-              <p style={{ fontSize: 9, color: "#4A5568" }}>{act.desc}</p>
+              <p style={{ fontSize: 9, color: "var(--text-muted)" }}>{act.desc}</p>
             </div>
           </div>
         </div>
@@ -280,44 +307,50 @@ function HookDetail({ hook, onClose, onToggle, onDelete }: {
         {/* Stats */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 16 }}>
           {[
-            { label: "EJECUCIONES",   value: hook.runCount.toLocaleString(), color: hook.color },
-            { label: "TASA ÉXITO",    value: `${successRate}%`,              color: "#3D8A60" },
-            { label: "TASA FALLO",    value: `${failRate}%`,                 color: Number(failRate) > 5 ? "#A83C50" : "#4A5568" },
+            { label: "EJECUCIONES", value: hook.runCount.toLocaleString(), color: hook.color },
+            { label: "TASA ÉXITO",  value: `${successRate}%`,             color: "#3D8A60" },
+            { label: "TASA FALLO",  value: `${failRate}%`,                color: Number(failRate) > 5 ? "#A83C50" : "var(--text-muted)" },
           ].map((s) => (
             <div key={s.label} style={{
-              padding: "10px 12px", borderRadius: 8,
+              padding: "10px 12px", borderRadius: 10,
               background: `${s.color}08`,
-              border: `1px solid ${s.color}15`,
-              display: "flex", flexDirection: "column", gap: 4,
+              border: `1px solid ${s.color}18`,
+              display: "flex", flexDirection: "column", gap: 5,
             }}>
-              <span style={{ fontSize: 8, color: "#4A5568", letterSpacing: "0.08em" }}>{s.label}</span>
-              <span style={{ fontSize: 15, fontWeight: 700, color: s.color, fontFamily: "var(--font-mono)" }}>{s.value}</span>
+              <span style={{ fontSize: 8, color: "var(--text-muted)", letterSpacing: "0.08em" }}>{s.label}</span>
+              <span style={{
+                fontSize: 17, fontWeight: 700, color: s.color,
+                fontFamily: "var(--font-display)",
+              }}>
+                {s.value}
+              </span>
             </div>
           ))}
         </div>
 
         {/* Last run */}
         <div style={{
-          padding: "10px 14px", borderRadius: 8,
-          background: "rgba(10,15,31,0.5)",
-          border: "1px solid rgba(26,39,68,0.4)",
+          padding: "9px 14px", borderRadius: 8,
+          background: "var(--bg-base)",
+          border: `1px solid var(--border-subtle)`,
           display: "flex", alignItems: "center", gap: 8,
           marginBottom: 16,
         }}>
-          <ClockIcon size={12} color="#4A5568" />
-          <span style={{ fontSize: 11, color: "#6A7898" }}>
-            Última ejecución: <span style={{ color: "#F0EDE6", fontFamily: "var(--font-mono)" }}>{relTime(hook.lastRun)}</span>
+          <ClockIcon size={12} color="var(--text-muted)" />
+          <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>
+            Última ejecución:{" "}
+            <span style={{ color: "var(--text-primary)", fontFamily: "var(--font-mono)" }}>{relTime(hook.lastRun)}</span>
           </span>
         </div>
 
         {/* Config preview */}
         {(Object.keys(hook.triggerConfig).length > 0 || Object.keys(hook.actionConfig).length > 0) && (
           <div style={{ marginBottom: 16 }}>
-            <p style={{ fontSize: 10, color: "#4A5568", letterSpacing: "0.06em", marginBottom: 8 }}>CONFIGURACIÓN</p>
+            <p style={{ fontSize: 10, color: "var(--text-muted)", letterSpacing: "0.06em", marginBottom: 8 }}>CONFIGURACIÓN</p>
             <pre style={{
-              fontSize: 11, color: "#6A7898",
-              background: "rgba(10,15,31,0.7)",
-              border: "1px solid rgba(26,39,68,0.5)",
+              fontSize: 11, color: "var(--text-secondary)",
+              background: "var(--bg-base)",
+              border: `1px solid var(--border-subtle)`,
               borderRadius: 8, padding: "12px 14px",
               overflow: "auto", margin: 0,
               fontFamily: "var(--font-mono)",
@@ -329,31 +362,30 @@ function HookDetail({ hook, onClose, onToggle, onDelete }: {
           </div>
         )}
 
-        {/* Success bar */}
+        {/* Reliability bar */}
         <div>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-            <span style={{ fontSize: 10, color: "#4A5568", letterSpacing: "0.06em" }}>FIABILIDAD</span>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+            <span style={{ fontSize: 10, color: "var(--text-muted)", letterSpacing: "0.06em" }}>FIABILIDAD</span>
             <span style={{ fontSize: 10, color: "#3D8A60", fontFamily: "var(--font-mono)", fontWeight: 700 }}>{successRate}%</span>
           </div>
-          <div style={{ width: "100%", height: 3, background: "rgba(255,255,255,0.05)", borderRadius: 2 }}>
+          <div style={{ width: "100%", height: 3, background: "var(--bg-surface-2)", borderRadius: 2 }}>
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${successRate}%` }}
-              transition={{ duration: 0.8, ease: EASE }}
+              transition={{ duration: 0.9, ease: EASE }}
               style={{
                 height: "100%", borderRadius: 2,
                 background: "linear-gradient(90deg, #3D8A60, #4A8EB8)",
-                boxShadow: "0 0 6px rgba(0,229,160,0.5)",
               }}
             />
           </div>
         </div>
       </div>
 
-      {/* Actions */}
+      {/* Footer actions */}
       <div style={{
         padding: "12px 20px",
-        borderTop: "1px solid rgba(255,255,255,0.04)",
+        borderTop: `1px solid var(--border-subtle)`,
         display: "flex", gap: 8,
       }}>
         <motion.button
@@ -361,8 +393,8 @@ function HookDetail({ hook, onClose, onToggle, onDelete }: {
           whileTap={{ scale: 0.96 }}
           style={{
             flex: 2, padding: "9px 0", borderRadius: 9,
-            border: `1px solid ${hook.active ? "rgba(255,71,87,0.3)" : `${hook.color}35`}`,
-            background: hook.active ? "rgba(255,71,87,0.08)" : `${hook.color}10`,
+            border: `1px solid ${hook.active ? "rgba(168,60,80,0.3)" : `${hook.color}35`}`,
+            background: hook.active ? "rgba(168,60,80,0.07)" : `${hook.color}10`,
             color: hook.active ? "#A83C50" : hook.color,
             fontSize: 11, fontWeight: 700, cursor: "pointer",
           }}
@@ -374,8 +406,8 @@ function HookDetail({ hook, onClose, onToggle, onDelete }: {
           whileTap={{ scale: 0.96 }}
           style={{
             flex: 1, padding: "9px 0", borderRadius: 9,
-            border: "1px solid rgba(255,71,87,0.25)",
-            background: "rgba(255,71,87,0.06)",
+            border: "1px solid rgba(168,60,80,0.25)",
+            background: "rgba(168,60,80,0.06)",
             color: "#A83C50", fontSize: 11, fontWeight: 600, cursor: "pointer",
           }}
         >
@@ -388,8 +420,6 @@ function HookDetail({ hook, onClose, onToggle, onDelete }: {
 
 // ─── New Hook Wizard ──────────────────────────────────────────────────────────
 
-const HOOK_COLORS = ["#4A8EB8", "#6655CC", "#3D8A60", "#B88530", "#B04858", "#A83C50"];
-
 function NewHookWizard({ onClose, onSave }: {
   onClose: () => void;
   onSave: (data: Omit<Hook, "id" | "createdAt" | "runCount" | "successCount" | "failCount">) => void;
@@ -401,12 +431,13 @@ function NewHookWizard({ onClose, onSave }: {
   const [desc, setDesc] = useState("");
   const [color, setColor] = useState("#4A8EB8");
 
-  const canProceed = [
-    trigger !== null,
-    action !== null,
-    name.trim().length > 0,
-  ];
+  useEffect(() => {
+    const handle = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handle);
+    return () => window.removeEventListener("keydown", handle);
+  }, [onClose]);
 
+  const canProceed = [trigger !== null, action !== null, name.trim().length > 0];
   const steps = ["Trigger", "Acción", "Nombre"];
 
   type TrigEntry = [HookTrigger, typeof TRIGGER_CONFIG[HookTrigger]];
@@ -421,6 +452,14 @@ function NewHookWizard({ onClose, onSave }: {
     )
   );
 
+  const FIELD: React.CSSProperties = {
+    width: "100%", padding: "10px 12px", borderRadius: 8,
+    background: "var(--bg-base)",
+    border: `1px solid var(--border-subtle)`,
+    color: "var(--text-primary)", fontSize: 13, boxSizing: "border-box",
+    outline: "none",
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -429,7 +468,7 @@ function NewHookWizard({ onClose, onSave }: {
       onClick={onClose}
       style={{
         position: "fixed", inset: 0, zIndex: 60,
-        background: "rgba(5,8,16,0.88)", backdropFilter: "blur(20px)",
+        background: "rgba(10,9,8,0.85)", backdropFilter: "blur(20px)",
         display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
       }}
     >
@@ -441,39 +480,52 @@ function NewHookWizard({ onClose, onSave }: {
         style={{
           width: "100%", maxWidth: 520,
           borderRadius: 20,
-          border: "1px solid rgba(0,212,255,0.2)",
-          background: "rgba(8,12,26,0.98)",
-          backdropFilter: "blur(40px)",
+          border: `1px solid var(--border-subtle)`,
+          background: "var(--bg-surface)",
           boxShadow: "0 32px 80px rgba(0,0,0,0.5)",
           overflow: "hidden",
           display: "flex", flexDirection: "column",
         }}
       >
-        {/* Wizard header */}
+        {/* Accent */}
+        <div style={{
+          height: 2,
+          background: `linear-gradient(90deg, transparent, #3D8A6080, #3D8A60cc, #3D8A6080, transparent)`,
+        }} />
+
+        {/* Header */}
         <div style={{
           padding: "18px 24px 14px",
-          borderBottom: "1px solid rgba(255,255,255,0.05)",
+          borderBottom: `1px solid var(--border-subtle)`,
           display: "flex", alignItems: "center", justifyContent: "space-between",
         }}>
           <div>
-            <h3 style={{ fontSize: 15, fontWeight: 700, color: "#F0EDE6", marginBottom: 3 }}>Nuevo Hook</h3>
-            <p style={{ fontSize: 11, color: "#4A5568" }}>Paso {step + 1} de {steps.length} — {steps[step]}</p>
+            <h3 style={{
+              fontSize: 16, fontWeight: 700,
+              color: "var(--text-primary)",
+              fontFamily: "var(--font-display)",
+              marginBottom: 3,
+            }}>
+              Nuevo Hook
+            </h3>
+            <p style={{ fontSize: 11, color: "var(--text-muted)" }}>
+              Paso {step + 1} de {steps.length} — {steps[step]}
+            </p>
           </div>
-          {/* Step pills */}
-          <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             {steps.map((s, i) => (
               <div key={s} style={{
-                width: i === step ? 24 : 8, height: 8, borderRadius: 4,
-                background: i < step ? "#3D8A60" : i === step ? "#4A8EB8" : "rgba(26,39,68,0.8)",
+                width: i === step ? 22 : 7, height: 7, borderRadius: 4,
+                background: i < step ? "#3D8A60" : i === step ? "#4A8EB8" : "var(--bg-surface-2)",
                 transition: "all 0.25s",
               }} />
             ))}
           </div>
           <button onClick={onClose} style={{
             width: 28, height: 28, borderRadius: 7,
-            background: "rgba(255,255,255,0.05)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            cursor: "pointer", color: "#6A7898",
+            background: "var(--bg-surface-2)",
+            border: `1px solid var(--border-subtle)`,
+            cursor: "pointer", color: "var(--text-muted)",
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
             <XIcon size={12} />
@@ -491,12 +543,12 @@ function NewHookWizard({ onClose, onSave }: {
                 exit={{ opacity: 0, x: -16 }}
                 transition={{ duration: 0.18 }}
               >
-                <p style={{ fontSize: 11, color: "#4A5568", marginBottom: 14, letterSpacing: "0.04em" }}>
+                <p style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 14, letterSpacing: "0.04em" }}>
                   ¿QUÉ EVENTO DISPARA ESTE HOOK?
                 </p>
                 {groups.map(([group, items]) => (
                   <div key={group} style={{ marginBottom: 14 }}>
-                    <p style={{ fontSize: 9, color: "#4A4A5A", letterSpacing: "0.1em", marginBottom: 6, fontFamily: "var(--font-mono)" }}>
+                    <p style={{ fontSize: 9, color: "var(--text-muted)", letterSpacing: "0.1em", marginBottom: 6, fontFamily: "var(--font-mono)" }}>
                       {group.toUpperCase()}
                     </p>
                     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -510,17 +562,17 @@ function NewHookWizard({ onClose, onSave }: {
                             whileTap={{ scale: 0.98 }}
                             style={{
                               padding: "10px 12px", borderRadius: 8,
-                              border: `1px solid ${sel ? `${v.color}40` : "rgba(26,39,68,0.5)"}`,
-                              background: sel ? `${v.color}0C` : "rgba(10,15,31,0.4)",
+                              border: `1px solid ${sel ? `${v.color}40` : "var(--border-subtle)"}`,
+                              background: sel ? `${v.color}0C` : "var(--bg-base)",
                               cursor: "pointer", textAlign: "left",
                               display: "flex", alignItems: "center", gap: 10,
                               transition: "all 0.15s",
                             }}
                           >
-                            <Icon size={14} color={sel ? v.color : "#4A5568"} />
+                            <Icon size={14} color={sel ? v.color : "var(--text-muted)"} />
                             <div style={{ flex: 1 }}>
-                              <p style={{ fontSize: 12, fontWeight: 600, color: sel ? "#F0EDE6" : "#6A7898" }}>{v.label}</p>
-                              <p style={{ fontSize: 10, color: "#4A5568" }}>{v.desc}</p>
+                              <p style={{ fontSize: 12, fontWeight: 600, color: sel ? "var(--text-primary)" : "var(--text-secondary)" }}>{v.label}</p>
+                              <p style={{ fontSize: 10, color: "var(--text-muted)" }}>{v.desc}</p>
                             </div>
                             {sel && <CheckIcon size={13} color={v.color} />}
                           </motion.button>
@@ -540,7 +592,7 @@ function NewHookWizard({ onClose, onSave }: {
                 exit={{ opacity: 0, x: -16 }}
                 transition={{ duration: 0.18 }}
               >
-                <p style={{ fontSize: 11, color: "#4A5568", marginBottom: 14, letterSpacing: "0.04em" }}>
+                <p style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 14, letterSpacing: "0.04em" }}>
                   ¿QUÉ DEBE HACER AL ACTIVARSE?
                 </p>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
@@ -555,8 +607,8 @@ function NewHookWizard({ onClose, onSave }: {
                         style={{
                           padding: "14px",
                           borderRadius: 10,
-                          border: `1px solid ${sel ? `${v.color}40` : "rgba(26,39,68,0.5)"}`,
-                          background: sel ? `${v.color}0C` : "rgba(10,15,31,0.4)",
+                          border: `1px solid ${sel ? `${v.color}40` : "var(--border-subtle)"}`,
+                          background: sel ? `${v.color}0C` : "var(--bg-base)",
                           cursor: "pointer", textAlign: "left",
                           transition: "all 0.15s",
                         }}
@@ -567,10 +619,10 @@ function NewHookWizard({ onClose, onSave }: {
                           border: `1px solid ${v.color}22`,
                           display: "flex", alignItems: "center", justifyContent: "center",
                         }}>
-                          <Icon size={15} color={sel ? v.color : "#4A5568"} />
+                          <Icon size={15} color={sel ? v.color : "var(--text-muted)"} />
                         </div>
-                        <p style={{ fontSize: 12, fontWeight: 600, color: sel ? "#F0EDE6" : "#6A7898", marginBottom: 2 }}>{v.label}</p>
-                        <p style={{ fontSize: 10, color: "#4A5568", lineHeight: 1.4 }}>{v.desc}</p>
+                        <p style={{ fontSize: 12, fontWeight: 600, color: sel ? "var(--text-primary)" : "var(--text-secondary)", marginBottom: 2 }}>{v.label}</p>
+                        <p style={{ fontSize: 10, color: "var(--text-muted)", lineHeight: 1.4 }}>{v.desc}</p>
                       </motion.button>
                     );
                   })}
@@ -588,60 +640,58 @@ function NewHookWizard({ onClose, onSave }: {
                 style={{ display: "flex", flexDirection: "column", gap: 16 }}
               >
                 <div>
-                  <label style={{ fontSize: 10, color: "#4A5568", letterSpacing: "0.06em", display: "block", marginBottom: 6 }}>NOMBRE DEL HOOK *</label>
+                  <label style={{ fontSize: 10, color: "var(--text-muted)", letterSpacing: "0.06em", display: "block", marginBottom: 6 }}>
+                    NOMBRE DEL HOOK *
+                  </label>
                   <input
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(e) => setName(e.target.value.slice(0, 60))}
                     autoFocus
                     placeholder="Ej: Log automático de conversaciones..."
-                    style={{
-                      width: "100%", padding: "10px 12px", borderRadius: 8,
-                      background: "rgba(10,15,31,0.6)",
-                      border: "1px solid rgba(26,39,68,0.7)",
-                      color: "#F0EDE6", fontSize: 13, boxSizing: "border-box",
-                    }}
+                    style={FIELD}
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: 10, color: "#4A5568", letterSpacing: "0.06em", display: "block", marginBottom: 6 }}>DESCRIPCIÓN</label>
+                  <label style={{ fontSize: 10, color: "var(--text-muted)", letterSpacing: "0.06em", display: "block", marginBottom: 6 }}>
+                    DESCRIPCIÓN
+                  </label>
                   <textarea
                     value={desc}
-                    onChange={(e) => setDesc(e.target.value)}
+                    onChange={(e) => setDesc(e.target.value.slice(0, 200))}
                     placeholder="Describe para qué sirve este hook..."
                     rows={3}
-                    style={{
-                      width: "100%", padding: "10px 12px", borderRadius: 8,
-                      background: "rgba(10,15,31,0.6)",
-                      border: "1px solid rgba(26,39,68,0.7)",
-                      color: "#F0EDE6", fontSize: 12, lineHeight: 1.5, resize: "none",
-                      boxSizing: "border-box",
-                    }}
+                    style={{ ...FIELD, lineHeight: 1.5, resize: "none" } as React.CSSProperties}
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: 10, color: "#4A5568", letterSpacing: "0.06em", display: "block", marginBottom: 8 }}>COLOR</label>
+                  <label style={{ fontSize: 10, color: "var(--text-muted)", letterSpacing: "0.06em", display: "block", marginBottom: 8 }}>
+                    COLOR
+                  </label>
                   <div style={{ display: "flex", gap: 8 }}>
                     {HOOK_COLORS.map((c) => (
-                      <button key={c} onClick={() => setColor(c)} style={{
-                        width: 28, height: 28, borderRadius: "50%",
-                        background: c,
-                        border: color === c ? `2.5px solid #fff` : "2px solid transparent",
-                        cursor: "pointer",
-                        boxShadow: color === c ? `0 0 10px ${c}70` : "none",
-                        transition: "all 0.15s",
-                      }} />
+                      <button
+                        key={c}
+                        onClick={() => setColor(c)}
+                        style={{
+                          width: 26, height: 26, borderRadius: "50%",
+                          background: c,
+                          border: color === c ? "2.5px solid var(--text-primary)" : "2px solid transparent",
+                          cursor: "pointer",
+                          boxShadow: color === c ? `0 0 8px ${c}70` : "none",
+                          transition: "all 0.15s",
+                        }}
+                      />
                     ))}
                   </div>
                 </div>
 
-                {/* Summary */}
                 {trigger && action && (
                   <div style={{
                     padding: "12px 14px", borderRadius: 10,
-                    background: "rgba(10,15,31,0.5)",
-                    border: "1px solid rgba(26,39,68,0.5)",
+                    background: "var(--bg-base)",
+                    border: `1px solid var(--border-subtle)`,
                   }}>
-                    <p style={{ fontSize: 10, color: "#4A5568", letterSpacing: "0.05em", marginBottom: 8 }}>RESUMEN DEL HOOK</p>
+                    <p style={{ fontSize: 10, color: "var(--text-muted)", letterSpacing: "0.05em", marginBottom: 8 }}>RESUMEN DEL HOOK</p>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                       <span style={{
                         padding: "3px 8px", borderRadius: 5, fontSize: 11, fontWeight: 600,
@@ -651,7 +701,7 @@ function NewHookWizard({ onClose, onSave }: {
                       }}>
                         {TRIGGER_CONFIG[trigger].label}
                       </span>
-                      <ChevronRightIcon size={12} color="#4A4A5A" />
+                      <ChevronRightIcon size={12} color="var(--text-muted)" />
                       <span style={{
                         padding: "3px 8px", borderRadius: 5, fontSize: 11, fontWeight: 600,
                         background: `${ACTION_CONFIG[action].color}10`,
@@ -671,16 +721,19 @@ function NewHookWizard({ onClose, onSave }: {
         {/* Footer */}
         <div style={{
           padding: "12px 24px",
-          borderTop: "1px solid rgba(255,255,255,0.04)",
+          borderTop: `1px solid var(--border-subtle)`,
           display: "flex", gap: 8,
         }}>
           {step > 0 && (
-            <button onClick={() => setStep((s) => s - 1)} style={{
-              flex: 1, padding: "10px 0", borderRadius: 9,
-              border: "1px solid rgba(26,39,68,0.7)",
-              background: "transparent", color: "#6A7898",
-              fontSize: 12, fontWeight: 500, cursor: "pointer",
-            }}>
+            <button
+              onClick={() => setStep((s) => s - 1)}
+              style={{
+                flex: 1, padding: "10px 0", borderRadius: 9,
+                border: `1px solid var(--border-subtle)`,
+                background: "transparent", color: "var(--text-secondary)",
+                fontSize: 12, fontWeight: 500, cursor: "pointer",
+              }}
+            >
               ← Atrás
             </button>
           )}
@@ -691,8 +744,8 @@ function NewHookWizard({ onClose, onSave }: {
               whileTap={{ scale: 0.97 }}
               style={{
                 flex: 2, padding: "10px 0", borderRadius: 9,
-                border: "1px solid rgba(0,212,255,0.35)",
-                background: "rgba(0,212,255,0.1)",
+                border: "1px solid rgba(74,142,184,0.35)",
+                background: "rgba(74,142,184,0.1)",
                 color: "#4A8EB8", fontSize: 12, fontWeight: 700, cursor: "pointer",
                 opacity: canProceed[step] ? 1 : 0.4,
               }}
@@ -713,8 +766,8 @@ function NewHookWizard({ onClose, onSave }: {
               whileTap={{ scale: 0.97 }}
               style={{
                 flex: 2, padding: "10px 0", borderRadius: 9,
-                border: "1px solid rgba(0,229,160,0.35)",
-                background: "rgba(0,229,160,0.1)",
+                border: "1px solid rgba(61,138,96,0.35)",
+                background: "rgba(61,138,96,0.1)",
                 color: "#3D8A60", fontSize: 12, fontWeight: 700, cursor: "pointer",
                 opacity: canProceed[2] ? 1 : 0.4,
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
@@ -743,7 +796,9 @@ export default function HooksPage() {
   const totalRuns = hooks.reduce((s, h) => s + h.runCount, 0);
 
   const filtered = hooks.filter((h) => {
-    const matchSearch = !search || h.name.toLowerCase().includes(search.toLowerCase()) || h.description.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = !search
+      || h.name.toLowerCase().includes(search.toLowerCase())
+      || h.description.toLowerCase().includes(search.toLowerCase());
     const matchTrigger = filterTrigger === "all" || h.trigger === filterTrigger;
     return matchSearch && matchTrigger;
   });
@@ -756,40 +811,37 @@ export default function HooksPage() {
   );
 
   return (
-    <div style={{
-      height: "100%", display: "flex", flexDirection: "column",
-      background: "transparent", overflow: "hidden",
-    }}>
-      {/* ── Header ─────────────────────────────────────────── */}
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "transparent", overflow: "hidden" }}>
+
+      {/* ── Header ────────────────────────────────────────── */}
       <div style={{
         padding: "18px 24px 14px",
-        borderBottom: "1px solid rgba(255,255,255,0.04)",
-        background: "rgba(5,8,20,0.6)",
+        borderBottom: `1px solid var(--border-subtle)`,
+        background: "var(--bg-surface)",
         backdropFilter: "blur(20px)",
         flexShrink: 0,
       }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 5 }}>
               <div style={{
-                width: 32, height: 32, borderRadius: 8,
-                background: "linear-gradient(135deg, rgba(0,229,160,0.15), rgba(0,212,255,0.1))",
-                border: "1px solid rgba(0,229,160,0.25)",
+                width: 32, height: 32, borderRadius: 9,
+                background: "rgba(61,138,96,0.1)",
+                border: "1px solid rgba(61,138,96,0.22)",
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}>
                 <ActivityIcon size={15} color="#3D8A60" />
               </div>
               <h1 style={{
-                fontSize: 20, fontWeight: 800, color: "#F0EDE6",
-                letterSpacing: "0.08em",
-                background: "linear-gradient(135deg, #E8ECF8 0%, #3D8A60 50%, #4A8EB8 100%)",
-                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
+                fontSize: 20, fontWeight: 700,
+                color: "var(--text-primary)",
+                fontFamily: "var(--font-display)",
+                letterSpacing: "0.01em",
               }}>
-                HOOKS
+                Hooks
               </h1>
             </div>
-            <p style={{ fontSize: 12, color: "#6A7898" }}>
+            <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>
               Automatizaciones por eventos · {activeCount} activos de {hooks.length} totales
             </p>
           </div>
@@ -797,23 +849,27 @@ export default function HooksPage() {
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <div style={{
               padding: "6px 12px", borderRadius: 8,
-              background: "rgba(0,229,160,0.08)",
-              border: "1px solid rgba(0,229,160,0.18)",
-              display: "flex", alignItems: "center", gap: 7,
+              background: "rgba(61,138,96,0.07)",
+              border: "1px solid rgba(61,138,96,0.18)",
+              display: "flex", alignItems: "center", gap: 6,
             }}>
               <PlayIcon size={10} color="#3D8A60" />
-              <span style={{ fontSize: 11, color: "#3D8A60", fontFamily: "var(--font-mono)", fontWeight: 700 }}>
+              <span style={{
+                fontSize: 11, color: "#3D8A60",
+                fontFamily: "var(--font-display)",
+                fontWeight: 700,
+              }}>
                 {totalRuns.toLocaleString()} runs
               </span>
             </div>
             <motion.button
-              whileHover={{ scale: 1.03 }}
+              whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => setShowWizard(true)}
               style={{
-                padding: "7px 16px", borderRadius: 8,
-                background: "linear-gradient(135deg, rgba(0,229,160,0.15), rgba(0,212,255,0.1))",
-                border: "1px solid rgba(0,229,160,0.3)",
+                padding: "7px 14px", borderRadius: 8,
+                background: "rgba(61,138,96,0.1)",
+                border: "1px solid rgba(61,138,96,0.28)",
                 color: "#3D8A60", fontSize: 12, fontWeight: 700, cursor: "pointer",
                 display: "flex", alignItems: "center", gap: 6,
               }}
@@ -828,17 +884,17 @@ export default function HooksPage() {
       {/* ── Body ──────────────────────────────────────────── */}
       <div style={{ flex: 1, display: "flex", gap: 0, overflow: "hidden" }}>
 
-        {/* Left: List */}
+        {/* Left: list */}
         <div style={{
           width: 400, flexShrink: 0,
-          borderRight: "1px solid rgba(255,255,255,0.04)",
+          borderRight: `1px solid var(--border-subtle)`,
           display: "flex", flexDirection: "column",
           overflow: "hidden",
         }}>
           {/* Search + filter */}
-          <div style={{ padding: "12px 14px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+          <div style={{ padding: "12px 12px 8px", borderBottom: `1px solid var(--border-subtle)` }}>
             <div style={{ position: "relative", marginBottom: 8 }}>
-              <SearchIcon size={12} color="#4A5568" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)" }} />
+              <SearchIcon size={12} color="var(--text-muted)" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)" }} />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -846,36 +902,44 @@ export default function HooksPage() {
                 style={{
                   width: "100%", padding: "7px 10px 7px 28px",
                   borderRadius: 7,
-                  background: "rgba(10,15,31,0.6)",
-                  border: "1px solid rgba(26,39,68,0.7)",
-                  color: "#F0EDE6", fontSize: 12, boxSizing: "border-box",
+                  background: "var(--bg-base)",
+                  border: `1px solid var(--border-subtle)`,
+                  color: "var(--text-primary)", fontSize: 12, boxSizing: "border-box",
+                  outline: "none",
                 }}
               />
             </div>
 
             {/* Trigger filter chips */}
             <div style={{ display: "flex", gap: 4, overflowX: "auto", paddingBottom: 2 }}>
-              <button onClick={() => setFilterTrigger("all")} style={{
-                padding: "3px 9px", borderRadius: 5, flexShrink: 0,
-                background: filterTrigger === "all" ? "rgba(232,236,248,0.1)" : "transparent",
-                border: `1px solid ${filterTrigger === "all" ? "rgba(232,236,248,0.2)" : "rgba(26,39,68,0.4)"}`,
-                color: filterTrigger === "all" ? "#F0EDE6" : "#4A5568",
-                fontSize: 10, fontWeight: 600, cursor: "pointer",
-              }}>
+              <button
+                onClick={() => setFilterTrigger("all")}
+                style={{
+                  padding: "3px 9px", borderRadius: 5, flexShrink: 0,
+                  background: filterTrigger === "all" ? "var(--bg-surface-2)" : "transparent",
+                  border: `1px solid ${filterTrigger === "all" ? "var(--border-subtle)" : "transparent"}`,
+                  color: filterTrigger === "all" ? "var(--text-primary)" : "var(--text-muted)",
+                  fontSize: 10, fontWeight: 600, cursor: "pointer",
+                }}
+              >
                 Todos ({hooks.length})
               </button>
               {triggerGroups.map(([k, count]) => {
                 const cfg = TRIGGER_CONFIG[k as HookTrigger];
                 const sel = filterTrigger === k;
                 return (
-                  <button key={k} onClick={() => setFilterTrigger(k as HookTrigger)} style={{
-                    padding: "3px 9px", borderRadius: 5, flexShrink: 0,
-                    background: sel ? `${cfg.color}12` : "transparent",
-                    border: `1px solid ${sel ? `${cfg.color}30` : "rgba(26,39,68,0.4)"}`,
-                    color: sel ? cfg.color : "#4A5568",
-                    fontSize: 10, fontWeight: 600, cursor: "pointer",
-                    display: "flex", alignItems: "center", gap: 4,
-                  }}>
+                  <button
+                    key={k}
+                    onClick={() => setFilterTrigger(k as HookTrigger)}
+                    style={{
+                      padding: "3px 9px", borderRadius: 5, flexShrink: 0,
+                      background: sel ? `${cfg.color}12` : "transparent",
+                      border: `1px solid ${sel ? `${cfg.color}30` : "transparent"}`,
+                      color: sel ? cfg.color : "var(--text-muted)",
+                      fontSize: 10, fontWeight: 600, cursor: "pointer",
+                      display: "flex", alignItems: "center", gap: 4,
+                    }}
+                  >
                     <cfg.icon size={8} />
                     {cfg.label} ({count})
                   </button>
@@ -888,9 +952,9 @@ export default function HooksPage() {
           <div style={{ flex: 1, overflowY: "auto", padding: "10px 10px" }}>
             <AnimatePresence>
               {filtered.length === 0 ? (
-                <div style={{ padding: "32px 16px", textAlign: "center" }}>
-                  <ZapIcon size={24} color="#4A4A5A" style={{ margin: "0 auto 10px" }} />
-                  <p style={{ color: "#4A4A5A", fontSize: 12 }}>No hay hooks que coincidan</p>
+                <div style={{ padding: "40px 16px", textAlign: "center" }}>
+                  <ZapIcon size={22} color="var(--text-muted)" style={{ margin: "0 auto 10px" }} />
+                  <p style={{ color: "var(--text-muted)", fontSize: 12 }}>No hay hooks que coincidan</p>
                 </div>
               ) : (
                 filtered.map((hook) => (
@@ -914,7 +978,7 @@ export default function HooksPage() {
           </div>
         </div>
 
-        {/* Right: Detail or empty state */}
+        {/* Right: detail or empty state */}
         <div style={{ flex: 1, padding: "16px", overflow: "hidden", display: "flex" }}>
           <AnimatePresence mode="wait">
             {selected ? (
@@ -940,25 +1004,25 @@ export default function HooksPage() {
                 style={{
                   flex: 1, display: "flex", flexDirection: "column",
                   alignItems: "center", justifyContent: "center", gap: 16,
-                  background: "rgba(8,12,26,0.3)",
-                  borderRadius: 14,
-                  border: "1px solid rgba(26,39,68,0.3)",
+                  background: "var(--bg-surface)",
+                  borderRadius: 16,
+                  border: `1px solid var(--border-subtle)`,
                 }}
               >
                 <div style={{
-                  width: 64, height: 64, borderRadius: 16,
-                  background: "rgba(0,229,160,0.06)",
-                  border: "1px solid rgba(0,229,160,0.12)",
+                  width: 60, height: 60, borderRadius: 15,
+                  background: "rgba(61,138,96,0.06)",
+                  border: "1px solid rgba(61,138,96,0.12)",
                   display: "flex", alignItems: "center", justifyContent: "center",
                 }}>
-                  <ActivityIcon size={28} color="#1E3040" />
+                  <ActivityIcon size={26} color="rgba(61,138,96,0.25)" />
                 </div>
                 <div style={{ textAlign: "center" }}>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: "#4A4A5A", marginBottom: 5 }}>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 5 }}>
                     Selecciona un hook
                   </p>
-                  <p style={{ fontSize: 12, color: "#2A3550", maxWidth: 220 }}>
-                    Haz clic en cualquier hook de la lista para ver sus detalles y configuración
+                  <p style={{ fontSize: 12, color: "var(--text-muted)", maxWidth: 220 }}>
+                    Haz clic en cualquier hook de la lista para ver detalles y configuración
                   </p>
                 </div>
                 <motion.button
@@ -967,8 +1031,8 @@ export default function HooksPage() {
                   onClick={() => setShowWizard(true)}
                   style={{
                     padding: "9px 18px", borderRadius: 9,
-                    border: "1px solid rgba(0,229,160,0.3)",
-                    background: "rgba(0,229,160,0.07)",
+                    border: "1px solid rgba(61,138,96,0.28)",
+                    background: "rgba(61,138,96,0.07)",
                     color: "#3D8A60", fontSize: 12, fontWeight: 700, cursor: "pointer",
                     display: "flex", alignItems: "center", gap: 6,
                   }}
@@ -982,7 +1046,7 @@ export default function HooksPage() {
         </div>
       </div>
 
-      {/* ── Wizard Modal ─────────────────────────────────── */}
+      {/* ── Wizard Modal ──────────────────────────────────── */}
       <AnimatePresence>
         {showWizard && (
           <NewHookWizard

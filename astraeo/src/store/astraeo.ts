@@ -252,10 +252,13 @@ export const useAstraeo = create<AstraeoState>()(
         return id;
       },
       setActiveChat: (id) => set({ activeChatId: id }),
-      deleteChat: (id) => set((s) => ({
-        chatSessions: s.chatSessions.filter((c) => c.id !== id),
-        activeChatId: s.activeChatId === id ? (s.chatSessions[0]?.id ?? null) : s.activeChatId,
-      })),
+      deleteChat: (id) => set((s) => {
+        const remaining = s.chatSessions.filter((c) => c.id !== id);
+        return {
+          chatSessions: remaining,
+          activeChatId: s.activeChatId === id ? (remaining[0]?.id ?? null) : s.activeChatId,
+        };
+      }),
 
       sendMessage: async (sessionId, content, agentId) => {
         const state = get();
@@ -314,7 +317,8 @@ export const useAstraeo = create<AstraeoState>()(
 
           if (!res.ok) throw new Error(`API Error ${res.status}`);
 
-          const reader = res.body!.getReader();
+          if (!res.body) throw new Error("Response body is null");
+          const reader = res.body.getReader();
           const decoder = new TextDecoder();
           let buffer = "";
           let replyText = "";
@@ -505,6 +509,8 @@ export const useAstraeo = create<AstraeoState>()(
         activeChatId: s.activeChatId,
         memory: s.memory,
         workflows: s.workflows,
+        skills: s.skills,
+        hooks: s.hooks,
         integrations: s.integrations,
         notifications: s.notifications,
         settings: s.settings,
