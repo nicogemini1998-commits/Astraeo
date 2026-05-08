@@ -13,7 +13,7 @@ const MODELS = [
     label: "Claude Haiku 4.5",
     sub: "Rápido · Económico",
     desc: "Respuestas rápidas, agentes frecuentes",
-    badge: "#00E5A0",
+    badge: "#3D8A60",
     speedDots: 3,
     costDots: 1,
   },
@@ -23,7 +23,7 @@ const MODELS = [
     label: "Claude Sonnet 4.6",
     sub: "Balanceado · Recomendado",
     desc: "Tareas generales, desarrollo, análisis",
-    badge: "#00D4FF",
+    badge: "#4A8EB8",
     speedDots: 2,
     costDots: 2,
   },
@@ -55,12 +55,12 @@ const ANIMATION_SPEEDS = [
 type Section = "general" | "api" | "appearance" | "security" | "context" | "danger";
 
 const NAV_SECTIONS: { id: Section; label: string; icon: string; color: string }[] = [
-  { id: "general",    label: "General",         icon: "◉",  color: "#00D4FF" },
+  { id: "general",    label: "General",         icon: "◉",  color: "#4A8EB8" },
   { id: "api",        label: "IA / API",         icon: "🤖", color: "#CC785C" },
-  { id: "appearance", label: "Apariencia",       icon: "◈",  color: "#FF6B9D" },
-  { id: "security",   label: "Seguridad",        icon: "⬡",  color: "#7B61FF" },
-  { id: "context",    label: "Contexto Empresa", icon: "🏢", color: "#00E5A0" },
-  { id: "danger",     label: "Zona de Peligro",  icon: "⚠",  color: "#FF4757" },
+  { id: "appearance", label: "Apariencia",       icon: "◈",  color: "#B04858" },
+  { id: "security",   label: "Seguridad",        icon: "⬡",  color: "#6655CC" },
+  { id: "context",    label: "Contexto Empresa", icon: "🏢", color: "#3D8A60" },
+  { id: "danger",     label: "Zona de Peligro",  icon: "⚠",  color: "#A83C50" },
 ];
 
 type ApiStatus = "idle" | "verifying" | "valid" | "invalid";
@@ -187,13 +187,13 @@ export default function SettingsPage() {
 
   const apiStatusMeta = {
     idle: {
-      color: claudeIntg?.connected ? "#00E5A0" : "#4A5568",
+      color: claudeIntg?.connected ? "#3D8A60" : "#4A5568",
       label: claudeIntg?.connected ? "Conectada" : "No configurada",
       bg: claudeIntg?.connected ? "rgba(0,229,160,0.08)" : "rgba(74,85,104,0.08)",
     },
-    verifying: { color: "#FFB800", label: "Verificando...", bg: "rgba(255,184,0,0.08)" },
-    valid:     { color: "#00E5A0", label: "Verificada ✓",  bg: "rgba(0,229,160,0.08)" },
-    invalid:   { color: "#FF4757", label: "Inválida ✗",    bg: "rgba(255,71,87,0.08)" },
+    verifying: { color: "#B88530", label: "Verificando...", bg: "rgba(255,184,0,0.08)" },
+    valid:     { color: "#3D8A60", label: "Verificada ✓",  bg: "rgba(0,229,160,0.08)" },
+    invalid:   { color: "#A83C50", label: "Inválida ✗",    bg: "rgba(255,71,87,0.08)" },
   };
 
   const currentApiMeta = apiStatusMeta[apiStatus];
@@ -217,7 +217,7 @@ export default function SettingsPage() {
           <p style={{ fontSize: 11, color: "#4A5568", fontFamily: "monospace", letterSpacing: "0.08em", textTransform: "uppercase" }}>
             Sistema
           </p>
-          <h2 style={{ fontSize: 17, fontWeight: 700, color: "#E8ECF4", marginTop: 2, letterSpacing: "-0.01em" }}>
+          <h2 style={{ fontSize: 17, fontWeight: 700, color: "#F0EDE6", marginTop: 2, letterSpacing: "-0.01em" }}>
             Configuración
           </h2>
         </div>
@@ -241,7 +241,7 @@ export default function SettingsPage() {
                   borderRadius: 10,
                   border: `1px solid ${active ? sec.color + "28" : "transparent"}`,
                   background: active ? `${sec.color}0D` : "transparent",
-                  color: active ? sec.color : "#6B7A99",
+                  color: active ? sec.color : "#8A8A97",
                   fontSize: 12,
                   fontWeight: active ? 600 : 500,
                   cursor: "pointer",
@@ -277,7 +277,7 @@ export default function SettingsPage() {
               borderRadius: 8,
               border: "1px solid rgba(26,39,68,0.7)",
               background: "transparent",
-              color: "#6B7A99",
+              color: "#8A8A97",
               fontSize: 11,
               fontWeight: 500,
               cursor: "pointer",
@@ -294,7 +294,7 @@ export default function SettingsPage() {
               borderRadius: 8,
               border: "1px solid rgba(0,212,255,0.3)",
               background: saved ? "rgba(0,229,160,0.15)" : "rgba(0,212,255,0.1)",
-              color: saved ? "#00E5A0" : "#00D4FF",
+              color: saved ? "#3D8A60" : "#4A8EB8",
               fontSize: 11,
               fontWeight: 600,
               cursor: "pointer",
@@ -316,7 +316,7 @@ export default function SettingsPage() {
             id="general"
             title="General"
             icon="◉"
-            color="#00D4FF"
+            color="#4A8EB8"
             refCallback={(el) => { if (el) sectionRefs.current.general = el; }}
           >
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -350,10 +350,10 @@ export default function SettingsPage() {
                   ◎
                 </div>
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: "#E8ECF4", marginBottom: 2 }}>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: "#F0EDE6", marginBottom: 2 }}>
                     {localSettings.userName || "ASTRAEO"}
                   </p>
-                  <p style={{ fontSize: 11, color: "#6B7A99" }}>{localSettings.userRole}</p>
+                  <p style={{ fontSize: 11, color: "#8A8A97" }}>{localSettings.userRole}</p>
                 </div>
                 <span
                   style={{
@@ -361,7 +361,7 @@ export default function SettingsPage() {
                     padding: "3px 8px",
                     borderRadius: 6,
                     background: "rgba(0,212,255,0.1)",
-                    color: "#00D4FF",
+                    color: "#4A8EB8",
                     border: "1px solid rgba(0,212,255,0.2)",
                     fontFamily: "monospace",
                     fontWeight: 600,
@@ -404,7 +404,7 @@ export default function SettingsPage() {
                         borderRadius: 8,
                         border: `1px solid ${localSettings.language === lang.code ? "rgba(0,212,255,0.4)" : "rgba(26,39,68,0.7)"}`,
                         background: localSettings.language === lang.code ? "rgba(0,212,255,0.1)" : "rgba(10,15,31,0.4)",
-                        color: localSettings.language === lang.code ? "#00D4FF" : "#6B7A99",
+                        color: localSettings.language === lang.code ? "#4A8EB8" : "#8A8A97",
                         fontSize: 12,
                         fontWeight: 600,
                         cursor: "pointer",
@@ -420,7 +420,7 @@ export default function SettingsPage() {
               {/* Timezone */}
               <FieldGroup label="Zona horaria">
                 <div style={{ ...inputStyle, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: 12, color: "#E8ECF4" }}>Europe/Madrid</span>
+                  <span style={{ fontSize: 12, color: "#F0EDE6" }}>Europe/Madrid</span>
                   <span style={{ fontSize: 10, color: "#4A5568" }}>UTC+2</span>
                 </div>
               </FieldGroup>
@@ -432,7 +432,7 @@ export default function SettingsPage() {
                   sub="Métricas y estado se actualizan automáticamente cada 3 segundos"
                   value={localSettings.realtimeUpdates}
                   onChange={(v) => patch({ realtimeUpdates: v })}
-                  color="#00D4FF"
+                  color="#4A8EB8"
                 />
               </div>
             </div>
@@ -471,7 +471,7 @@ export default function SettingsPage() {
                       transform: "translateY(-50%)",
                       background: "none",
                       border: "none",
-                      color: "#6B7A99",
+                      color: "#8A8A97",
                       cursor: "pointer",
                       fontSize: 13,
                       padding: 0,
@@ -566,7 +566,7 @@ export default function SettingsPage() {
                       {/* Info */}
                       <div style={{ flex: 1 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: "#E8ECF4" }}>{m.label}</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: "#F0EDE6" }}>{m.label}</span>
                           {selected && (
                             <motion.span
                               initial={{ scale: 0 }}
@@ -587,7 +587,7 @@ export default function SettingsPage() {
                             </motion.span>
                           )}
                         </div>
-                        <p style={{ fontSize: 11, color: "#6B7A99" }}>{m.sub}</p>
+                        <p style={{ fontSize: 11, color: "#8A8A97" }}>{m.sub}</p>
                         <p style={{ fontSize: 10, color: "rgba(107,122,153,0.6)", marginTop: 2 }}>{m.desc}</p>
                       </div>
 
@@ -694,7 +694,7 @@ export default function SettingsPage() {
             id="appearance"
             title="Apariencia"
             icon="◈"
-            color="#FF6B9D"
+            color="#B04858"
             refCallback={(el) => { if (el) sectionRefs.current.appearance = el; }}
           >
             {/* Starfield density */}
@@ -705,7 +705,7 @@ export default function SettingsPage() {
                 max={200}
                 value={localSettings.starfieldDensity}
                 onChange={(e) => patch({ starfieldDensity: Number(e.target.value) })}
-                style={{ width: "100%", accentColor: "#FF6B9D", cursor: "pointer" }}
+                style={{ width: "100%", accentColor: "#B04858", cursor: "pointer" }}
               />
               <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
                 <span style={{ fontSize: 10, color: "#4A5568" }}>Mínimo</span>
@@ -725,7 +725,7 @@ export default function SettingsPage() {
                       borderRadius: 8,
                       border: `1px solid rgba(26,39,68,0.7)`,
                       background: "rgba(10,15,31,0.4)",
-                      color: "#6B7A99",
+                      color: "#8A8A97",
                       fontSize: 11,
                       fontWeight: 500,
                       cursor: "pointer",
@@ -742,7 +742,7 @@ export default function SettingsPage() {
               sub="Reduce el espaciado de la interfaz para más densidad"
               value={localSettings.compactMode}
               onChange={(v) => patch({ compactMode: v })}
-              color="#FF6B9D"
+              color="#B04858"
             />
           </SectionCard>
 
@@ -751,7 +751,7 @@ export default function SettingsPage() {
             id="security"
             title="Seguridad"
             icon="⬡"
-            color="#7B61FF"
+            color="#6655CC"
             refCallback={(el) => { if (el) sectionRefs.current.security = el; }}
           >
             <ToggleSetting
@@ -759,14 +759,14 @@ export default function SettingsPage() {
               sub="Alertas, errores y eventos críticos de la plataforma"
               value={localSettings.notifications}
               onChange={(v) => patch({ notifications: v })}
-              color="#7B61FF"
+              color="#6655CC"
             />
             <ToggleSetting
               label="Efectos de sonido"
               sub="Sonidos para eventos importantes y acciones del sistema"
               value={localSettings.soundEffects}
               onChange={(v) => patch({ soundEffects: v })}
-              color="#7B61FF"
+              color="#6655CC"
             />
             <div
               style={{
@@ -776,7 +776,7 @@ export default function SettingsPage() {
                 border: "1px solid rgba(123,97,255,0.12)",
               }}
             >
-              <p style={{ fontSize: 11, color: "#6B7A99", lineHeight: 1.6 }}>
+              <p style={{ fontSize: 11, color: "#8A8A97", lineHeight: 1.6 }}>
                 Las API keys se almacenan localmente en tu navegador. Nunca se transmiten a servidores de terceros excepto al hacer llamadas directas a la API de Anthropic.
               </p>
             </div>
@@ -787,7 +787,7 @@ export default function SettingsPage() {
             id="context"
             title="Contexto Empresa"
             icon="🏢"
-            color="#00E5A0"
+            color="#3D8A60"
             refCallback={(el) => { if (el) sectionRefs.current.context = el; }}
             badge="Inyectado en todos los agentes"
           >
@@ -803,7 +803,7 @@ export default function SettingsPage() {
               }}
             >
               <span style={{ fontSize: 13, flexShrink: 0, marginTop: 1 }}>💡</span>
-              <p style={{ fontSize: 11, color: "#6B7A99", lineHeight: 1.7 }}>
+              <p style={{ fontSize: 11, color: "#8A8A97", lineHeight: 1.7 }}>
                 Este contexto se inyecta automáticamente en todos los prompts de agentes y el Comandante, permitiéndoles operar con pleno conocimiento del negocio.
               </p>
             </div>
@@ -855,7 +855,7 @@ export default function SettingsPage() {
                   style={{
                     fontSize: 10,
                     fontFamily: "monospace",
-                    color: companyLen > 1800 ? "#FFB800" : "#4A5568",
+                    color: companyLen > 1800 ? "#B88530" : "#4A5568",
                   }}
                 >
                   {companyLen} / 2000
@@ -865,7 +865,7 @@ export default function SettingsPage() {
                     onClick={() => patch({ companyContext: COMPANY_DEFAULT })}
                     style={{
                       fontSize: 10,
-                      color: "#6B7A99",
+                      color: "#8A8A97",
                       background: "none",
                       border: "none",
                       cursor: "pointer",
@@ -881,11 +881,11 @@ export default function SettingsPage() {
                         width: 6,
                         height: 6,
                         borderRadius: "50%",
-                        background: "#00E5A0",
+                        background: "#3D8A60",
                         animation: "pulse 2s infinite",
                       }}
                     />
-                    <span style={{ fontSize: 10, color: "#00E5A0", fontWeight: 600 }}>
+                    <span style={{ fontSize: 10, color: "#3D8A60", fontWeight: 600 }}>
                       Activo en agentes
                     </span>
                   </div>
@@ -910,7 +910,7 @@ export default function SettingsPage() {
                       borderRadius: 6,
                       background: "rgba(0,229,160,0.08)",
                       border: "1px solid rgba(0,229,160,0.2)",
-                      color: "#00E5A0",
+                      color: "#3D8A60",
                       fontSize: 11,
                       fontWeight: 500,
                     }}
@@ -948,7 +948,7 @@ export default function SettingsPage() {
                     borderRadius: 8,
                     border: "1px solid rgba(0,229,160,0.3)",
                     background: "rgba(0,229,160,0.08)",
-                    color: "#00E5A0",
+                    color: "#3D8A60",
                     fontSize: 12,
                     fontWeight: 600,
                     cursor: "pointer",
@@ -965,7 +965,7 @@ export default function SettingsPage() {
             id="danger"
             title="Zona de Peligro"
             icon="⚠"
-            color="#FF4757"
+            color="#A83C50"
             refCallback={(el) => { if (el) sectionRefs.current.danger = el; }}
             danger
           >
@@ -1023,7 +1023,7 @@ export default function SettingsPage() {
                   style={{
                     ...ghostBtnStyle,
                     borderColor: "rgba(255,184,0,0.4)",
-                    color: "#FFB800",
+                    color: "#B88530",
                     background: "rgba(255,184,0,0.06)",
                   }}
                 >
@@ -1057,7 +1057,7 @@ const inputStyle: React.CSSProperties = {
   borderRadius: 8,
   border: "1px solid rgba(26,39,68,0.7)",
   background: "rgba(10,15,31,0.5)",
-  color: "#E8ECF4",
+  color: "#F0EDE6",
   fontSize: 12,
   fontFamily: "inherit",
   outline: "none",
@@ -1069,7 +1069,7 @@ const ghostBtnStyle: React.CSSProperties = {
   borderRadius: 7,
   border: "1px solid rgba(26,39,68,0.7)",
   background: "transparent",
-  color: "#6B7A99",
+  color: "#8A8A97",
   fontSize: 11,
   fontWeight: 500,
   cursor: "pointer",
@@ -1081,7 +1081,7 @@ const dangerBtnStyle: React.CSSProperties = {
   borderRadius: 7,
   border: "1px solid rgba(255,71,87,0.4)",
   background: "rgba(255,71,87,0.1)",
-  color: "#FF4757",
+  color: "#A83C50",
   fontSize: 11,
   fontWeight: 600,
   cursor: "pointer",
@@ -1135,7 +1135,7 @@ function SectionCard({
         }}
       >
         <span style={{ color, fontSize: 16 }}>{icon}</span>
-        <h3 style={{ fontSize: 13, fontWeight: 700, color: "#E8ECF4", letterSpacing: "0.01em", flex: 1 }}>
+        <h3 style={{ fontSize: 13, fontWeight: 700, color: "#F0EDE6", letterSpacing: "0.01em", flex: 1 }}>
           {title}
         </h3>
         {badge && (
@@ -1174,7 +1174,7 @@ function FieldGroup({
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-      <label style={{ fontSize: 11, color: "#6B7A99", letterSpacing: "0.04em", fontWeight: 500 }}>
+      <label style={{ fontSize: 11, color: "#8A8A97", letterSpacing: "0.04em", fontWeight: 500 }}>
         {label}
       </label>
       {children}
@@ -1198,8 +1198,8 @@ function ToggleSetting({
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
       <div>
-        <p style={{ fontSize: 13, color: "#E8ECF4", fontWeight: 500, marginBottom: 2 }}>{label}</p>
-        <p style={{ fontSize: 11, color: "#6B7A99" }}>{sub}</p>
+        <p style={{ fontSize: 13, color: "#F0EDE6", fontWeight: 500, marginBottom: 2 }}>{label}</p>
+        <p style={{ fontSize: 11, color: "#8A8A97" }}>{sub}</p>
       </div>
       <motion.button
         onClick={() => onChange(!value)}
@@ -1258,8 +1258,8 @@ function DangerRow({
       }}
     >
       <div style={{ flex: 1 }}>
-        <p style={{ fontSize: 13, color: "#E8ECF4", fontWeight: 500, marginBottom: 3 }}>{title}</p>
-        <p style={{ fontSize: 11, color: "#6B7A99", lineHeight: 1.5 }}>{desc}</p>
+        <p style={{ fontSize: 13, color: "#F0EDE6", fontWeight: 500, marginBottom: 3 }}>{title}</p>
+        <p style={{ fontSize: 11, color: "#8A8A97", lineHeight: 1.5 }}>{desc}</p>
       </div>
       <div style={{ flexShrink: 0 }}>{children}</div>
     </div>

@@ -9,10 +9,17 @@ import rehypeHighlight from "rehype-highlight";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const C = {
-  cyan: "#00D4FF", purple: "#7B61FF", emerald: "#00E5A0",
-  amber: "#FFB800", coral: "#FF6B9D", red: "#FF4757",
-  bg: "#050810", surface: "#0D1120", surfaceHover: "#111828",
-  border: "rgba(255,255,255,0.06)", text: "#E8ECF8", muted: "#3A4560",
+  cyan:    "var(--accent-sky)",
+  purple:  "var(--accent-indigo)",
+  emerald: "var(--accent-emerald)",
+  amber:   "var(--accent-amber)",
+  coral:   "var(--accent-rose)",
+  red:     "var(--danger)",
+  bg:      "var(--bg-base)",
+  surface: "var(--bg-surface)",
+  border:  "var(--border-subtle)",
+  text:    "var(--text-primary)",
+  muted:   "var(--text-muted)",
 } as const;
 
 // ─── CopyButton ───────────────────────────────────────────────────────────────

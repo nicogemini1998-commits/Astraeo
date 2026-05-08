@@ -9,17 +9,17 @@ import { useAstraeo } from "@/store/astraeo";
 import type { Agent, Notification } from "@/lib/types";
 
 const COLORS = {
-  cyan: "#00D4FF",
-  purple: "#7B61FF",
-  emerald: "#00E5A0",
-  amber: "#FFB800",
-  coral: "#FF6B9D",
-  red: "#FF4757",
-  bg: "#050810",
-  surface: "#0D1120",
-  border: "rgba(255,255,255,0.06)",
-  text: "#E8ECF8",
-  muted: "#3A4560",
+  cyan:    "var(--accent-sky)",
+  purple:  "var(--accent-indigo)",
+  emerald: "var(--accent-emerald)",
+  amber:   "var(--accent-amber)",
+  coral:   "var(--accent-rose)",
+  red:     "var(--danger)",
+  bg:      "var(--bg-base)",
+  surface: "var(--bg-surface)",
+  border:  "var(--border-subtle)",
+  text:    "var(--text-primary)",
+  muted:   "var(--text-muted)",
 } as const;
 
 function formatTokens(n: number): string {
@@ -105,61 +105,63 @@ function KpiCard({ label, color, icon, trend, trendText, delay, target }: KpiCar
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.45, delay, ease: [0.16, 1, 0.3, 1] }}
       style={{
-        background: `linear-gradient(135deg, ${COLORS.surface} 0%, rgba(13,17,32,0.95) 100%)`,
-        border: `1px solid ${color}22`,
-        borderRadius: 16,
-        padding: "20px 22px 16px",
+        background: "var(--bg-surface)",
+        border: "1px solid var(--border-subtle)",
+        borderRadius: 14,
+        padding: "22px 22px 18px",
         position: "relative",
         overflow: "hidden",
-        cursor: "default",
       }}
     >
-      {/* ambient glow */}
+      {/* Subtle top-left corner ambient */}
       <div style={{
-        position: "absolute", inset: 0, borderRadius: 16,
-        background: `radial-gradient(ellipse at top left, ${color}08 0%, transparent 60%)`,
+        position: "absolute", top: 0, left: 0, width: 80, height: 80,
+        background: `radial-gradient(circle at top left, ${color}09 0%, transparent 70%)`,
         pointerEvents: "none",
       }} />
 
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>
         <p style={{
-          fontSize: 10, letterSpacing: "0.18em", fontWeight: 700,
-          color: COLORS.muted, textTransform: "uppercase",
+          fontSize: 9.5, letterSpacing: "0.2em", fontWeight: 700,
+          color: "var(--text-muted)", textTransform: "uppercase",
+          fontFamily: "var(--font-mono)",
         }}>{label}</p>
         <div style={{
-          width: 36, height: 36, borderRadius: 10, display: "flex",
+          width: 32, height: 32, borderRadius: 8, display: "flex",
           alignItems: "center", justifyContent: "center", flexShrink: 0,
-          background: `${color}12`, border: `1px solid ${color}30`, color,
+          background: `${color}10`, border: `1px solid ${color}25`, color,
+          opacity: 0.9,
         }}>
           {icon}
         </div>
       </div>
 
-      <div style={{ display: "flex", alignItems: "flex-end", gap: 10, marginBottom: 6 }}>
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 10, marginBottom: 8 }}>
         <span style={{
-          fontSize: 36, fontWeight: 800, lineHeight: 1, color,
-          fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em",
+          fontSize: 38, fontWeight: 600, lineHeight: 1, color,
+          fontFamily: "var(--font-display)",
+          fontVariantNumeric: "tabular-nums", letterSpacing: "-0.03em",
         }}>
           {displayed.toLocaleString()}
         </span>
         <span style={{
-          fontSize: 11, fontWeight: 600, color: trendColor,
-          background: `${trendColor}18`, border: `1px solid ${trendColor}30`,
-          borderRadius: 20, padding: "2px 8px", marginBottom: 4,
+          fontSize: 10, fontWeight: 600, color: trendColor,
+          background: `${trendColor}12`, border: `1px solid ${trendColor}22`,
+          borderRadius: 20, padding: "2px 7px", marginBottom: 5,
+          fontFamily: "var(--font-mono)",
         }}>
           {trendSymbol} {trendText}
         </span>
       </div>
 
-      {/* bottom accent bar */}
+      {/* Clean 1px accent line at bottom — no gradient glow */}
       <div style={{
-        position: "absolute", bottom: 0, left: 0, right: 0,
-        height: 3, background: `linear-gradient(90deg, transparent, ${color}, transparent)`,
-        opacity: 0.6,
+        position: "absolute", bottom: 0, left: "15%", right: "15%",
+        height: 1, background: color, opacity: 0.18,
       }} />
     </motion.div>
   );

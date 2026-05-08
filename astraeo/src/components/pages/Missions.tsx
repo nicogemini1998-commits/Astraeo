@@ -4,14 +4,14 @@ import { useAstraeo } from "@/store/astraeo";
 import type { Mission, MissionStatus, MissionPriority } from "@/lib/types";
 
 const columns: { id: MissionStatus; label: string; color: string }[] = [
-  { id: "backlog", label: "Backlog", color: "#6B7A99" },
-  { id: "active", label: "En Progreso", color: "#00D4FF" },
-  { id: "review", label: "En Revisión", color: "#FFB800" },
-  { id: "done", label: "Completado", color: "#00E5A0" },
+  { id: "backlog", label: "Backlog", color: "#8A8A97" },
+  { id: "active", label: "En Progreso", color: "#4A8EB8" },
+  { id: "review", label: "En Revisión", color: "#B88530" },
+  { id: "done", label: "Completado", color: "#3D8A60" },
 ];
 
 const priorityColors: Record<MissionPriority, string> = {
-  critical: "#FF4757", high: "#FFB800", medium: "#7B61FF", low: "#6B7A99",
+  critical: "#A83C50", high: "#B88530", medium: "#6655CC", low: "#8A8A97",
 };
 
 const emptyMission = (): Omit<Mission, "id" | "createdAt" | "updatedAt"> => ({
@@ -81,11 +81,11 @@ export default function Missions() {
                     ? p === "all" ? "rgba(0,212,255,0.12)" : `${priorityColors[p as MissionPriority]}12`
                     : "transparent",
                   color: filter === p
-                    ? p === "all" ? "#00D4FF" : priorityColors[p as MissionPriority]
-                    : "#6B7A99",
+                    ? p === "all" ? "#4A8EB8" : priorityColors[p as MissionPriority]
+                    : "#8A8A97",
                   border: `1px solid ${filter === p
                     ? p === "all" ? "rgba(0,212,255,0.25)" : `${priorityColors[p as MissionPriority]}30`
-                    : "#1A2744"}`,
+                    : "#23211C"}`,
                 }}
               >
                 {p === "all" ? "Todas" : p}
@@ -169,7 +169,7 @@ export default function Missions() {
                 <label className="text-[11px] text-[#6B7A99] mb-1 block tracking-wide">Prioridad</label>
                 <select className="astraeo-input" value={form.priority}
                   onChange={(e) => setForm((f) => ({ ...f, priority: e.target.value as MissionPriority }))}
-                  style={{ background: "#0A0F1F" }}>
+                  style={{ background: "#100F0D" }}>
                   {(["low", "medium", "high", "critical"] as const).map((p) => (
                     <option key={p} value={p}>{p}</option>
                   ))}
@@ -179,7 +179,7 @@ export default function Missions() {
                 <label className="text-[11px] text-[#6B7A99] mb-1 block tracking-wide">Estado</label>
                 <select className="astraeo-input" value={form.status}
                   onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as MissionStatus }))}
-                  style={{ background: "#0A0F1F" }}>
+                  style={{ background: "#100F0D" }}>
                   {columns.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
                 </select>
               </div>
@@ -188,7 +188,7 @@ export default function Missions() {
               <label className="text-[11px] text-[#6B7A99] mb-1 block tracking-wide">Progreso: {form.progress}%</label>
               <input type="range" min={0} max={100} value={form.progress}
                 onChange={(e) => setForm((f) => ({ ...f, progress: Number(e.target.value) }))}
-                className="w-full accent-[#00D4FF]" />
+                className="w-full accent-[#4A8EB8]" />
             </div>
             <div>
               <label className="text-[11px] text-[#6B7A99] mb-1 block tracking-wide">Asignar agentes</label>
@@ -205,8 +205,8 @@ export default function Missions() {
                     className="text-[11px] px-2.5 py-1 rounded-lg font-medium transition-all"
                     style={{
                       background: form.assignedTo.includes(a.id) ? `${a.color}15` : "transparent",
-                      color: form.assignedTo.includes(a.id) ? a.color : "#6B7A99",
-                      border: `1px solid ${form.assignedTo.includes(a.id) ? a.color + "35" : "#1A2744"}`,
+                      color: form.assignedTo.includes(a.id) ? a.color : "#8A8A97",
+                      border: `1px solid ${form.assignedTo.includes(a.id) ? a.color + "35" : "#23211C"}`,
                     }}
                   >
                     {a.icon} {a.name}
@@ -245,7 +245,7 @@ function MissionCard({
       draggable
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
-      className="glass-card rounded-xl p-3 border border-[#1A2744]/60 cursor-grab active:cursor-grabbing group transition-all hover:border-[#00D4FF]/20 hover:bg-white/[0.02]"
+      className="glass-card rounded-xl p-3 border border-[#1A2744]/60 cursor-grab active:cursor-grabbing group transition-all hover:border-[#4A8EB8]/20 hover:bg-white/[0.02]"
     >
       <div className="flex items-start justify-between gap-2 mb-2">
         <span
@@ -255,8 +255,8 @@ function MissionCard({
           {mission.priority}
         </span>
         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
-          <button onClick={onEdit} className="text-[11px] text-[#6B7A99] hover:text-[#00D4FF] transition-all">✎</button>
-          <button onClick={onDelete} className="text-[11px] text-[#6B7A99] hover:text-[#FF4757] transition-all">✕</button>
+          <button onClick={onEdit} className="text-[11px] text-[#6B7A99] hover:text-[#4A8EB8] transition-all">✎</button>
+          <button onClick={onDelete} className="text-[11px] text-[#6B7A99] hover:text-[#A83C50] transition-all">✕</button>
         </div>
       </div>
       <p className="text-[12px] font-semibold text-[#E8ECF4] mb-1 leading-snug">{mission.title}</p>
@@ -271,8 +271,8 @@ function MissionCard({
               style={{
                 width: `${mission.progress}%`,
                 background: mission.progress === 100
-                  ? "linear-gradient(90deg, #00E5A0, #00D4FF)"
-                  : "linear-gradient(90deg, #7B61FF, #00D4FF)",
+                  ? "linear-gradient(90deg, #3D8A60, #4A8EB8)"
+                  : "linear-gradient(90deg, #6655CC, #4A8EB8)",
               }}
             />
           </div>

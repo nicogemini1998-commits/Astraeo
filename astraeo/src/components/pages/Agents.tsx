@@ -4,19 +4,19 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAstraeo } from "@/store/astraeo";
 import type { Agent, AgentStatus } from "@/lib/types";
 
-// ── Color palette ──────────────────────────────────────────────────────────────
+// ── Color palette — CSS variables (tokens v3) ─────────────────────────────────
 const C = {
-  cyan:    "#00D4FF",
-  purple:  "#7B61FF",
-  emerald: "#00E5A0",
-  amber:   "#FFB800",
-  coral:   "#FF6B9D",
-  red:     "#FF4757",
-  bg:      "#050810",
-  surface: "#0D1120",
-  border:  "rgba(255,255,255,0.06)",
-  text:    "#E8ECF8",
-  muted:   "#3A4560",
+  cyan:    "var(--accent-sky)",
+  purple:  "var(--accent-indigo)",
+  emerald: "var(--accent-emerald)",
+  amber:   "var(--accent-amber)",
+  coral:   "var(--accent-rose)",
+  red:     "var(--danger)",
+  bg:      "var(--bg-base)",
+  surface: "var(--bg-surface)",
+  border:  "var(--border-subtle)",
+  text:    "var(--text-primary)",
+  muted:   "var(--text-muted)",
 } as const;
 
 // ── Static data ────────────────────────────────────────────────────────────────
@@ -541,7 +541,7 @@ function AgentDetail({ agent, agentIndex, onEdit, onDelete, onStatusChange, onDu
                 letterSpacing: "0.06em",
                 textTransform: "uppercase",
                 background: `linear-gradient(135deg, ${agent.color}, ${agent.color}99)`,
-                color: "#050810",
+                color: "#0A0908",
                 boxShadow: `0 4px 16px ${agent.color}40`,
               }}
             >
@@ -1187,7 +1187,7 @@ function AgentForm({
             borderRadius: 10,
             border: "none",
             background: `linear-gradient(135deg, ${C.cyan}, ${C.purple})`,
-            color: "#050810",
+            color: "#0A0908",
             cursor: "pointer",
             fontSize: 12,
             fontWeight: 800,
@@ -1355,7 +1355,7 @@ export default function AgentsPage() {
                 borderRadius: 8,
                 border: "none",
                 background: `linear-gradient(135deg, ${C.cyan}, ${C.purple})`,
-                color: "#050810",
+                color: "#0A0908",
                 cursor: "pointer",
                 fontSize: 11,
                 fontWeight: 800,

@@ -14,27 +14,27 @@ import type { Hook, HookTrigger, HookAction } from "@/lib/types";
 // ─── Config maps ──────────────────────────────────────────────────────────────
 
 const TRIGGER_CONFIG: Record<HookTrigger, { label: string; desc: string; color: string; icon: typeof ZapIcon; group: string }> = {
-  "pre-message":      { label: "Pre-Mensaje",      desc: "Antes de enviar un mensaje",        color: "#7B61FF", icon: ChevronRightIcon, group: "Mensajes" },
-  "post-message":     { label: "Post-Mensaje",     desc: "Después de recibir respuesta",      color: "#7B61FF", icon: SendIcon,         group: "Mensajes" },
-  "agent-start":      { label: "Agente Iniciado",  desc: "Al activar un agente",              color: "#00D4FF", icon: PlayIcon,         group: "Agentes" },
-  "agent-end":        { label: "Agente Terminado", desc: "Al finalizar sesión de agente",     color: "#00D4FF", icon: StopCircleIcon,   group: "Agentes" },
-  "workflow-start":   { label: "Workflow Inicia",  desc: "Al comenzar un workflow",           color: "#00E5A0", icon: GitBranchIcon,    group: "Workflows" },
-  "workflow-end":     { label: "Workflow Completa",desc: "Al terminar un workflow",           color: "#00E5A0", icon: CheckIcon,        group: "Workflows" },
-  "schedule":         { label: "Programado",       desc: "En fecha/hora definida (cron)",     color: "#FFB800", icon: ClockIcon,        group: "Tiempo" },
-  "webhook":          { label: "Webhook Entrante", desc: "Al recibir petición HTTP externa",  color: "#FF6B9D", icon: HashIcon,         group: "Externo" },
-  "error":            { label: "Error",            desc: "Cuando ocurre un error",            color: "#FF4757", icon: AlertTriangleIcon,group: "Sistema" },
-  "success":          { label: "Éxito",            desc: "Cuando una acción tiene éxito",     color: "#00E5A0", icon: CheckIcon,        group: "Sistema" },
+  "pre-message":      { label: "Pre-Mensaje",      desc: "Antes de enviar un mensaje",        color: "#6655CC", icon: ChevronRightIcon, group: "Mensajes" },
+  "post-message":     { label: "Post-Mensaje",     desc: "Después de recibir respuesta",      color: "#6655CC", icon: SendIcon,         group: "Mensajes" },
+  "agent-start":      { label: "Agente Iniciado",  desc: "Al activar un agente",              color: "#4A8EB8", icon: PlayIcon,         group: "Agentes" },
+  "agent-end":        { label: "Agente Terminado", desc: "Al finalizar sesión de agente",     color: "#4A8EB8", icon: StopCircleIcon,   group: "Agentes" },
+  "workflow-start":   { label: "Workflow Inicia",  desc: "Al comenzar un workflow",           color: "#3D8A60", icon: GitBranchIcon,    group: "Workflows" },
+  "workflow-end":     { label: "Workflow Completa",desc: "Al terminar un workflow",           color: "#3D8A60", icon: CheckIcon,        group: "Workflows" },
+  "schedule":         { label: "Programado",       desc: "En fecha/hora definida (cron)",     color: "#B88530", icon: ClockIcon,        group: "Tiempo" },
+  "webhook":          { label: "Webhook Entrante", desc: "Al recibir petición HTTP externa",  color: "#B04858", icon: HashIcon,         group: "Externo" },
+  "error":            { label: "Error",            desc: "Cuando ocurre un error",            color: "#A83C50", icon: AlertTriangleIcon,group: "Sistema" },
+  "success":          { label: "Éxito",            desc: "Cuando una acción tiene éxito",     color: "#3D8A60", icon: CheckIcon,        group: "Sistema" },
 };
 
 const ACTION_CONFIG: Record<HookAction, { label: string; desc: string; color: string; icon: typeof ZapIcon }> = {
-  notify:    { label: "Notificar",    desc: "Envía notificación in-app",        color: "#00D4FF", icon: BellIcon },
-  log:       { label: "Registrar",   desc: "Guarda en logs del sistema",        color: "#7B61FF", icon: CodeIcon },
-  transform: { label: "Transformar", desc: "Modifica datos del payload",        color: "#FFB800", icon: RotateCcwIcon },
-  webhook:   { label: "Webhook",     desc: "Envía datos a URL externa",         color: "#00E5A0", icon: SendIcon },
-  email:     { label: "Email",       desc: "Envía email al destinatario",       color: "#FF6B9D", icon: MailIcon },
+  notify:    { label: "Notificar",    desc: "Envía notificación in-app",        color: "#4A8EB8", icon: BellIcon },
+  log:       { label: "Registrar",   desc: "Guarda en logs del sistema",        color: "#6655CC", icon: CodeIcon },
+  transform: { label: "Transformar", desc: "Modifica datos del payload",        color: "#B88530", icon: RotateCcwIcon },
+  webhook:   { label: "Webhook",     desc: "Envía datos a URL externa",         color: "#3D8A60", icon: SendIcon },
+  email:     { label: "Email",       desc: "Envía email al destinatario",       color: "#B04858", icon: MailIcon },
   slack:     { label: "Slack",       desc: "Publica mensaje en canal Slack",    color: "#4A154B", icon: HashIcon },
-  stop:      { label: "Detener",     desc: "Para la ejecución del flujo",       color: "#FF4757", icon: StopCircleIcon },
-  branch:    { label: "Bifurcar",    desc: "Dirige a rama condicional",         color: "#FFB800", icon: GitBranchIcon },
+  stop:      { label: "Detener",     desc: "Para la ejecución del flujo",       color: "#A83C50", icon: StopCircleIcon },
+  branch:    { label: "Bifurcar",    desc: "Dirige a rama condicional",         color: "#B88530", icon: GitBranchIcon },
 };
 
 const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
@@ -116,7 +116,7 @@ function HookItem({ hook, active, onSelect, onToggle }: {
       {/* Name */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{
-          fontSize: 12, fontWeight: 600, color: active ? "#E8ECF8" : "#B0BAD4",
+          fontSize: 12, fontWeight: 600, color: active ? "#F0EDE6" : "#B0BAD4",
           whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
           marginBottom: 2,
         }}>
@@ -126,15 +126,15 @@ function HookItem({ hook, active, onSelect, onToggle }: {
           <span style={{ fontSize: 9, color: "#4A5568", fontFamily: "var(--font-mono)" }}>
             {hook.runCount.toLocaleString()} runs
           </span>
-          <span style={{ fontSize: 8, color: "#3A4560" }}>·</span>
-          <span style={{ fontSize: 9, color: successRate >= 95 ? "#00E5A0" : successRate >= 80 ? "#FFB800" : "#FF4757", fontFamily: "var(--font-mono)" }}>
+          <span style={{ fontSize: 8, color: "#4A4A5A" }}>·</span>
+          <span style={{ fontSize: 9, color: successRate >= 95 ? "#3D8A60" : successRate >= 80 ? "#B88530" : "#A83C50", fontFamily: "var(--font-mono)" }}>
             {successRate}%
           </span>
         </div>
       </div>
 
       {/* Arrow + Action */}
-      <ChevronRightIcon size={10} color="#3A4560" style={{ flexShrink: 0 }} />
+      <ChevronRightIcon size={10} color="#4A4A5A" style={{ flexShrink: 0 }} />
       <div style={{
         display: "flex", alignItems: "center", gap: 4,
         padding: "3px 7px", borderRadius: 5, flexShrink: 0,
@@ -218,7 +218,7 @@ function HookDetail({ hook, onClose, onToggle, onDelete }: {
                 boxShadow: hook.active ? `0 0 8px ${hook.color}` : "none",
                 animation: hook.active ? "pulse 2s infinite" : "none",
               }} />
-              <h3 style={{ fontSize: 15, fontWeight: 700, color: "#E8ECF8" }}>{hook.name}</h3>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: "#F0EDE6" }}>{hook.name}</h3>
             </div>
             <p style={{ fontSize: 12, color: "#6A7898", lineHeight: 1.5 }}>{hook.description}</p>
           </div>
@@ -281,8 +281,8 @@ function HookDetail({ hook, onClose, onToggle, onDelete }: {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 16 }}>
           {[
             { label: "EJECUCIONES",   value: hook.runCount.toLocaleString(), color: hook.color },
-            { label: "TASA ÉXITO",    value: `${successRate}%`,              color: "#00E5A0" },
-            { label: "TASA FALLO",    value: `${failRate}%`,                 color: Number(failRate) > 5 ? "#FF4757" : "#4A5568" },
+            { label: "TASA ÉXITO",    value: `${successRate}%`,              color: "#3D8A60" },
+            { label: "TASA FALLO",    value: `${failRate}%`,                 color: Number(failRate) > 5 ? "#A83C50" : "#4A5568" },
           ].map((s) => (
             <div key={s.label} style={{
               padding: "10px 12px", borderRadius: 8,
@@ -306,7 +306,7 @@ function HookDetail({ hook, onClose, onToggle, onDelete }: {
         }}>
           <ClockIcon size={12} color="#4A5568" />
           <span style={{ fontSize: 11, color: "#6A7898" }}>
-            Última ejecución: <span style={{ color: "#E8ECF8", fontFamily: "var(--font-mono)" }}>{relTime(hook.lastRun)}</span>
+            Última ejecución: <span style={{ color: "#F0EDE6", fontFamily: "var(--font-mono)" }}>{relTime(hook.lastRun)}</span>
           </span>
         </div>
 
@@ -333,7 +333,7 @@ function HookDetail({ hook, onClose, onToggle, onDelete }: {
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
             <span style={{ fontSize: 10, color: "#4A5568", letterSpacing: "0.06em" }}>FIABILIDAD</span>
-            <span style={{ fontSize: 10, color: "#00E5A0", fontFamily: "var(--font-mono)", fontWeight: 700 }}>{successRate}%</span>
+            <span style={{ fontSize: 10, color: "#3D8A60", fontFamily: "var(--font-mono)", fontWeight: 700 }}>{successRate}%</span>
           </div>
           <div style={{ width: "100%", height: 3, background: "rgba(255,255,255,0.05)", borderRadius: 2 }}>
             <motion.div
@@ -342,7 +342,7 @@ function HookDetail({ hook, onClose, onToggle, onDelete }: {
               transition={{ duration: 0.8, ease: EASE }}
               style={{
                 height: "100%", borderRadius: 2,
-                background: "linear-gradient(90deg, #00E5A0, #00D4FF)",
+                background: "linear-gradient(90deg, #3D8A60, #4A8EB8)",
                 boxShadow: "0 0 6px rgba(0,229,160,0.5)",
               }}
             />
@@ -363,7 +363,7 @@ function HookDetail({ hook, onClose, onToggle, onDelete }: {
             flex: 2, padding: "9px 0", borderRadius: 9,
             border: `1px solid ${hook.active ? "rgba(255,71,87,0.3)" : `${hook.color}35`}`,
             background: hook.active ? "rgba(255,71,87,0.08)" : `${hook.color}10`,
-            color: hook.active ? "#FF4757" : hook.color,
+            color: hook.active ? "#A83C50" : hook.color,
             fontSize: 11, fontWeight: 700, cursor: "pointer",
           }}
         >
@@ -376,7 +376,7 @@ function HookDetail({ hook, onClose, onToggle, onDelete }: {
             flex: 1, padding: "9px 0", borderRadius: 9,
             border: "1px solid rgba(255,71,87,0.25)",
             background: "rgba(255,71,87,0.06)",
-            color: "#FF4757", fontSize: 11, fontWeight: 600, cursor: "pointer",
+            color: "#A83C50", fontSize: 11, fontWeight: 600, cursor: "pointer",
           }}
         >
           Eliminar
@@ -388,7 +388,7 @@ function HookDetail({ hook, onClose, onToggle, onDelete }: {
 
 // ─── New Hook Wizard ──────────────────────────────────────────────────────────
 
-const HOOK_COLORS = ["#00D4FF", "#7B61FF", "#00E5A0", "#FFB800", "#FF6B9D", "#FF4757"];
+const HOOK_COLORS = ["#4A8EB8", "#6655CC", "#3D8A60", "#B88530", "#B04858", "#A83C50"];
 
 function NewHookWizard({ onClose, onSave }: {
   onClose: () => void;
@@ -399,7 +399,7 @@ function NewHookWizard({ onClose, onSave }: {
   const [action, setAction] = useState<HookAction | null>(null);
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
-  const [color, setColor] = useState("#00D4FF");
+  const [color, setColor] = useState("#4A8EB8");
 
   const canProceed = [
     trigger !== null,
@@ -456,7 +456,7 @@ function NewHookWizard({ onClose, onSave }: {
           display: "flex", alignItems: "center", justifyContent: "space-between",
         }}>
           <div>
-            <h3 style={{ fontSize: 15, fontWeight: 700, color: "#E8ECF8", marginBottom: 3 }}>Nuevo Hook</h3>
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: "#F0EDE6", marginBottom: 3 }}>Nuevo Hook</h3>
             <p style={{ fontSize: 11, color: "#4A5568" }}>Paso {step + 1} de {steps.length} — {steps[step]}</p>
           </div>
           {/* Step pills */}
@@ -464,7 +464,7 @@ function NewHookWizard({ onClose, onSave }: {
             {steps.map((s, i) => (
               <div key={s} style={{
                 width: i === step ? 24 : 8, height: 8, borderRadius: 4,
-                background: i < step ? "#00E5A0" : i === step ? "#00D4FF" : "rgba(26,39,68,0.8)",
+                background: i < step ? "#3D8A60" : i === step ? "#4A8EB8" : "rgba(26,39,68,0.8)",
                 transition: "all 0.25s",
               }} />
             ))}
@@ -496,7 +496,7 @@ function NewHookWizard({ onClose, onSave }: {
                 </p>
                 {groups.map(([group, items]) => (
                   <div key={group} style={{ marginBottom: 14 }}>
-                    <p style={{ fontSize: 9, color: "#3A4560", letterSpacing: "0.1em", marginBottom: 6, fontFamily: "var(--font-mono)" }}>
+                    <p style={{ fontSize: 9, color: "#4A4A5A", letterSpacing: "0.1em", marginBottom: 6, fontFamily: "var(--font-mono)" }}>
                       {group.toUpperCase()}
                     </p>
                     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -519,7 +519,7 @@ function NewHookWizard({ onClose, onSave }: {
                           >
                             <Icon size={14} color={sel ? v.color : "#4A5568"} />
                             <div style={{ flex: 1 }}>
-                              <p style={{ fontSize: 12, fontWeight: 600, color: sel ? "#E8ECF8" : "#6A7898" }}>{v.label}</p>
+                              <p style={{ fontSize: 12, fontWeight: 600, color: sel ? "#F0EDE6" : "#6A7898" }}>{v.label}</p>
                               <p style={{ fontSize: 10, color: "#4A5568" }}>{v.desc}</p>
                             </div>
                             {sel && <CheckIcon size={13} color={v.color} />}
@@ -569,7 +569,7 @@ function NewHookWizard({ onClose, onSave }: {
                         }}>
                           <Icon size={15} color={sel ? v.color : "#4A5568"} />
                         </div>
-                        <p style={{ fontSize: 12, fontWeight: 600, color: sel ? "#E8ECF8" : "#6A7898", marginBottom: 2 }}>{v.label}</p>
+                        <p style={{ fontSize: 12, fontWeight: 600, color: sel ? "#F0EDE6" : "#6A7898", marginBottom: 2 }}>{v.label}</p>
                         <p style={{ fontSize: 10, color: "#4A5568", lineHeight: 1.4 }}>{v.desc}</p>
                       </motion.button>
                     );
@@ -598,7 +598,7 @@ function NewHookWizard({ onClose, onSave }: {
                       width: "100%", padding: "10px 12px", borderRadius: 8,
                       background: "rgba(10,15,31,0.6)",
                       border: "1px solid rgba(26,39,68,0.7)",
-                      color: "#E8ECF4", fontSize: 13, boxSizing: "border-box",
+                      color: "#F0EDE6", fontSize: 13, boxSizing: "border-box",
                     }}
                   />
                 </div>
@@ -613,7 +613,7 @@ function NewHookWizard({ onClose, onSave }: {
                       width: "100%", padding: "10px 12px", borderRadius: 8,
                       background: "rgba(10,15,31,0.6)",
                       border: "1px solid rgba(26,39,68,0.7)",
-                      color: "#E8ECF4", fontSize: 12, lineHeight: 1.5, resize: "none",
+                      color: "#F0EDE6", fontSize: 12, lineHeight: 1.5, resize: "none",
                       boxSizing: "border-box",
                     }}
                   />
@@ -651,7 +651,7 @@ function NewHookWizard({ onClose, onSave }: {
                       }}>
                         {TRIGGER_CONFIG[trigger].label}
                       </span>
-                      <ChevronRightIcon size={12} color="#3A4560" />
+                      <ChevronRightIcon size={12} color="#4A4A5A" />
                       <span style={{
                         padding: "3px 8px", borderRadius: 5, fontSize: 11, fontWeight: 600,
                         background: `${ACTION_CONFIG[action].color}10`,
@@ -693,7 +693,7 @@ function NewHookWizard({ onClose, onSave }: {
                 flex: 2, padding: "10px 0", borderRadius: 9,
                 border: "1px solid rgba(0,212,255,0.35)",
                 background: "rgba(0,212,255,0.1)",
-                color: "#00D4FF", fontSize: 12, fontWeight: 700, cursor: "pointer",
+                color: "#4A8EB8", fontSize: 12, fontWeight: 700, cursor: "pointer",
                 opacity: canProceed[step] ? 1 : 0.4,
               }}
             >
@@ -715,7 +715,7 @@ function NewHookWizard({ onClose, onSave }: {
                 flex: 2, padding: "10px 0", borderRadius: 9,
                 border: "1px solid rgba(0,229,160,0.35)",
                 background: "rgba(0,229,160,0.1)",
-                color: "#00E5A0", fontSize: 12, fontWeight: 700, cursor: "pointer",
+                color: "#3D8A60", fontSize: 12, fontWeight: 700, cursor: "pointer",
                 opacity: canProceed[2] ? 1 : 0.4,
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
               }}
@@ -777,12 +777,12 @@ export default function HooksPage() {
                 border: "1px solid rgba(0,229,160,0.25)",
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}>
-                <ActivityIcon size={15} color="#00E5A0" />
+                <ActivityIcon size={15} color="#3D8A60" />
               </div>
               <h1 style={{
-                fontSize: 20, fontWeight: 800, color: "#E8ECF8",
+                fontSize: 20, fontWeight: 800, color: "#F0EDE6",
                 letterSpacing: "0.08em",
-                background: "linear-gradient(135deg, #E8ECF8 0%, #00E5A0 50%, #00D4FF 100%)",
+                background: "linear-gradient(135deg, #E8ECF8 0%, #3D8A60 50%, #4A8EB8 100%)",
                 WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
               }}>
@@ -801,8 +801,8 @@ export default function HooksPage() {
               border: "1px solid rgba(0,229,160,0.18)",
               display: "flex", alignItems: "center", gap: 7,
             }}>
-              <PlayIcon size={10} color="#00E5A0" />
-              <span style={{ fontSize: 11, color: "#00E5A0", fontFamily: "var(--font-mono)", fontWeight: 700 }}>
+              <PlayIcon size={10} color="#3D8A60" />
+              <span style={{ fontSize: 11, color: "#3D8A60", fontFamily: "var(--font-mono)", fontWeight: 700 }}>
                 {totalRuns.toLocaleString()} runs
               </span>
             </div>
@@ -814,7 +814,7 @@ export default function HooksPage() {
                 padding: "7px 16px", borderRadius: 8,
                 background: "linear-gradient(135deg, rgba(0,229,160,0.15), rgba(0,212,255,0.1))",
                 border: "1px solid rgba(0,229,160,0.3)",
-                color: "#00E5A0", fontSize: 12, fontWeight: 700, cursor: "pointer",
+                color: "#3D8A60", fontSize: 12, fontWeight: 700, cursor: "pointer",
                 display: "flex", alignItems: "center", gap: 6,
               }}
             >
@@ -848,7 +848,7 @@ export default function HooksPage() {
                   borderRadius: 7,
                   background: "rgba(10,15,31,0.6)",
                   border: "1px solid rgba(26,39,68,0.7)",
-                  color: "#E8ECF4", fontSize: 12, boxSizing: "border-box",
+                  color: "#F0EDE6", fontSize: 12, boxSizing: "border-box",
                 }}
               />
             </div>
@@ -859,7 +859,7 @@ export default function HooksPage() {
                 padding: "3px 9px", borderRadius: 5, flexShrink: 0,
                 background: filterTrigger === "all" ? "rgba(232,236,248,0.1)" : "transparent",
                 border: `1px solid ${filterTrigger === "all" ? "rgba(232,236,248,0.2)" : "rgba(26,39,68,0.4)"}`,
-                color: filterTrigger === "all" ? "#E8ECF8" : "#4A5568",
+                color: filterTrigger === "all" ? "#F0EDE6" : "#4A5568",
                 fontSize: 10, fontWeight: 600, cursor: "pointer",
               }}>
                 Todos ({hooks.length})
@@ -889,8 +889,8 @@ export default function HooksPage() {
             <AnimatePresence>
               {filtered.length === 0 ? (
                 <div style={{ padding: "32px 16px", textAlign: "center" }}>
-                  <ZapIcon size={24} color="#3A4560" style={{ margin: "0 auto 10px" }} />
-                  <p style={{ color: "#3A4560", fontSize: 12 }}>No hay hooks que coincidan</p>
+                  <ZapIcon size={24} color="#4A4A5A" style={{ margin: "0 auto 10px" }} />
+                  <p style={{ color: "#4A4A5A", fontSize: 12 }}>No hay hooks que coincidan</p>
                 </div>
               ) : (
                 filtered.map((hook) => (
@@ -954,7 +954,7 @@ export default function HooksPage() {
                   <ActivityIcon size={28} color="#1E3040" />
                 </div>
                 <div style={{ textAlign: "center" }}>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: "#3A4560", marginBottom: 5 }}>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: "#4A4A5A", marginBottom: 5 }}>
                     Selecciona un hook
                   </p>
                   <p style={{ fontSize: 12, color: "#2A3550", maxWidth: 220 }}>
@@ -969,7 +969,7 @@ export default function HooksPage() {
                     padding: "9px 18px", borderRadius: 9,
                     border: "1px solid rgba(0,229,160,0.3)",
                     background: "rgba(0,229,160,0.07)",
-                    color: "#00E5A0", fontSize: 12, fontWeight: 700, cursor: "pointer",
+                    color: "#3D8A60", fontSize: 12, fontWeight: 700, cursor: "pointer",
                     display: "flex", alignItems: "center", gap: 6,
                   }}
                 >

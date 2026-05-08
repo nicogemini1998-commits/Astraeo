@@ -12,20 +12,20 @@ import type { Skill, SkillCategory } from "@/lib/types";
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CATEGORY_CONFIG: Record<SkillCategory | "all", { label: string; color: string; bg: string; emoji: string }> = {
-  all:           { label: "Todas",        color: "#E8ECF8", bg: "rgba(232,236,248,0.08)", emoji: "✨" },
-  research:      { label: "Investigación",color: "#00D4FF", bg: "rgba(0,212,255,0.08)",   emoji: "🔍" },
-  writing:       { label: "Escritura",    color: "#7B61FF", bg: "rgba(123,97,255,0.08)",  emoji: "✍️" },
-  code:          { label: "Código",       color: "#00E5A0", bg: "rgba(0,229,160,0.08)",   emoji: "💻" },
-  data:          { label: "Datos",        color: "#FFB800", bg: "rgba(255,184,0,0.08)",   emoji: "📊" },
-  visual:        { label: "Visual",       color: "#FF6B9D", bg: "rgba(255,107,157,0.08)", emoji: "🎨" },
-  communication: { label: "Comunicación", color: "#00D4FF", bg: "rgba(0,212,255,0.08)",   emoji: "💬" },
-  automation:    { label: "Automatización",color: "#7B61FF",bg: "rgba(123,97,255,0.08)",  emoji: "⚙️" },
+  all:           { label: "Todas",        color: "#F0EDE6", bg: "rgba(232,236,248,0.08)", emoji: "✨" },
+  research:      { label: "Investigación",color: "#4A8EB8", bg: "rgba(0,212,255,0.08)",   emoji: "🔍" },
+  writing:       { label: "Escritura",    color: "#6655CC", bg: "rgba(123,97,255,0.08)",  emoji: "✍️" },
+  code:          { label: "Código",       color: "#3D8A60", bg: "rgba(0,229,160,0.08)",   emoji: "💻" },
+  data:          { label: "Datos",        color: "#B88530", bg: "rgba(255,184,0,0.08)",   emoji: "📊" },
+  visual:        { label: "Visual",       color: "#B04858", bg: "rgba(255,107,157,0.08)", emoji: "🎨" },
+  communication: { label: "Comunicación", color: "#4A8EB8", bg: "rgba(0,212,255,0.08)",   emoji: "💬" },
+  automation:    { label: "Automatización",color: "#6655CC",bg: "rgba(123,97,255,0.08)",  emoji: "⚙️" },
 };
 
 const DIFFICULTY_CONFIG = {
-  beginner:     { label: "Básico",       color: "#00E5A0", bg: "rgba(0,229,160,0.1)"   },
-  intermediate: { label: "Intermedio",   color: "#FFB800", bg: "rgba(255,184,0,0.1)"   },
-  advanced:     { label: "Avanzado",     color: "#FF4757", bg: "rgba(255,71,87,0.1)"   },
+  beginner:     { label: "Básico",       color: "#3D8A60", bg: "rgba(0,229,160,0.1)"   },
+  intermediate: { label: "Intermedio",   color: "#B88530", bg: "rgba(255,184,0,0.1)"   },
+  advanced:     { label: "Avanzado",     color: "#A83C50", bg: "rgba(255,71,87,0.1)"   },
 };
 
 const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
@@ -177,7 +177,7 @@ function SkillCard({ skill, agents, onSelect, onToggle, index }: SkillCardProps)
         </div>
 
         {/* Name + desc */}
-        <h3 style={{ fontSize: 13, fontWeight: 700, color: "#E8ECF8", marginBottom: 5, letterSpacing: "0.01em" }}>
+        <h3 style={{ fontSize: 13, fontWeight: 700, color: "#F0EDE6", marginBottom: 5, letterSpacing: "0.01em" }}>
           {skill.name}
         </h3>
         <p style={{
@@ -198,8 +198,8 @@ function SkillCard({ skill, agents, onSelect, onToggle, index }: SkillCardProps)
               </span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <StarIcon size={10} color="#FFB800" />
-              <span style={{ fontSize: 10, color: "#FFB800", fontFamily: "var(--font-mono)", fontWeight: 700 }}>
+              <StarIcon size={10} color="#B88530" />
+              <span style={{ fontSize: 10, color: "#B88530", fontFamily: "var(--font-mono)", fontWeight: 700 }}>
                 {skill.successRate.toFixed(1)}%
               </span>
             </div>
@@ -313,11 +313,11 @@ function SkillDetail({ skill, agents, onClose, onToggle }: {
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                <h2 style={{ fontSize: 18, fontWeight: 700, color: "#E8ECF8" }}>{skill.name}</h2>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: "#F0EDE6" }}>{skill.name}</h2>
                 {skill.builtIn && (
                   <span style={{
                     fontSize: 9, padding: "2px 7px", borderRadius: 4,
-                    background: "rgba(0,212,255,0.1)", color: "#00D4FF",
+                    background: "rgba(0,212,255,0.1)", color: "#4A8EB8",
                     border: "1px solid rgba(0,212,255,0.2)", fontWeight: 700,
                     letterSpacing: "0.06em",
                   }}>SISTEMA</span>
@@ -365,8 +365,8 @@ function SkillDetail({ skill, agents, onClose, onToggle }: {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 20 }}>
             {[
               { icon: TrendingUpIcon, label: "Usos totales", value: usageVal.toLocaleString(), color: cat.color },
-              { icon: StarIcon, label: "Tasa éxito", value: `${(successVal / 10).toFixed(1)}%`, color: "#FFB800" },
-              { icon: ClockIcon, label: "Tiempo medio", value: `${(skill.avgDurationMs / 1000).toFixed(1)}s`, color: "#7B61FF" },
+              { icon: StarIcon, label: "Tasa éxito", value: `${(successVal / 10).toFixed(1)}%`, color: "#B88530" },
+              { icon: ClockIcon, label: "Tiempo medio", value: `${(skill.avgDurationMs / 1000).toFixed(1)}s`, color: "#6655CC" },
             ].map((m) => (
               <div key={m.label} style={{
                 padding: "12px 14px", borderRadius: 10,
@@ -418,7 +418,7 @@ function SkillDetail({ skill, agents, onClose, onToggle }: {
                       {agent!.name[0]}
                     </div>
                     <div>
-                      <p style={{ fontSize: 12, fontWeight: 600, color: "#E8ECF8" }}>{agent!.name}</p>
+                      <p style={{ fontSize: 12, fontWeight: 600, color: "#F0EDE6" }}>{agent!.name}</p>
                       <p style={{ fontSize: 10, color: "#6A7898" }}>{agent!.role}</p>
                     </div>
                   </div>
@@ -458,7 +458,7 @@ function SkillDetail({ skill, agents, onClose, onToggle }: {
               flex: 1, padding: "10px 0", borderRadius: 10,
               border: `1px solid ${skill.active ? "rgba(255,71,87,0.3)" : `${cat.color}35`}`,
               background: skill.active ? "rgba(255,71,87,0.08)" : `${cat.color}10`,
-              color: skill.active ? "#FF4757" : cat.color,
+              color: skill.active ? "#A83C50" : cat.color,
               fontSize: 12, fontWeight: 700, cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
             }}
@@ -543,9 +543,9 @@ function NewSkillForm({ onClose, onSave }: {
               border: "1px solid rgba(0,212,255,0.2)",
               display: "flex", alignItems: "center", justifyContent: "center",
             }}>
-              <PlusIcon size={14} color="#00D4FF" />
+              <PlusIcon size={14} color="#4A8EB8" />
             </div>
-            <h3 style={{ fontSize: 15, fontWeight: 700, color: "#E8ECF8" }}>Nueva Habilidad</h3>
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: "#F0EDE6" }}>Nueva Habilidad</h3>
           </div>
           <button onClick={onClose} style={{
             width: 30, height: 30, borderRadius: 7,
@@ -570,7 +570,7 @@ function NewSkillForm({ onClose, onSave }: {
                   width: 52, height: 44, borderRadius: 10, textAlign: "center",
                   background: "rgba(10,15,31,0.6)",
                   border: "1px solid rgba(26,39,68,0.7)",
-                  color: "#E8ECF4", fontSize: 22, cursor: "pointer", boxSizing: "border-box",
+                  color: "#F0EDE6", fontSize: 22, cursor: "pointer", boxSizing: "border-box",
                 }}
               />
             </div>
@@ -584,7 +584,7 @@ function NewSkillForm({ onClose, onSave }: {
                   width: "100%", padding: "10px 12px", borderRadius: 8,
                   background: "rgba(10,15,31,0.6)",
                   border: "1px solid rgba(26,39,68,0.7)",
-                  color: "#E8ECF4", fontSize: 13,
+                  color: "#F0EDE6", fontSize: 13,
                   boxSizing: "border-box",
                 }}
               />
@@ -603,7 +603,7 @@ function NewSkillForm({ onClose, onSave }: {
                 width: "100%", padding: "10px 12px", borderRadius: 8,
                 background: "rgba(10,15,31,0.6)",
                 border: "1px solid rgba(26,39,68,0.7)",
-                color: "#E8ECF4", fontSize: 12, lineHeight: 1.5, resize: "none",
+                color: "#F0EDE6", fontSize: 12, lineHeight: 1.5, resize: "none",
                 boxSizing: "border-box",
               }}
             />
@@ -662,7 +662,7 @@ function NewSkillForm({ onClose, onSave }: {
                 <span key={t} style={{
                   display: "flex", alignItems: "center", gap: 4,
                   padding: "3px 8px", borderRadius: 5,
-                  background: "rgba(0,212,255,0.08)", color: "#00D4FF",
+                  background: "rgba(0,212,255,0.08)", color: "#4A8EB8",
                   border: "1px solid rgba(0,212,255,0.2)", fontSize: 11,
                 }}>
                   {t}
@@ -683,14 +683,14 @@ function NewSkillForm({ onClose, onSave }: {
                   flex: 1, padding: "8px 12px", borderRadius: 7,
                   background: "rgba(10,15,31,0.6)",
                   border: "1px solid rgba(26,39,68,0.7)",
-                  color: "#E8ECF4", fontSize: 12, boxSizing: "border-box",
+                  color: "#F0EDE6", fontSize: 12, boxSizing: "border-box",
                 }}
               />
               <button onClick={addTag} style={{
                 padding: "0 14px", borderRadius: 7,
                 background: "rgba(0,212,255,0.08)",
                 border: "1px solid rgba(0,212,255,0.2)",
-                color: "#00D4FF", fontSize: 12, fontWeight: 600, cursor: "pointer",
+                color: "#4A8EB8", fontSize: 12, fontWeight: 600, cursor: "pointer",
               }}>+</button>
             </div>
           </div>
@@ -724,7 +724,7 @@ function NewSkillForm({ onClose, onSave }: {
               flex: 2, padding: "10px 0", borderRadius: 10,
               border: "1px solid rgba(0,212,255,0.35)",
               background: "rgba(0,212,255,0.1)",
-              color: "#00D4FF", fontSize: 12, fontWeight: 700, cursor: "pointer",
+              color: "#4A8EB8", fontSize: 12, fontWeight: 700, cursor: "pointer",
               opacity: name.trim() ? 1 : 0.4,
             }}
           >
@@ -788,12 +788,12 @@ export default function SkillsPage() {
                 border: "1px solid rgba(0,212,255,0.25)",
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}>
-                <ZapIcon size={15} color="#00D4FF" />
+                <ZapIcon size={15} color="#4A8EB8" />
               </div>
               <h1 style={{
-                fontSize: 20, fontWeight: 800, color: "#E8ECF8",
+                fontSize: 20, fontWeight: 800, color: "#F0EDE6",
                 letterSpacing: "0.08em",
-                background: "linear-gradient(135deg, #E8ECF8 0%, #00D4FF 50%, #7B61FF 100%)",
+                background: "linear-gradient(135deg, #E8ECF8 0%, #4A8EB8 50%, #6655CC 100%)",
                 WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
               }}>
@@ -813,8 +813,8 @@ export default function SkillsPage() {
               border: "1px solid rgba(0,212,255,0.18)",
               display: "flex", alignItems: "center", gap: 7,
             }}>
-              <TrendingUpIcon size={11} color="#00D4FF" />
-              <span style={{ fontSize: 11, color: "#00D4FF", fontFamily: "var(--font-mono)", fontWeight: 700 }}>
+              <TrendingUpIcon size={11} color="#4A8EB8" />
+              <span style={{ fontSize: 11, color: "#4A8EB8", fontFamily: "var(--font-mono)", fontWeight: 700 }}>
                 {totalUsage.toLocaleString()} usos
               </span>
             </div>
@@ -824,8 +824,8 @@ export default function SkillsPage() {
               border: "1px solid rgba(255,184,0,0.18)",
               display: "flex", alignItems: "center", gap: 7,
             }}>
-              <StarIcon size={11} color="#FFB800" />
-              <span style={{ fontSize: 11, color: "#FFB800", fontFamily: "var(--font-mono)", fontWeight: 700 }}>
+              <StarIcon size={11} color="#B88530" />
+              <span style={{ fontSize: 11, color: "#B88530", fontFamily: "var(--font-mono)", fontWeight: 700 }}>
                 {avgSuccess.toFixed(1)}%
               </span>
             </div>
@@ -837,7 +837,7 @@ export default function SkillsPage() {
                 padding: "7px 16px", borderRadius: 8,
                 background: "linear-gradient(135deg, rgba(0,212,255,0.15), rgba(123,97,255,0.1))",
                 border: "1px solid rgba(0,212,255,0.3)",
-                color: "#00D4FF", fontSize: 12, fontWeight: 700, cursor: "pointer",
+                color: "#4A8EB8", fontSize: 12, fontWeight: 700, cursor: "pointer",
                 display: "flex", alignItems: "center", gap: 6,
               }}
             >
@@ -860,7 +860,7 @@ export default function SkillsPage() {
                 borderRadius: 8,
                 background: "rgba(10,15,31,0.6)",
                 border: "1px solid rgba(26,39,68,0.7)",
-                color: "#E8ECF4", fontSize: 12, boxSizing: "border-box",
+                color: "#F0EDE6", fontSize: 12, boxSizing: "border-box",
               }}
             />
           </div>
@@ -892,7 +892,7 @@ export default function SkillsPage() {
                   <span style={{
                     fontSize: 9, padding: "1px 5px", borderRadius: 3,
                     background: active ? `${cfg.color}20` : "rgba(255,255,255,0.05)",
-                    color: active ? cfg.color : "#3A4560",
+                    color: active ? cfg.color : "#4A4A5A",
                     fontFamily: "var(--font-mono)",
                   }}>
                     {count}
@@ -922,9 +922,9 @@ export default function SkillsPage() {
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 26,
             }}>
-              {search ? <FilterIcon size={24} color="#3A4560" /> : "⚡"}
+              {search ? <FilterIcon size={24} color="#4A4A5A" /> : "⚡"}
             </div>
-            <p style={{ color: "#3A4560", fontSize: 13, textAlign: "center" }}>
+            <p style={{ color: "#4A4A5A", fontSize: 13, textAlign: "center" }}>
               {search ? `Sin resultados para "${search}"` : "No hay habilidades en esta categoría"}
             </p>
           </motion.div>

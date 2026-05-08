@@ -47,12 +47,12 @@ interface TimelinePoint {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const CHART_COLORS = [
-  "#00D4FF",
-  "#7B61FF",
-  "#00E5A0",
-  "#FFB800",
-  "#FF6B9D",
-  "#FF4757",
+  "#4A8EB8",
+  "#6655CC",
+  "#3D8A60",
+  "#B88530",
+  "#B04858",
+  "#A83C50",
   "#64B5F6",
 ];
 
@@ -178,7 +178,7 @@ interface SectionHeaderProps {
   accent?: string;
 }
 
-function SectionHeader({ title, sub, accent = "#00D4FF" }: SectionHeaderProps) {
+function SectionHeader({ title, sub, accent = "#4A8EB8" }: SectionHeaderProps) {
   return (
     <div className="mb-5 flex items-start gap-2.5">
       <div
@@ -237,10 +237,10 @@ function PieLegend({ data, total }: PieLegendProps) {
 
 // ─── Timeline Item ────────────────────────────────────────────────────────────
 const NOTIF_CFG = {
-  success: { dot: "#00E5A0", bg: "#00E5A018", label: "OK" },
-  info: { dot: "#00D4FF", bg: "#00D4FF18", label: "INF" },
-  warning: { dot: "#FFB800", bg: "#FFB80018", label: "WAR" },
-  error: { dot: "#FF4757", bg: "#FF475718", label: "ERR" },
+  success: { dot: "#3D8A60", bg: "#3D8A6018", label: "OK" },
+  info: { dot: "#4A8EB8", bg: "#4A8EB818", label: "INF" },
+  warning: { dot: "#B88530", bg: "#B8853018", label: "WAR" },
+  error: { dot: "#A83C50", bg: "#A83C5018", label: "ERR" },
 } as const;
 
 type NotifType = keyof typeof NOTIF_CFG;
@@ -301,7 +301,7 @@ function PeriodSelector({ value, onChange }: PeriodSelectorProps) {
           onClick={() => onChange(p.key)}
           className="relative px-3.5 py-1.5 rounded-lg text-[11px] font-mono transition-all duration-200"
           style={{
-            color: value === p.key ? "#00D4FF" : "#6B7A99",
+            color: value === p.key ? "#4A8EB8" : "#8A8A97",
           }}
         >
           {value === p.key && (
@@ -381,7 +381,7 @@ export default function Analytics() {
         value: totalTasks,
         display: totalTasks.toLocaleString(),
         sub: `${onlineCount} agentes online`,
-        color: "#00D4FF",
+        color: "#4A8EB8",
         unit: "n",
       },
       {
@@ -392,7 +392,7 @@ export default function Analytics() {
             ? `${(totalTokens / 1000).toFixed(1)}k`
             : totalTokens.toLocaleString(),
         sub: `${metrics.tokensPerMinute > 0 ? metrics.tokensPerMinute : "—"} tok/min`,
-        color: "#7B61FF",
+        color: "#6655CC",
         unit: "k",
       },
       {
@@ -400,7 +400,7 @@ export default function Analytics() {
         value: Math.round(metrics.successRate),
         display: `${metrics.successRate}%`,
         sub: `${metrics.requestsToday.toLocaleString()} req hoy`,
-        color: "#00E5A0",
+        color: "#3D8A60",
         unit: "%",
       },
       {
@@ -408,7 +408,7 @@ export default function Analytics() {
         value: avgLatency,
         display: `${avgLatency}ms`,
         sub: "objetivo < 1000ms",
-        color: "#FFB800",
+        color: "#B88530",
         unit: "ms",
       },
     ],
@@ -474,14 +474,14 @@ export default function Analytics() {
   // ── Period-scoped summary stats ───────────────────────────────────────────
   const summaryStats = useMemo(
     () => [
-      { label: "Eficiencia", value: `${metrics.efficiency}%`, color: "#00E5A0" },
-      { label: "Agentes totales", value: agents.length, color: "#00D4FF" },
-      { label: "Memorias", value: memory.length, color: "#7B61FF" },
-      { label: "Workflows activos", value: workflows.filter((w) => w.active).length, color: "#FF6B9D" },
+      { label: "Eficiencia", value: `${metrics.efficiency}%`, color: "#3D8A60" },
+      { label: "Agentes totales", value: agents.length, color: "#4A8EB8" },
+      { label: "Memorias", value: memory.length, color: "#6655CC" },
+      { label: "Workflows activos", value: workflows.filter((w) => w.active).length, color: "#B04858" },
       {
         label: "Workflow runs",
         value: workflows.reduce((s, w) => s + w.runs, 0),
-        color: "#FFB800",
+        color: "#B88530",
       },
     ],
     [metrics.efficiency, agents.length, memory.length, workflows]
@@ -516,14 +516,14 @@ export default function Analytics() {
         <SectionHeader
           title="Token Usage"
           sub={`${metrics.tokensPerMinute > 0 ? metrics.tokensPerMinute : "—"} tok/min · live stream`}
-          accent="#00D4FF"
+          accent="#4A8EB8"
         />
         <ResponsiveContainer width="100%" height={148}>
           <AreaChart data={tokensData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
             <defs>
               <linearGradient id="tokGradPremium" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#00D4FF" stopOpacity={0.22} />
-                <stop offset="100%" stopColor="#00D4FF" stopOpacity={0} />
+                <stop offset="0%" stopColor="#4A8EB8" stopOpacity={0.22} />
+                <stop offset="100%" stopColor="#4A8EB8" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid
@@ -548,12 +548,12 @@ export default function Analytics() {
             <Area
               type="monotone"
               dataKey="v"
-              stroke="#00D4FF"
+              stroke="#4A8EB8"
               strokeWidth={1.5}
               fill="url(#tokGradPremium)"
               dot={false}
               name="Tokens/min"
-              activeDot={{ r: 4, fill: "#00D4FF", stroke: "rgba(0,212,255,0.3)", strokeWidth: 4 }}
+              activeDot={{ r: 4, fill: "#4A8EB8", stroke: "rgba(0,212,255,0.3)", strokeWidth: 4 }}
             />
           </AreaChart>
         </ResponsiveContainer>
@@ -566,7 +566,7 @@ export default function Analytics() {
           <SectionHeader
             title="Agent Performance"
             sub="tokens (k) por agente · top 7"
-            accent="#7B61FF"
+            accent="#6655CC"
           />
           {agentBars.length === 0 ? (
             <div className="flex items-center justify-center h-32 text-[12px] text-[#4A5570] font-mono">
@@ -622,7 +622,7 @@ export default function Analytics() {
           <SectionHeader
             title="Task Distribution"
             sub="misiones por estado · actual"
-            accent="#00E5A0"
+            accent="#3D8A60"
           />
           <div className="flex items-center gap-4">
             <div className="flex-shrink-0">
@@ -670,14 +670,14 @@ export default function Analytics() {
           <SectionHeader
             title="API Latency"
             sub={`${metrics.apiLatency > 0 ? `${metrics.apiLatency}ms` : "—"} actual · objetivo < 1000ms`}
-            accent="#7B61FF"
+            accent="#6655CC"
           />
           <ResponsiveContainer width="100%" height={120}>
             <AreaChart data={latencyData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
               <defs>
                 <linearGradient id="latGradPremium" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#7B61FF" stopOpacity={0.2} />
-                  <stop offset="100%" stopColor="#7B61FF" stopOpacity={0} />
+                  <stop offset="0%" stopColor="#6655CC" stopOpacity={0.2} />
+                  <stop offset="100%" stopColor="#6655CC" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid
@@ -702,12 +702,12 @@ export default function Analytics() {
               <Area
                 type="monotone"
                 dataKey="v"
-                stroke="#7B61FF"
+                stroke="#6655CC"
                 strokeWidth={1.5}
                 fill="url(#latGradPremium)"
                 dot={false}
                 name="Latencia"
-                activeDot={{ r: 4, fill: "#7B61FF", stroke: "rgba(123,97,255,0.3)", strokeWidth: 4 }}
+                activeDot={{ r: 4, fill: "#6655CC", stroke: "rgba(123,97,255,0.3)", strokeWidth: 4 }}
               />
             </AreaChart>
           </ResponsiveContainer>
@@ -715,7 +715,7 @@ export default function Analytics() {
 
         {/* Summary stats */}
         <ChartCard delay={0.3}>
-          <SectionHeader title="System Summary" accent="#FFB800" />
+          <SectionHeader title="System Summary" accent="#B88530" />
           <div className="space-y-2.5">
             {summaryStats.map((s) => (
               <div key={s.label} className="flex items-center justify-between gap-2">
@@ -731,7 +731,7 @@ export default function Analytics() {
             <div className="pt-2.5 border-t border-white/[0.06] space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] text-[#6B7A99]">Success rate</span>
-                <span className="text-[13px] font-bold font-mono text-[#00D4FF]">
+                <span className="text-[13px] font-bold font-mono text-[#4A8EB8]">
                   {metrics.successRate}%
                 </span>
               </div>
@@ -751,7 +751,7 @@ export default function Analytics() {
         <SectionHeader
           title="Activity Timeline"
           sub={`Últimos ${filteredNotifs.length} eventos · periodo ${PERIODS.find((p) => p.key === period)?.label}`}
-          accent="#FF6B9D"
+          accent="#B04858"
         />
         {filteredNotifs.length === 0 ? (
           <div className="flex items-center justify-center py-8 gap-2 opacity-40">

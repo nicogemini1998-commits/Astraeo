@@ -56,12 +56,12 @@ interface AgentConfig {
 }
 
 const AGENT_CONFIG: Record<string, AgentConfig> = {
-  "agent-1": { dept: "COMMAND",    color: "#00D4FF", skin: "#F5C5A3", shirt: "#004A60", pants: "#0D1B3E", hair: "#1A0800", hairStyle: "short",  irisColor: "#00D4FF" },
-  "agent-2": { dept: "PAID MEDIA", color: "#FF4757", skin: "#E8A882", shirt: "#6B1219", pants: "#1A0A0A", hair: "#0A0A0A", hairStyle: "curly",  irisColor: "#FF4757" },
-  "agent-3": { dept: "CRM",        color: "#FF6B9D", skin: "#FDDBB4", shirt: "#5A1535", pants: "#1A0A12", hair: "#3A1020", hairStyle: "long",   irisColor: "#FF6B9D" },
-  "agent-4": { dept: "CONTENT",    color: "#FFB800", skin: "#F0D090", shirt: "#5A4000", pants: "#1A1200", hair: "#2A1800", hairStyle: "bun",    irisColor: "#FFB800" },
-  "agent-5": { dept: "ANALYTICS",  color: "#7B61FF", skin: "#D4A574", shirt: "#2A1A60", pants: "#0A0A1A", hair: "#0A0020", hairStyle: "short",  irisColor: "#7B61FF" },
-  "agent-6": { dept: "AI TECH",    color: "#00E5A0", skin: "#C68642", shirt: "#003830", pants: "#0A1A12", hair: "#001510", hairStyle: "spiky",  irisColor: "#00E5A0" },
+  "agent-1": { dept: "COMMAND",    color: "#4A8EB8", skin: "#F5C5A3", shirt: "#004A60", pants: "#1C1A16", hair: "#1A0800", hairStyle: "short",  irisColor: "#4A8EB8" },
+  "agent-2": { dept: "PAID MEDIA", color: "#A83C50", skin: "#E8A882", shirt: "#6B1219", pants: "#1A0A0A", hair: "#0A0A0A", hairStyle: "curly",  irisColor: "#A83C50" },
+  "agent-3": { dept: "CRM",        color: "#B04858", skin: "#FDDBB4", shirt: "#5A1535", pants: "#1A0A12", hair: "#3A1020", hairStyle: "long",   irisColor: "#B04858" },
+  "agent-4": { dept: "CONTENT",    color: "#B88530", skin: "#F0D090", shirt: "#5A4000", pants: "#1A1200", hair: "#2A1800", hairStyle: "bun",    irisColor: "#B88530" },
+  "agent-5": { dept: "ANALYTICS",  color: "#6655CC", skin: "#D4A574", shirt: "#2A1A60", pants: "#0A0A1A", hair: "#0A0020", hairStyle: "short",  irisColor: "#6655CC" },
+  "agent-6": { dept: "AI TECH",    color: "#3D8A60", skin: "#C68642", shirt: "#003830", pants: "#0A1A12", hair: "#001510", hairStyle: "spiky",  irisColor: "#3D8A60" },
   "agent-7": { dept: "SALES",      color: "#CC785C", skin: "#F0C090", shirt: "#4A2010", pants: "#1A0800", hair: "#200800", hairStyle: "curly",  irisColor: "#CC785C" },
   "agent-8": { dept: "SEO",        color: "#64B5F6", skin: "#FDDBB4", shirt: "#14305A", pants: "#0A0A1A", hair: "#001020", hairStyle: "long",   irisColor: "#64B5F6" },
 };
@@ -1332,9 +1332,9 @@ function drawWallDecor(ctx: CanvasRenderingContext2D): void {
     ctx.fill();
     // Colorful diagram lines on whiteboard
     const wbLines = [
-      { color: "#FF4757", x1: wbx + 5, y1: wby + 10, x2: wbx + 32, y2: wby + 10 },
-      { color: "#00D4FF", x1: wbx + 5, y1: wby + 18, x2: wbx + 50, y2: wby + 18 },
-      { color: "#00E5A0", x1: wbx + 5, y1: wby + 26, x2: wbx + 40, y2: wby + 26 },
+      { color: "#A83C50", x1: wbx + 5, y1: wby + 10, x2: wbx + 32, y2: wby + 10 },
+      { color: "#4A8EB8", x1: wbx + 5, y1: wby + 18, x2: wbx + 50, y2: wby + 18 },
+      { color: "#3D8A60", x1: wbx + 5, y1: wby + 26, x2: wbx + 40, y2: wby + 26 },
     ];
     wbLines.forEach(({ color, x1, y1, x2, y2 }) => {
       ctx.strokeStyle = color;
@@ -1346,7 +1346,7 @@ function drawWallDecor(ctx: CanvasRenderingContext2D): void {
       ctx.stroke();
     });
     // Circle node
-    ctx.fillStyle = "#7B61FF";
+    ctx.fillStyle = "#6655CC";
     ctx.beginPath();
     ctx.arc(wbx + 55, wby + 14, 6, 0, Math.PI * 2);
     ctx.fill();
@@ -2222,10 +2222,10 @@ function drawChibiAvatar(
 
   // ── STATUS INDICATOR ──
   const statusColors: Record<string, string> = {
-    online: "#00E5A0",
-    busy:   "#FFB800",
+    online: "#3D8A60",
+    busy:   "#B88530",
     offline:"#4A5570",
-    error:  "#FF4757",
+    error:  "#A83C50",
   };
   const sColor = statusColors[agent.status] ?? "#4A5570";
   const dotY = -56 - 22 - 12;
@@ -2491,12 +2491,12 @@ function drawScene(
     ctx.fill();
     // Book spines — colorful
     const books = [
-      { x: bx, y: by - 38, w: 5, h: 18, c: "#FF4757" },
-      { x: bx + 6, y: by - 36, w: 4, h: 16, c: "#00D4FF" },
-      { x: bx + 11, y: by - 40, w: 6, h: 20, c: "#FFB800" },
-      { x: bx + 18, y: by - 37, w: 5, h: 17, c: "#7B61FF" },
-      { x: bx, y: by - 16, w: 5, h: 14, c: "#00E5A0" },
-      { x: bx + 6, y: by - 18, w: 7, h: 16, c: "#FF6B9D" },
+      { x: bx, y: by - 38, w: 5, h: 18, c: "#A83C50" },
+      { x: bx + 6, y: by - 36, w: 4, h: 16, c: "#4A8EB8" },
+      { x: bx + 11, y: by - 40, w: 6, h: 20, c: "#B88530" },
+      { x: bx + 18, y: by - 37, w: 5, h: 17, c: "#6655CC" },
+      { x: bx, y: by - 16, w: 5, h: 14, c: "#3D8A60" },
+      { x: bx + 6, y: by - 18, w: 7, h: 16, c: "#B04858" },
       { x: bx + 14, y: by - 15, w: 8, h: 13, c: "#64B5F6" },
     ];
     books.forEach(({ x, y, w, h, c }) => {
@@ -2669,7 +2669,7 @@ interface AgentPanelProps {
 function AgentPanel({ agent, onClose, onChat, onStatusChange }: AgentPanelProps) {
   const cfg = AGENT_CONFIG[agent.id];
   const statusColors: Record<string, string> = {
-    online: "#00E5A0", busy: "#FFB800", offline: "#4A5570", error: "#FF4757",
+    online: "#3D8A60", busy: "#B88530", offline: "#4A5570", error: "#A83C50",
   };
 
   return (
@@ -2733,7 +2733,7 @@ function AgentPanel({ agent, onClose, onChat, onStatusChange }: AgentPanelProps)
           {agent.icon}
         </div>
         <div>
-          <div style={{ color: "#E8ECF8", fontSize: 14, fontWeight: 700, marginBottom: 2 }}>
+          <div style={{ color: "#F0EDE6", fontSize: 14, fontWeight: 700, marginBottom: 2 }}>
             {agent.name}
           </div>
           <div style={{ color: "#4A5570", fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>
@@ -2819,7 +2819,7 @@ function AgentPanel({ agent, onClose, onChat, onStatusChange }: AgentPanelProps)
               border: "1px solid rgba(255,255,255,0.05)",
             }}
           >
-            <div style={{ color: "#3A4560", fontSize: 8, fontFamily: "'JetBrains Mono', monospace", marginBottom: 3 }}>
+            <div style={{ color: "#4A4A5A", fontSize: 8, fontFamily: "'JetBrains Mono', monospace", marginBottom: 3 }}>
               {label}
             </div>
             <div style={{ color: "#8090B0", fontSize: 12, fontWeight: 700 }}>
@@ -2831,7 +2831,7 @@ function AgentPanel({ agent, onClose, onChat, onStatusChange }: AgentPanelProps)
 
       {/* Skills */}
       <div style={{ marginBottom: 14 }}>
-        <div style={{ color: "#3A4560", fontSize: 9, fontFamily: "'JetBrains Mono', monospace", marginBottom: 6, letterSpacing: "0.1em" }}>
+        <div style={{ color: "#4A4A5A", fontSize: 9, fontFamily: "'JetBrains Mono', monospace", marginBottom: 6, letterSpacing: "0.1em" }}>
           SKILLS
         </div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
@@ -2856,7 +2856,7 @@ function AgentPanel({ agent, onClose, onChat, onStatusChange }: AgentPanelProps)
 
       {/* Status selector */}
       <div style={{ marginBottom: 14 }}>
-        <div style={{ color: "#3A4560", fontSize: 9, fontFamily: "'JetBrains Mono', monospace", marginBottom: 6, letterSpacing: "0.1em" }}>
+        <div style={{ color: "#4A4A5A", fontSize: 9, fontFamily: "'JetBrains Mono', monospace", marginBottom: 6, letterSpacing: "0.1em" }}>
           CAMBIAR ESTADO
         </div>
         <div style={{ display: "flex", gap: 6 }}>
@@ -2870,7 +2870,7 @@ function AgentPanel({ agent, onClose, onChat, onStatusChange }: AgentPanelProps)
                 borderRadius: 5,
                 border: `1px solid ${agent.status === s ? statusColors[s] + "80" : "rgba(255,255,255,0.07)"}`,
                 background: agent.status === s ? statusColors[s] + "20" : "rgba(255,255,255,0.03)",
-                color: agent.status === s ? statusColors[s] : "#3A4560",
+                color: agent.status === s ? statusColors[s] : "#4A4A5A",
                 fontSize: 9,
                 fontFamily: "'JetBrains Mono', monospace",
                 cursor: "pointer",
@@ -2890,10 +2890,10 @@ function AgentPanel({ agent, onClose, onChat, onStatusChange }: AgentPanelProps)
         style={{
           width: "100%",
           padding: "10px 0",
-          background: `linear-gradient(135deg, ${cfg?.color ?? "#00D4FF"}25, ${cfg?.color ?? "#00D4FF"}10)`,
-          border: `1px solid ${cfg?.color ?? "#00D4FF"}60`,
+          background: `linear-gradient(135deg, ${cfg?.color ?? "#4A8EB8"}25, ${cfg?.color ?? "#4A8EB8"}10)`,
+          border: `1px solid ${cfg?.color ?? "#4A8EB8"}60`,
           borderRadius: 8,
-          color: cfg?.color ?? "#00D4FF",
+          color: cfg?.color ?? "#4A8EB8",
           fontSize: 11,
           fontFamily: "'JetBrains Mono', monospace",
           fontWeight: 700,
@@ -2924,7 +2924,7 @@ function AgentPanel({ agent, onClose, onChat, onStatusChange }: AgentPanelProps)
             style={{
               flex: 1,
               height: `${20 + Math.sin(i * 0.8) * 10 + (i % 3) * 4}px`,
-              background: `${cfg?.color ?? "#00D4FF"}${i === 15 ? "FF" : i > 10 ? "AA" : "50"}`,
+              background: `${cfg?.color ?? "#4A8EB8"}${i === 15 ? "FF" : i > 10 ? "AA" : "50"}`,
               borderRadius: "1px 1px 0 0",
               transition: "height 0.3s ease",
             }}

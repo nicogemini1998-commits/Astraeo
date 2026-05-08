@@ -13,11 +13,11 @@ const NODE_H = 64;
 const PORT_R = 6;
 
 const NODE_STYLES: Record<WorkflowNode["type"], { color: string; bg: string; icon: string; label: string }> = {
-  trigger:   { color: "#FFB800", bg: "rgba(255,184,0,0.10)",   icon: "⚡", label: "Trigger" },
-  agent:     { color: "#00D4FF", bg: "rgba(0,212,255,0.10)",   icon: "◉",  label: "Agente" },
-  condition: { color: "#7B61FF", bg: "rgba(123,97,255,0.10)",  icon: "◇",  label: "Condición" },
-  action:    { color: "#00E5A0", bg: "rgba(0,229,160,0.10)",   icon: "▶",  label: "Acción" },
-  output:    { color: "#FF6B9D", bg: "rgba(255,107,157,0.10)", icon: "◎",  label: "Salida" },
+  trigger:   { color: "#B88530", bg: "rgba(255,184,0,0.10)",   icon: "⚡", label: "Trigger" },
+  agent:     { color: "#4A8EB8", bg: "rgba(0,212,255,0.10)",   icon: "◉",  label: "Agente" },
+  condition: { color: "#6655CC", bg: "rgba(123,97,255,0.10)",  icon: "◇",  label: "Condición" },
+  action:    { color: "#3D8A60", bg: "rgba(0,229,160,0.10)",   icon: "▶",  label: "Acción" },
+  output:    { color: "#B04858", bg: "rgba(255,107,157,0.10)", icon: "◎",  label: "Salida" },
 };
 
 // ─── Canvas Types ──────────────────────────────────────────────────────────────
@@ -418,11 +418,11 @@ function RunModal({ workflow, agents, settings, onClose, onComplete }: RunModalP
     skipped: "⊘",
   };
   const stateColor: Record<NodeExecState, string> = {
-    pending: "#6B7A99",
-    running: "#00D4FF",
-    done: "#00E5A0",
-    error: "#FF4757",
-    skipped: "#1A2744",
+    pending: "#8A8A97",
+    running: "#4A8EB8",
+    done: "#3D8A60",
+    error: "#A83C50",
+    skipped: "#23211C",
   };
 
   return (
@@ -460,24 +460,24 @@ function RunModal({ workflow, agents, settings, onClose, onComplete }: RunModalP
                 <motion.span
                   animate={{ opacity: [1, 0.3, 1] }}
                   transition={{ repeat: Infinity, duration: 1.2 }}
-                  style={{ color: "#00D4FF", fontSize: 10 }}
+                  style={{ color: "#4A8EB8", fontSize: 10 }}
                 >
                   ●
                 </motion.span>
               )}
-              {phase === "done" && <span style={{ color: "#00E5A0", fontSize: 10 }}>●</span>}
-              {phase === "input" && <span style={{ color: "#6B7A99", fontSize: 10 }}>●</span>}
+              {phase === "done" && <span style={{ color: "#3D8A60", fontSize: 10 }}>●</span>}
+              {phase === "input" && <span style={{ color: "#8A8A97", fontSize: 10 }}>●</span>}
               <h3 className="text-[13px] font-bold text-[#E8ECF4] uppercase tracking-widest">
                 {phase === "running" ? "EJECUTANDO WORKFLOW" : phase === "done" ? "EJECUCIÓN COMPLETADA" : "EJECUTAR WORKFLOW"}
               </h3>
             </div>
-            <p className="text-[11px] font-mono" style={{ color: "#00D4FF", opacity: 0.7 }}>{workflow.name}</p>
+            <p className="text-[11px] font-mono" style={{ color: "#4A8EB8", opacity: 0.7 }}>{workflow.name}</p>
           </div>
           <button
             onClick={onClose}
             className="transition-all"
             style={{
-              color: "#6B7A99",
+              color: "#8A8A97",
               fontSize: 18,
               lineHeight: 1,
               padding: "4px 8px",
@@ -485,11 +485,11 @@ function RunModal({ workflow, agents, settings, onClose, onComplete }: RunModalP
               border: "1px solid transparent",
             }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.color = "#E8ECF4";
+              (e.currentTarget as HTMLElement).style.color = "#F0EDE6";
               (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.1)";
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.color = "#6B7A99";
+              (e.currentTarget as HTMLElement).style.color = "#8A8A97";
               (e.currentTarget as HTMLElement).style.borderColor = "transparent";
             }}
           >✕</button>
@@ -516,8 +516,8 @@ function RunModal({ workflow, agents, settings, onClose, onComplete }: RunModalP
                   className="flex items-start gap-3 rounded-xl p-3"
                   style={{ background: "rgba(255,184,0,0.08)", border: "1px solid rgba(255,184,0,0.2)" }}
                 >
-                  <span className="text-[#FFB800] mt-0.5">⚠</span>
-                  <p className="text-[11px] text-[#FFB800]">
+                  <span className="text-[#B88530] mt-0.5">⚠</span>
+                  <p className="text-[11px] text-[#B88530]">
                     Sin Claude API Key. Los nodos de agente usarán respuestas simuladas. Configura en Ajustes.
                   </p>
                 </div>
@@ -538,7 +538,7 @@ function RunModal({ workflow, agents, settings, onClose, onComplete }: RunModalP
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[10px] font-bold text-[#6B7A99] uppercase tracking-widest">Progreso</span>
-                    <span className="text-[10px] font-mono text-[#00D4FF]">
+                    <span className="text-[10px] font-mono text-[#4A8EB8]">
                       {Object.values(nodeStates).filter((s) => s === "done" || s === "error" || s === "skipped").length}
                       /{workflow.nodes.length}
                     </span>
@@ -547,7 +547,7 @@ function RunModal({ workflow, agents, settings, onClose, onComplete }: RunModalP
                     <motion.div
                       className="h-full rounded-full"
                       style={{
-                        background: "linear-gradient(90deg, #00D4FF, #7B61FF)",
+                        background: "linear-gradient(90deg, #4A8EB8, #6655CC)",
                         boxShadow: "0 0 8px rgba(0,212,255,0.6)",
                       }}
                       initial={{ width: "0%" }}
@@ -571,7 +571,7 @@ function RunModal({ workflow, agents, settings, onClose, onComplete }: RunModalP
                     key={node.id}
                     className="rounded-xl overflow-hidden"
                     style={{
-                      border: `1px solid ${execState === "running" ? cfg.color + "60" : execState === "done" ? cfg.color + "25" : "#1A2744"}`,
+                      border: `1px solid ${execState === "running" ? cfg.color + "60" : execState === "done" ? cfg.color + "25" : "#23211C"}`,
                       background: execState === "running" ? cfg.bg : execState === "done" ? `${cfg.color}05` : "rgba(10,15,31,0.6)",
                     }}
                     animate={execState === "running" ? { boxShadow: [`0 0 0px ${cfg.color}00`, `0 0 16px ${cfg.color}40`, `0 0 0px ${cfg.color}00`] } : {}}
@@ -638,7 +638,7 @@ function RunModal({ workflow, agents, settings, onClose, onComplete }: RunModalP
               className="rounded-xl p-4 space-y-2"
               style={{ background: "rgba(0,229,160,0.06)", border: "1px solid rgba(0,229,160,0.2)" }}
             >
-              <p className="text-[11px] font-semibold text-[#00E5A0] uppercase tracking-wider">
+              <p className="text-[11px] font-semibold text-[#3D8A60] uppercase tracking-wider">
                 ✓ Resultado Final · {(totalTime / 1000).toFixed(1)}s
               </p>
               <p className="text-[12px] text-[#E8ECF4] leading-relaxed whitespace-pre-wrap">
@@ -662,7 +662,7 @@ function RunModal({ workflow, agents, settings, onClose, onComplete }: RunModalP
                 style={{
                   background: "linear-gradient(135deg, rgba(0,212,255,0.2), rgba(123,97,255,0.15))",
                   border: "1px solid rgba(0,212,255,0.4)",
-                  color: "#00D4FF",
+                  color: "#4A8EB8",
                   boxShadow: "0 0 20px rgba(0,212,255,0.15)",
                   letterSpacing: "0.05em",
                   textTransform: "uppercase",
@@ -678,7 +678,7 @@ function RunModal({ workflow, agents, settings, onClose, onComplete }: RunModalP
                 animate={{ opacity: [1, 0.3, 1] }}
                 transition={{ repeat: Infinity, duration: 1 }}
                 className="text-[11px] font-mono"
-                style={{ color: "#00D4FF" }}
+                style={{ color: "#4A8EB8" }}
               >
                 ◌
               </motion.span>
@@ -692,7 +692,7 @@ function RunModal({ workflow, agents, settings, onClose, onComplete }: RunModalP
               style={{
                 background: "linear-gradient(135deg, rgba(0,229,160,0.15), rgba(0,212,255,0.1))",
                 border: "1px solid rgba(0,229,160,0.3)",
-                color: "#00E5A0",
+                color: "#3D8A60",
                 boxShadow: "0 0 20px rgba(0,229,160,0.1)",
               }}
             >
@@ -1107,7 +1107,7 @@ function WorkflowCanvas({ workflow, agents, settings, onSave, onBack }: Workflow
           <span
             className="text-[9px] font-mono px-2 py-0.5 rounded-full"
             style={{
-              color: "#FFB800",
+              color: "#B88530",
               background: "rgba(255,184,0,0.1)",
               border: "1px solid rgba(255,184,0,0.2)",
             }}
@@ -1122,13 +1122,13 @@ function WorkflowCanvas({ workflow, agents, settings, onSave, onBack }: Workflow
             <button
               onClick={() => dispatch({ type: "SET_ZOOM", zoom: canvasState.zoom - 0.1 })}
               className="text-[11px] px-2.5 py-1.5 transition-colors hover:text-white"
-              style={{ color: "#6B7A99" }}
+              style={{ color: "#8A8A97" }}
             >−</button>
-            <span className="text-[10px] font-mono w-9 text-center" style={{ color: "#00D4FF" }}>{zoomPct}%</span>
+            <span className="text-[10px] font-mono w-9 text-center" style={{ color: "#4A8EB8" }}>{zoomPct}%</span>
             <button
               onClick={() => dispatch({ type: "SET_ZOOM", zoom: canvasState.zoom + 0.1 })}
               className="text-[11px] px-2.5 py-1.5 transition-colors hover:text-white"
-              style={{ color: "#6B7A99" }}
+              style={{ color: "#8A8A97" }}
             >+</button>
           </div>
           <div className="h-4 w-px" style={{ background: "rgba(255,255,255,0.08)" }} />
@@ -1147,7 +1147,7 @@ function WorkflowCanvas({ workflow, agents, settings, onSave, onBack }: Workflow
             style={{
               background: "rgba(0,212,255,0.08)",
               border: "1px solid rgba(0,212,255,0.2)",
-              color: "#00D4FF",
+              color: "#4A8EB8",
             }}
           >
             ✓ Guardar
@@ -1158,7 +1158,7 @@ function WorkflowCanvas({ workflow, agents, settings, onSave, onBack }: Workflow
             style={{
               background: "linear-gradient(135deg, rgba(0,229,160,0.18), rgba(0,212,255,0.12))",
               border: "1px solid rgba(0,229,160,0.35)",
-              color: "#00E5A0",
+              color: "#3D8A60",
               boxShadow: "0 0 16px rgba(0,229,160,0.12)",
             }}
           >
@@ -1201,35 +1201,35 @@ function WorkflowCanvas({ workflow, agents, settings, onSave, onBack }: Workflow
                 <polygon points="0 0, 10 3.5, 0 7" fill="rgba(0,212,255,0.5)" />
               </marker>
               <marker id="arrowhead-selected" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                <polygon points="0 0, 10 3.5, 0 7" fill="#00D4FF" />
+                <polygon points="0 0, 10 3.5, 0 7" fill="#4A8EB8" />
               </marker>
               <filter id="glow-trigger" x="-20%" y="-20%" width="140%" height="140%">
                 <feGaussianBlur stdDeviation="4" result="blur" />
-                <feFlood floodColor="#FFB800" floodOpacity="0.35" result="color" />
+                <feFlood floodColor="#B88530" floodOpacity="0.35" result="color" />
                 <feComposite in="color" in2="blur" operator="in" result="glow" />
                 <feMerge><feMergeNode in="glow" /><feMergeNode in="SourceGraphic" /></feMerge>
               </filter>
               <filter id="glow-agent" x="-20%" y="-20%" width="140%" height="140%">
                 <feGaussianBlur stdDeviation="4" result="blur" />
-                <feFlood floodColor="#00D4FF" floodOpacity="0.35" result="color" />
+                <feFlood floodColor="#4A8EB8" floodOpacity="0.35" result="color" />
                 <feComposite in="color" in2="blur" operator="in" result="glow" />
                 <feMerge><feMergeNode in="glow" /><feMergeNode in="SourceGraphic" /></feMerge>
               </filter>
               <filter id="glow-condition" x="-20%" y="-20%" width="140%" height="140%">
                 <feGaussianBlur stdDeviation="4" result="blur" />
-                <feFlood floodColor="#7B61FF" floodOpacity="0.35" result="color" />
+                <feFlood floodColor="#6655CC" floodOpacity="0.35" result="color" />
                 <feComposite in="color" in2="blur" operator="in" result="glow" />
                 <feMerge><feMergeNode in="glow" /><feMergeNode in="SourceGraphic" /></feMerge>
               </filter>
               <filter id="glow-action" x="-20%" y="-20%" width="140%" height="140%">
                 <feGaussianBlur stdDeviation="4" result="blur" />
-                <feFlood floodColor="#00E5A0" floodOpacity="0.35" result="color" />
+                <feFlood floodColor="#3D8A60" floodOpacity="0.35" result="color" />
                 <feComposite in="color" in2="blur" operator="in" result="glow" />
                 <feMerge><feMergeNode in="glow" /><feMergeNode in="SourceGraphic" /></feMerge>
               </filter>
               <filter id="glow-output" x="-20%" y="-20%" width="140%" height="140%">
                 <feGaussianBlur stdDeviation="4" result="blur" />
-                <feFlood floodColor="#FF6B9D" floodOpacity="0.35" result="color" />
+                <feFlood floodColor="#B04858" floodOpacity="0.35" result="color" />
                 <feComposite in="color" in2="blur" operator="in" result="glow" />
                 <feMerge><feMergeNode in="glow" /><feMergeNode in="SourceGraphic" /></feMerge>
               </filter>
@@ -1264,7 +1264,7 @@ function WorkflowCanvas({ workflow, agents, settings, onSave, onBack }: Workflow
                     <path
                       d={path}
                       fill="none"
-                      stroke={isSelected ? "#00D4FF" : "rgba(0,212,255,0.4)"}
+                      stroke={isSelected ? "#4A8EB8" : "rgba(0,212,255,0.4)"}
                       strokeWidth={isSelected ? 3 : 2}
                       markerEnd={isSelected ? "url(#arrowhead-selected)" : "url(#arrowhead)"}
                       style={{ pointerEvents: "none", transition: "stroke 0.2s" }}
@@ -1274,7 +1274,7 @@ function WorkflowCanvas({ workflow, agents, settings, onSave, onBack }: Workflow
                         x={midX}
                         y={midY}
                         textAnchor="middle"
-                        style={{ fill: "#FFB800", fontSize: 10, fontFamily: "Space Grotesk", pointerEvents: "none" }}
+                        style={{ fill: "#B88530", fontSize: 10, fontFamily: "Space Grotesk", pointerEvents: "none" }}
                       >
                         {edge.label}
                       </text>
@@ -1362,7 +1362,7 @@ function WorkflowCanvas({ workflow, agents, settings, onSave, onBack }: Workflow
                             <div style={{
                               fontSize: 11,
                               fontWeight: 700,
-                              color: "#E8ECF4",
+                              color: "#F0EDE6",
                               fontFamily: "Space Grotesk",
                               whiteSpace: "nowrap",
                               overflow: "hidden",
@@ -1392,7 +1392,7 @@ function WorkflowCanvas({ workflow, agents, settings, onSave, onBack }: Workflow
                       cx={inPort.x}
                       cy={inPort.y}
                       r={PORT_R}
-                      fill="#050810"
+                      fill="#0A0908"
                       stroke={cfg.color}
                       strokeWidth={1.5}
                       style={{ cursor: "crosshair" }}
@@ -1404,7 +1404,7 @@ function WorkflowCanvas({ workflow, agents, settings, onSave, onBack }: Workflow
                       cx={outPort.x}
                       cy={outPort.y}
                       r={PORT_R}
-                      fill="#050810"
+                      fill="#0A0908"
                       stroke={cfg.color}
                       strokeWidth={1.5}
                       style={{ cursor: "crosshair" }}
@@ -1436,7 +1436,7 @@ function WorkflowCanvas({ workflow, agents, settings, onSave, onBack }: Workflow
                 >
                   <span style={{ fontSize: 28 }}>◫</span>
                 </div>
-                <p className="text-[13px] font-semibold" style={{ color: "#6B7A99" }}>Doble click para agregar nodo</p>
+                <p className="text-[13px] font-semibold" style={{ color: "#8A8A97" }}>Doble click para agregar nodo</p>
                 <p className="text-[10px] font-mono uppercase tracking-widest" style={{ color: "rgba(0,212,255,0.5)" }}>
                   o arrastra desde la paleta
                 </p>
@@ -1515,8 +1515,8 @@ export default function WorkflowsPage() {
       name: newName,
       description: newDesc,
       nodes: [
-        { id: `n-${nanoid(6)}`, type: "trigger", label: "Inicio", x: 80, y: 120, config: {}, color: "#00E5A0" },
-        { id: `n-${nanoid(6)}`, type: "output", label: "Resultado", x: 420, y: 120, config: {}, color: "#FF6B9D" },
+        { id: `n-${nanoid(6)}`, type: "trigger", label: "Inicio", x: 80, y: 120, config: {}, color: "#3D8A60" },
+        { id: `n-${nanoid(6)}`, type: "output", label: "Resultado", x: 420, y: 120, config: {}, color: "#B04858" },
       ],
       edges: [],
       active: false,
@@ -1585,7 +1585,7 @@ export default function WorkflowsPage() {
             <button
               onClick={() => setCreating(true)}
               className="text-[10px] font-semibold"
-              style={{ color: "#00D4FF" }}
+              style={{ color: "#4A8EB8" }}
             >
               + Nuevo
             </button>
@@ -1594,7 +1594,7 @@ export default function WorkflowsPage() {
           <div className="flex-1 overflow-y-auto p-2 space-y-1">
             {creating && (
               <div
-                className="rounded-xl p-3 space-y-2 border border-[#00D4FF]/20"
+                className="rounded-xl p-3 space-y-2 border border-[#4A8EB8]/20"
                 style={{ background: "rgba(0,212,255,0.04)" }}
               >
                 <input
@@ -1623,11 +1623,11 @@ export default function WorkflowsPage() {
                 <div className="flex items-center gap-2">
                   <div
                     className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                    style={{ background: wf.active ? "#00E5A0" : "#1A2744" }}
+                    style={{ background: wf.active ? "#3D8A60" : "#23211C" }}
                   />
                   <span
                     className="text-[11px] font-medium truncate"
-                    style={{ color: wf.id === editorWorkflowId ? "#E8ECF4" : "#6B7A99" }}
+                    style={{ color: wf.id === editorWorkflowId ? "#F0EDE6" : "#8A8A97" }}
                   >
                     {wf.name}
                   </span>
@@ -1665,7 +1665,7 @@ export default function WorkflowsPage() {
           <div>
             <h2
               className="font-black tracking-widest uppercase"
-              style={{ fontSize: 15, color: "#E8ECF4", letterSpacing: "0.15em" }}
+              style={{ fontSize: 15, color: "#F0EDE6", letterSpacing: "0.15em" }}
             >
               WORKFLOWS
             </h2>
@@ -1679,7 +1679,7 @@ export default function WorkflowsPage() {
             style={{
               background: "linear-gradient(135deg, rgba(0,212,255,0.15), rgba(123,97,255,0.1))",
               border: "1px solid rgba(0,212,255,0.3)",
-              color: "#00D4FF",
+              color: "#4A8EB8",
               boxShadow: "0 0 16px rgba(0,212,255,0.1)",
             }}
           >
@@ -1692,7 +1692,7 @@ export default function WorkflowsPage() {
             <motion.div
               initial={{ opacity: 0, y: -6 }}
               animate={{ opacity: 1, y: 0 }}
-              className="glass-card rounded-xl p-3.5 border border-[#00D4FF]/20 space-y-2"
+              className="glass-card rounded-xl p-3.5 border border-[#4A8EB8]/20 space-y-2"
             >
               <input
                 className="astraeo-input text-[12px]"
@@ -1733,8 +1733,8 @@ export default function WorkflowsPage() {
                 <div
                   className="w-4 h-4 rounded-full flex-shrink-0 mt-0.5"
                   style={{
-                    background: wf.active ? "#00E5A0" : "#1A2744",
-                    boxShadow: wf.active ? "0 0 8px #00E5A0" : "none",
+                    background: wf.active ? "#3D8A60" : "#23211C",
+                    boxShadow: wf.active ? "0 0 8px #3D8A60" : "none",
                   }}
                 />
               </div>
@@ -1815,7 +1815,7 @@ export default function WorkflowsPage() {
           <div className="text-center space-y-2">
             <p
               className="font-black uppercase tracking-widest"
-              style={{ fontSize: 16, color: "#E8ECF4", letterSpacing: "0.12em" }}
+              style={{ fontSize: 16, color: "#F0EDE6", letterSpacing: "0.12em" }}
             >
               Editor de Workflows
             </p>
@@ -1838,7 +1838,7 @@ export default function WorkflowsPage() {
               style={{
                 background: "linear-gradient(135deg, rgba(0,212,255,0.2), rgba(123,97,255,0.15))",
                 border: "1px solid rgba(0,212,255,0.35)",
-                color: "#00D4FF",
+                color: "#4A8EB8",
                 boxShadow: "0 0 24px rgba(0,212,255,0.15)",
               }}
             >

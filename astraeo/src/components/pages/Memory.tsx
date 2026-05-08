@@ -6,10 +6,17 @@ import type { MemoryEntry, MemoryType } from "@/lib/types";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const C = {
-  cyan: "#00D4FF", purple: "#7B61FF", emerald: "#00E5A0",
-  amber: "#FFB800", coral: "#FF6B9D", red: "#FF4757",
-  bg: "#050810", surface: "#0D1120", surfaceHover: "#111828",
-  border: "rgba(255,255,255,0.06)", text: "#E8ECF8", muted: "#3A4560",
+  cyan:    "var(--accent-sky)",
+  purple:  "var(--accent-indigo)",
+  emerald: "var(--accent-emerald)",
+  amber:   "var(--accent-amber)",
+  coral:   "var(--accent-rose)",
+  red:     "var(--danger)",
+  bg:      "var(--bg-base)",
+  surface: "var(--bg-surface)",
+  border:  "var(--border-subtle)",
+  text:    "var(--text-primary)",
+  muted:   "var(--text-muted)",
 } as const;
 
 // ─── Type config ──────────────────────────────────────────────────────────────
@@ -172,7 +179,7 @@ function MemoryForm({ initialData, isEditing, onChange, onSave, onCancel }: Memo
         <div className="flex items-center gap-2.5">
           <input
             type="checkbox"
-            className="w-3.5 h-3.5 cursor-pointer accent-[#FFB800]"
+            className="w-3.5 h-3.5 cursor-pointer accent-[#B88530]"
             checked={initialData.pinned}
             onChange={(e) => onChange({ ...initialData, pinned: e.target.checked })}
             id="memory-pin"
@@ -239,7 +246,7 @@ function MemoryCard({ entry, search, isSelected, onToggleSelect, onEdit, onDelet
       }}
       onMouseEnter={(e) => {
         if (!isSelected) {
-          (e.currentTarget as HTMLDivElement).style.background = C.surfaceHover;
+          (e.currentTarget as HTMLDivElement).style.background = "var(--bg-surface-2)";
           (e.currentTarget as HTMLDivElement).style.borderColor = `${cfg.color}40`;
         }
       }}
@@ -258,7 +265,7 @@ function MemoryCard({ entry, search, isSelected, onToggleSelect, onEdit, onDelet
           type="checkbox"
           checked={isSelected}
           onChange={onToggleSelect}
-          className="w-3.5 h-3.5 cursor-pointer accent-[#00D4FF]"
+          className="w-3.5 h-3.5 cursor-pointer accent-[#4A8EB8]"
           onClick={(e) => e.stopPropagation()}
         />
       </div>
@@ -322,7 +329,7 @@ function MemoryCard({ entry, search, isSelected, onToggleSelect, onEdit, onDelet
       </h4>
 
       {/* Content preview */}
-      <p className="text-[12px] line-clamp-3 leading-relaxed flex-1" style={{ color: "#6B7A99" }}>
+      <p className="text-[12px] line-clamp-3 leading-relaxed flex-1" style={{ color: "#8A8A97" }}>
         {highlightText(entry.content, search)}
       </p>
 
@@ -787,7 +794,7 @@ export default function MemoryPage() {
                 ◎
               </div>
               <div className="text-center">
-                <p className="text-[14px] font-semibold mb-1" style={{ color: "#6B7A99" }}>
+                <p className="text-[14px] font-semibold mb-1" style={{ color: "#8A8A97" }}>
                   {search ? `Sin resultados para "${search}"` : "No hay memorias"}
                 </p>
                 {!search && (

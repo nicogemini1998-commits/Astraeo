@@ -7,10 +7,17 @@ import type { AgentStatus, MissionPriority, MissionStatus, MemoryType } from "@/
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const C = {
-  cyan: "#00D4FF", purple: "#7B61FF", emerald: "#00E5A0",
-  amber: "#FFB800", coral: "#FF6B9D", red: "#FF4757",
-  bg: "#050810", surface: "#0D1120", surfaceHover: "#111828",
-  border: "rgba(255,255,255,0.06)", text: "#E8ECF8", muted: "#3A4560",
+  cyan:    "var(--accent-sky)",
+  purple:  "var(--accent-indigo)",
+  emerald: "var(--accent-emerald)",
+  amber:   "var(--accent-amber)",
+  coral:   "var(--accent-rose)",
+  red:     "var(--danger)",
+  bg:      "var(--bg-base)",
+  surface: "var(--bg-surface)",
+  border:  "var(--border-subtle)",
+  text:    "var(--text-primary)",
+  muted:   "var(--text-muted)",
 } as const;
 
 // ─── Tool definitions for Claude ──────────────────────────────────────────────
@@ -27,7 +34,7 @@ const COMMANDER_TOOLS = [
         systemPrompt: { type: "string", description: "System prompt completo para el agente" },
         skills: { type: "array", items: { type: "string" }, description: "Lista de skills del agente" },
         icon: { type: "string", description: "Emoji o símbolo para el agente" },
-        color: { type: "string", description: "Color hex del agente, ej. #00D4FF" },
+        color: { type: "string", description: "Color hex del agente, ej. #4A8EB8" },
       },
       required: ["name", "role", "model", "systemPrompt", "skills"],
     },
@@ -212,7 +219,7 @@ function executeTool(toolName: string, input: Record<string, unknown>): ToolResu
         x: 60 + i * 160,
         y: 120,
         config: step.agentId ? { agentId: step.agentId } : {},
-        color: ({ trigger: C.emerald, agent: C.cyan, condition: C.amber, action: C.purple, output: C.coral } as Record<string, string>)[step.type] ?? "#6B7A99",
+        color: ({ trigger: C.emerald, agent: C.cyan, condition: C.amber, action: C.purple, output: C.coral } as Record<string, string>)[step.type] ?? "#8A8A97",
       }));
       const edges = nodes.slice(0, -1).map((n, i) => ({ id: `e${i + 1}`, from: n.id, to: nodes[i + 1].id }));
       store.addWorkflow({
@@ -573,7 +580,7 @@ function SystemPromptPanel() {
               className="px-4 pb-3 text-[10px] leading-relaxed overflow-x-auto"
               style={{
                 fontFamily: "'JetBrains Mono', monospace",
-                color: "#6B7A99",
+                color: "#8A8A97",
                 whiteSpace: "pre-wrap",
                 wordBreak: "break-word",
               }}
