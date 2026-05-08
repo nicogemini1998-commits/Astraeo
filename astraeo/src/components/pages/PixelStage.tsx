@@ -78,6 +78,126 @@ const ACTIVITY_PHRASES: Record<string, string[]> = {
   "agent-8": ["Keyword research", "Link building", "Tech SEO audit"],
 };
 
+// ─── Ambient Occlusion + Light Shafts ─────────────────────────────────────────
+
+function drawAmbientOcclusion(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  rx: number,
+  ry: number
+): void {
+  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, rx);
+  grad.addColorStop(0, "rgba(0,0,0,0.30)");
+  grad.addColorStop(0.5, "rgba(0,0,0,0.12)");
+  grad.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.save();
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawWindowLightShafts(ctx: CanvasRenderingContext2D, t: number): void {
+  const windowCols = [1, 4, 7];
+  windowCols.forEach((wc, i) => {
+    const wx = isoX(wc + 0.5, 0);
+    const wy = isoY(wc + 0.5, 0);
+    const pulse = 0.65 + Math.sin(t * 0.25 + i * 1.2) * 0.12;
+
+    // Shaft polygon (trapezoid projecting onto floor)
+    const shaftW = 60;
+    const shaftSpread = 120;
+    const shaftLen = 180;
+    ctx.save();
+    const shaftGrad = ctx.createLinearGradient(wx, wy - 40, wx, wy + shaftLen);
+    shaftGrad.addColorStop(0, `rgba(255, 220, 160, ${0.12 * pulse})`);
+    shaftGrad.addColorStop(0.5, `rgba(255, 210, 140, ${0.06 * pulse})`);
+    shaftGrad.addColorStop(1, "rgba(255,200,120,0)");
+    ctx.fillStyle = shaftGrad;
+    ctx.beginPath();
+    ctx.moveTo(wx - shaftW / 2, wy - 40);
+    ctx.lineTo(wx + shaftW / 2, wy - 40);
+    ctx.lineTo(wx + shaftW / 2 + shaftSpread, wy + shaftLen);
+    ctx.lineTo(wx - shaftW / 2 - shaftSpread, wy + shaftLen);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    // Dust motes near window
+    for (let d = 0; d < 6; d++) {
+      const dx = wx + Math.sin(t * 0.3 + d * 1.7 + i * 2.3) * 28;
+      const dy = wy - 20 + Math.cos(t * 0.22 + d * 2.1) * 35 + d * 8;
+      const moteOpacity = 0.25 + Math.sin(t * 0.8 + d) * 0.15;
+      ctx.save();
+      ctx.fillStyle = `rgba(255, 230, 180, ${moteOpacity})`;
+      ctx.beginPath();
+      ctx.arc(dx, dy, 0.8 + (d % 3) * 0.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  });
+}
+
+function drawVignette(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+  const vgrad = ctx.createRadialGradient(W / 2, H / 2, H * 0.3, W / 2, H / 2, H * 0.85);
+  vgrad.addColorStop(0, "rgba(0,0,0,0)");
+  vgrad.addColorStop(0.7, "rgba(0,0,0,0.08)");
+  vgrad.addColorStop(1, "rgba(0,0,0,0.38)");
+  ctx.save();
+  ctx.fillStyle = vgrad;
+  ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+}
+
+function drawHeadphones(ctx: CanvasRenderingContext2D, cx: number, cy: number, color: string): void {
+  // Headband arc
+  ctx.strokeStyle = "#0C0E1C";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 8, Math.PI, 0);
+  ctx.stroke();
+  // Ear cups
+  ctx.fillStyle = "#1A1E2E";
+  ctx.beginPath();
+  ctx.roundRect(cx - 10, cy - 2, 5, 7, 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.roundRect(cx + 5, cy - 2, 5, 7, 2);
+  ctx.fill();
+  // Color accent on cups
+  ctx.fillStyle = color + "AA";
+  ctx.beginPath();
+  ctx.roundRect(cx - 9.5, cy - 1, 4, 2, 1);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.roundRect(cx + 5.5, cy - 1, 4, 2, 1);
+  ctx.fill();
+}
+
+function drawStickyNote(ctx: CanvasRenderingContext2D, x: number, y: number, color: string): void {
+  // Note body with slight rotation
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(-0.08);
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.roundRect(-7, -7, 14, 14, 1);
+  ctx.fill();
+  // Lines on note
+  ctx.strokeStyle = "rgba(0,0,0,0.18)";
+  ctx.lineWidth = 0.8;
+  ctx.lineCap = "round";
+  for (let l = 0; l < 3; l++) {
+    ctx.beginPath();
+    ctx.moveTo(-4.5, -2.5 + l * 3.5);
+    ctx.lineTo(3.5, -2.5 + l * 3.5);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 // ─── Canvas drawing helpers ────────────────────────────────────────────────────
 
 function drawExterior(ctx: CanvasRenderingContext2D): void {
@@ -217,37 +337,37 @@ function drawFloorTile(
   ctx.closePath();
   ctx.stroke();
 
-  // Wood grain line along the tile (diagonal highlight)
+  // Wood grain — visible on light hardwood
   if ((col + row) % 2 === 0) {
-    ctx.strokeStyle = "rgba(255, 200, 120, 0.04)";
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba(140, 90, 30, 0.12)";
+    ctx.lineWidth = 0.7;
     ctx.beginPath();
-    ctx.moveTo(cx - hw * 0.5, cy - hh * 0.4);
-    ctx.lineTo(cx + hw * 0.5, cy + hh * 0.4);
+    ctx.moveTo(cx - hw * 0.55, cy - hh * 0.45);
+    ctx.lineTo(cx + hw * 0.55, cy + hh * 0.45);
     ctx.stroke();
   }
 }
 
 function drawAllFloorTiles(ctx: CanvasRenderingContext2D): void {
-  // Main workspace — rich warm mahogany wood planks, clearly visible
+  // Main workspace — light warm oak/ash hardwood (research-backed: #C8A882 / #B8956F / #D9BC99)
   for (let c = 0; c < 14; c++) {
     for (let r = 0; r < 14; r++) {
-      const shade = (c + r) % 2 === 0 ? "#5A3C18" : "#503618";
-      drawFloorTile(ctx, c, r, shade, "#3A2510");
+      const shade = (c + r) % 2 === 0 ? "#C4A278" : "#B8956F";
+      drawFloorTile(ctx, c, r, shade, "#9A7450");
     }
   }
-  // Meeting room — cool polished slate/marble
+  // Meeting room — cool polished light concrete/marble
   for (let c = 14; c < 19; c++) {
     for (let r = 0; r < 9; r++) {
-      const shade = (c + r) % 2 === 0 ? "#1E2A42" : "#1A2440";
-      drawFloorTile(ctx, c, r, shade, "#0E1828");
+      const shade = (c + r) % 2 === 0 ? "#3A4A60" : "#344458";
+      drawFloorTile(ctx, c, r, shade, "#222E42");
     }
   }
-  // Lounge zone — plum/warm purple carpet base
+  // Lounge zone — warm plum/charcoal carpet with visible pile texture
   for (let c = 10; c < 14; c++) {
     for (let r = 10; r < 14; r++) {
-      const shade = (c + r) % 2 === 0 ? "#2E2248" : "#281C40";
-      drawFloorTile(ctx, c, r, shade, "#200E30");
+      const shade = (c + r) % 2 === 0 ? "#3C2C58" : "#342450";
+      drawFloorTile(ctx, c, r, shade, "#281840");
     }
   }
 }
@@ -526,10 +646,26 @@ function drawDesk(
   ctx.closePath();
   ctx.fill();
 
+  // Ambient occlusion under desk
+  const aoCx = isoX(col + 1, row + 0.5);
+  const aoCy = isoY(col + 1, row + 0.5);
+  drawAmbientOcclusion(ctx, aoCx, aoCy, 80, 28);
+
   // Monitor (centrado en la superficie del escritorio)
   const mcx = isoX(col + 0.9, row + 0.35);
   const mcy = isoY(col + 0.9, row + 0.35, DESK_H);
   drawMonitor(ctx, mcx, mcy, agentColor, t);
+
+  // Monitor floor glow
+  const monFloorGrad = ctx.createRadialGradient(mcx, mcy + 20, 0, mcx, mcy + 20, 55);
+  monFloorGrad.addColorStop(0, agentColor + "18");
+  monFloorGrad.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.save();
+  ctx.fillStyle = monFloorGrad;
+  ctx.beginPath();
+  ctx.ellipse(mcx, mcy + 20, 55, 22, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
 
   // Keyboard
   const kcx = isoX(col + 0.75, row + 0.72);
@@ -540,6 +676,21 @@ function drawDesk(
   const tcx = isoX(col + 1.55, row + 0.2);
   const tcy = isoY(col + 1.55, row + 0.2, DESK_H);
   drawCoffeeMug(ctx, tcx, tcy, agentColor);
+
+  // Headphones (every other desk)
+  if ((col + row) % 4 < 2) {
+    const hcx = isoX(col + 1.75, row + 0.65);
+    const hcy = isoY(col + 1.75, row + 0.65, DESK_H);
+    drawHeadphones(ctx, hcx, hcy, agentColor);
+  }
+
+  // Sticky notes (alternating)
+  if ((col + row) % 3 === 0) {
+    const scx = isoX(col + 0.35, row + 0.3);
+    const scy = isoY(col + 0.35, row + 0.3, DESK_H);
+    const noteColors = ["#FFE066", "#FF9AAA", "#80E5FF", "#B5F5A0"];
+    drawStickyNote(ctx, scx, scy, noteColors[(col + row) % noteColors.length]);
+  }
 }
 
 function drawMonitor(
@@ -1707,6 +1858,8 @@ function drawScene(
   selectedId: string | null,
   hitboxes: Map<string, { x: number; y: number; r: number }>
 ): void {
+  const W = 1500, H = 800;
+
   // 1. Exterior (sky, trees, buildings)
   drawExterior(ctx);
 
@@ -1738,12 +1891,12 @@ function drawScene(
     ctx.restore();
   });
 
-  // 2c. Floor polish — subtle specular shine on wood
+  // 2c. Floor polish — specular shine on light hardwood (more visible now that floor is lighter)
   const floorShine = ctx.createLinearGradient(isoX(0, 7), isoY(0, 7), isoX(10, 0), isoY(10, 0));
-  floorShine.addColorStop(0, "rgba(255, 220, 160, 0)");
-  floorShine.addColorStop(0.4, "rgba(255, 220, 160, 0.04)");
-  floorShine.addColorStop(0.6, "rgba(255, 255, 255, 0.03)");
-  floorShine.addColorStop(1, "rgba(255, 220, 160, 0)");
+  floorShine.addColorStop(0, "rgba(255, 240, 200, 0)");
+  floorShine.addColorStop(0.4, "rgba(255, 240, 200, 0.09)");
+  floorShine.addColorStop(0.6, "rgba(255, 255, 240, 0.06)");
+  floorShine.addColorStop(1, "rgba(255, 240, 200, 0)");
   ctx.save();
   ctx.fillStyle = floorShine;
   // Cover main floor area
@@ -1970,6 +2123,12 @@ function drawScene(
     const cy = isoY(pos.col + 1.0, pos.row + 0.45, 0);
     drawActivityBubble(ctx, cx, cy, agent, t);
   });
+
+  // 12. Window light shafts (over floor, under avatars)
+  drawWindowLightShafts(ctx, t);
+
+  // 13. Vignette (cinematic framing — always last)
+  drawVignette(ctx, W, H);
 }
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
@@ -1985,50 +2144,49 @@ function NexusHeader({ stats }: NexusHeaderProps) {
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        padding: "12px 24px",
-        background: "rgba(5,8,20,0.96)",
-        borderBottom: "1px solid rgba(255,255,255,0.06)",
-        backdropFilter: "blur(12px)",
+        padding: "10px 20px",
+        background: "var(--bg-base, #090B14)",
+        borderBottom: "1px solid var(--border-subtle, rgba(255,255,255,0.05))",
+        backdropFilter: "blur(16px)",
         flexShrink: 0,
         zIndex: 10,
-        backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,212,255,0.01) 2px, rgba(0,212,255,0.01) 4px)",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <div
           style={{
-            width: 8,
-            height: 8,
+            width: 7,
+            height: 7,
             borderRadius: "50%",
-            background: "#00E5A0",
-            boxShadow: "0 0 8px #00E5A0",
+            background: "var(--accent-emerald, #34D399)",
+            boxShadow: "0 0 6px var(--accent-emerald, #34D399)",
           }}
         />
         <span
           style={{
-            color: "#8898BB",
-            fontSize: 11,
+            color: "var(--text-secondary, #7A85A3)",
+            fontSize: 10.5,
             fontFamily: "'JetBrains Mono', monospace",
-            letterSpacing: "0.12em",
+            letterSpacing: "0.14em",
             textTransform: "uppercase",
           }}
         >
           NEXUS · OFICINA VIRTUAL
         </span>
-        <span style={{ animation: "neon-flicker 3s infinite", marginLeft: 4, color: "#00D4FF" }}>▮</span>
+        <span style={{ animation: "neon-flicker 3s infinite", marginLeft: 2, color: "var(--accent-indigo, #6366F1)", fontSize: 11 }}>▮</span>
       </div>
 
-      <div style={{ display: "flex", gap: 32 }}>
+      <div style={{ display: "flex", gap: 28 }}>
         {[
-          { label: "AGENTS ONLINE", value: `${stats.online}/${stats.total}`, color: "#00E5A0" },
-          { label: "TOKENS HOY",   value: stats.tokens.toLocaleString(),     color: "#7B61FF" },
-          { label: "TAREAS",       value: stats.tasks.toString(),            color: "#FFB800" },
+          { label: "AGENTS ONLINE", value: `${stats.online}/${stats.total}`, color: "var(--accent-emerald, #34D399)" },
+          { label: "TOKENS HOY",   value: stats.tokens.toLocaleString(),     color: "var(--accent-violet, #A78BFA)" },
+          { label: "TAREAS",       value: stats.tasks.toString(),            color: "var(--accent-amber, #F59E0B)" },
         ].map(({ label, value, color }) => (
           <div key={label} style={{ textAlign: "center" }}>
-            <div style={{ color: "#4A5570", fontSize: 9, fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.1em" }}>
+            <div style={{ color: "var(--text-micro, #2A3453)", fontSize: 8.5, fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.12em", marginBottom: 2 }}>
               {label}
             </div>
-            <div style={{ color, fontSize: 14, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>
+            <div style={{ color, fontSize: 13, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>
               {value}
             </div>
           </div>
@@ -2423,7 +2581,7 @@ export default function NexusPage() {
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        background: "linear-gradient(180deg, #0C0626 0%, #0E0820 60%, #080418 100%)",
+        background: "var(--bg-base, #090B14)",
         overflow: "hidden",
       }}
     >
@@ -2460,8 +2618,8 @@ export default function NexusPage() {
       {/* Status bar */}
       <div style={{
         height: 24,
-        background: "rgba(5,8,20,0.98)",
-        borderTop: "1px solid rgba(255,255,255,0.04)",
+        background: "var(--bg-base, #090B14)",
+        borderTop: "1px solid var(--border-subtle, rgba(255,255,255,0.05))",
         display: "flex",
         alignItems: "center",
         padding: "0 16px",
@@ -2469,13 +2627,13 @@ export default function NexusPage() {
         flexShrink: 0,
       }}>
         {[
-          { label: "CANVAS", value: "1500×800", color: "#3A4560" },
-          { label: "FPS", value: "60", color: "#00E5A0" },
-          { label: "AGENTS", value: `${agents.filter(a => a.status === "online").length} ONLINE`, color: "#00D4FF" },
-          { label: "RENDER", value: "CANVAS 2D · ISO 2.5D", color: "#7B61FF" },
+          { label: "CANVAS", value: "1500×800", color: "var(--text-muted, #3D4A6B)" },
+          { label: "FPS",    value: "60",        color: "var(--accent-emerald, #34D399)" },
+          { label: "AGENTS", value: `${agents.filter(a => a.status === "online").length} ONLINE`, color: "var(--accent-sky, #22D3EE)" },
+          { label: "RENDER", value: "CANVAS 2D · ISO 2.5D", color: "var(--accent-indigo, #6366F1)" },
         ].map(({ label, value, color }) => (
           <div key={label} style={{ display: "flex", gap: 5, alignItems: "center" }}>
-            <span style={{ color: "#1E2840", fontSize: 8, fontFamily: "'JetBrains Mono', monospace", textTransform: "uppercase" }}>{label}</span>
+            <span style={{ color: "var(--text-micro, #2A3453)", fontSize: 8, fontFamily: "'JetBrains Mono', monospace", textTransform: "uppercase" }}>{label}</span>
             <span style={{ color, fontSize: 9, fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.05em" }}>{value}</span>
           </div>
         ))}
