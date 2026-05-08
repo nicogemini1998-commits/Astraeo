@@ -68,28 +68,28 @@ const badgeVariants = {
 
 function HexLogo() {
   return (
-    <svg width="32" height="32" viewBox="0 0 36 36" fill="none" aria-label="ASTRAEO logo">
+    <svg width="32" height="32" viewBox="0 0 36 36" fill="none" aria-label="AETHER logo">
       <polygon
         points="18,2 32,10 32,26 18,34 4,26 4,10"
-        stroke="#6366F1"
+        stroke="#6F5BFF"
         strokeWidth="1.5"
-        fill="rgba(99,102,241,0.08)"
+        fill="rgba(111,91,255,0.08)"
       />
       <polygon
         points="18,7 28,13 28,23 18,29 8,23 8,13"
-        stroke="#818CF8"
+        stroke="#9B8FFF"
         strokeWidth="1"
         strokeOpacity="0.35"
         fill="none"
       />
       <motion.circle
         cx="18" cy="18" r="4"
-        fill="#6366F1"
+        fill="#6F5BFF"
         animate={{ r: [3.5, 5, 3.5], opacity: [0.8, 1, 0.8] }}
         transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
-        style={{ filter: "drop-shadow(0 0 5px rgba(99,102,241,0.8))" }}
+        style={{ filter: "drop-shadow(0 0 5px rgba(111,91,255,0.8))" }}
       />
-      <circle cx="18" cy="18" r="2" fill="#EDF0FA" />
+      <circle cx="18" cy="18" r="2" fill="#F0EDE6" />
     </svg>
   );
 }
@@ -131,7 +131,7 @@ function NavButton({ item, active, collapsed, onClick }: NavButtonProps) {
               ? "text-[var(--accent-indigo)]"
               : "group-hover:text-[var(--text-primary)]",
           ].join(" ")}
-          style={active ? { filter: "drop-shadow(0 0 5px rgba(99,102,241,0.5))" } : undefined}
+          style={active ? { filter: "drop-shadow(0 0 5px rgba(111,91,255,0.5))" } : undefined}
         />
       </span>
 
@@ -161,9 +161,9 @@ function NavButton({ item, active, collapsed, onClick }: NavButtonProps) {
             exit="closed"
             className="ml-auto text-[9px] px-1.5 py-0.5 rounded font-bold tracking-wider flex-shrink-0 font-mono"
             style={{
-              background: item.badgeColor ? `${item.badgeColor}15` : "rgba(99,102,241,0.1)",
+              background: item.badgeColor ? `${item.badgeColor}15` : "rgba(111,91,255,0.1)",
               color: item.badgeColor ?? "var(--accent-indigo)",
-              border: `1px solid ${item.badgeColor ? `${item.badgeColor}30` : "rgba(99,102,241,0.2)"}`,
+              border: `1px solid ${item.badgeColor ? `${item.badgeColor}30` : "rgba(111,91,255,0.2)"}`,
             }}
           >
             {item.badge}
@@ -249,8 +249,8 @@ export default function Sidebar() {
           <motion.div
             animate={
               claudeConnected
-                ? { filter: ["drop-shadow(0 0 4px rgba(99,102,241,0.4))", "drop-shadow(0 0 10px rgba(99,102,241,0.7))", "drop-shadow(0 0 4px rgba(99,102,241,0.4))"] }
-                : { filter: "drop-shadow(0 0 3px rgba(99,102,241,0.2))" }
+                ? { filter: ["drop-shadow(0 0 4px rgba(111,91,255,0.4))", "drop-shadow(0 0 10px rgba(111,91,255,0.7))", "drop-shadow(0 0 4px rgba(111,91,255,0.4))"] }
+                : { filter: "drop-shadow(0 0 3px rgba(111,91,255,0.2))" }
             }
             transition={claudeConnected ? { duration: 3, repeat: Infinity, ease: "easeInOut" } : undefined}
             className="flex-shrink-0"
@@ -267,8 +267,11 @@ export default function Sidebar() {
                 transition={{ duration: 0.15, ease: EASE }}
                 className="min-w-0"
               >
-                <h1 className="font-semibold text-[15px] tracking-[4px] text-[var(--text-primary)] leading-tight font-[var(--font-ui)]">
-                  ASTRAEO
+                <h1
+                  className="text-[16px] font-semibold leading-tight"
+                  style={{ fontFamily: "var(--font-display)", letterSpacing: "0.18em", color: "var(--text-primary)" }}
+                >
+                  AETHER
                 </h1>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span
@@ -389,7 +392,7 @@ export default function Sidebar() {
                     transition={{ duration: 1.2, ease: EASE }}
                     style={{
                       background: "linear-gradient(90deg, var(--accent-indigo), var(--accent-sky))",
-                      boxShadow: "0 0 6px rgba(99,102,241,0.5)",
+                      boxShadow: "0 0 6px rgba(111,91,255,0.5)",
                     }}
                   />
                 </div>

@@ -66,8 +66,11 @@ function Breadcrumb({ page }: { page: Page }) {
 
   return (
     <div className="flex items-center gap-2 select-none">
-      <span className="text-[var(--text-micro)] text-[11px] font-medium tracking-[0.18em] uppercase font-mono">
-        ASTRAEO
+      <span
+        className="text-[13px] font-semibold tracking-[0.12em] select-none"
+        style={{ fontFamily: "var(--font-display)", color: "var(--text-secondary)", letterSpacing: "0.14em" }}
+      >
+        AETHER
       </span>
       <span className="text-[var(--border-normal)] text-[14px] leading-none font-thin">/</span>
       <AnimatePresence mode="wait">
@@ -141,7 +144,7 @@ function SearchBar() {
               ? "var(--border-focus)"
               : "var(--border-subtle)",
             boxShadow: focused
-              ? "0 0 0 3px rgba(99,102,241,0.12)"
+              ? "0 0 0 3px rgba(111,91,255,0.12)"
               : "none",
             opacity: phVisible ? 1 : 0.8,
           }}
@@ -174,9 +177,9 @@ function SearchBar() {
                 <span
                   className="text-[9px] px-1.5 py-0.5 rounded font-bold font-mono"
                   style={{
-                    background: "rgba(99,102,241,0.12)",
+                    background: "rgba(111,91,255,0.12)",
                     color: "var(--accent-indigo)",
-                    border: "1px solid rgba(99,102,241,0.2)",
+                    border: "1px solid rgba(111,91,255,0.2)",
                   }}
                 >
                   {r.type}
@@ -337,7 +340,7 @@ function UserAvatar() {
         className="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-[10px] cursor-pointer font-mono flex-shrink-0 transition-all"
         style={{
           background: "linear-gradient(135deg, var(--accent-indigo), var(--accent-violet))",
-          boxShadow: "0 0 12px rgba(99,102,241,0.3)",
+          boxShadow: "0 0 12px rgba(111,91,255,0.3)",
         }}
         aria-label={`User: ${settings.userName}`}
       >

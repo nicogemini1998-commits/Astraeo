@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ASTRAEO | Mission Control",
-  description: "Sistema de control para gestión de agentes IA y clientes — ASTRAEO",
-  icons: { icon: "/astraeo-logo.png" },
+  title: "AETHER | Mission Control",
+  description: "Centro de mando para gestión de agentes IA y clientes — AETHER",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -1039,14 +1039,22 @@ function drawChair(ctx: CanvasRenderingContext2D, col: number, row: number): voi
 }
 
 function drawSofa(ctx: CanvasRenderingContext2D): void {
+  // Orange statement sofa — warm terracotta/burnt orange, Apple emoji-style gradients
   const col = 10.5, row = 10.5;
   const SOFA_H = 20;
+  const BACK_H = 30;
 
-  const sx = isoX(col, row);
-  const sy = isoY(col, row, SOFA_H);
+  // Base shadow
+  const sofaShadow = ctx.createRadialGradient(isoX(col + 1.25, row + 1), isoY(col + 1.25, row + 1), 0, isoX(col + 1.25, row + 1), isoY(col + 1.25, row + 1), 90);
+  sofaShadow.addColorStop(0, "rgba(0,0,0,0.28)");
+  sofaShadow.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = sofaShadow;
+  ctx.beginPath();
+  ctx.ellipse(isoX(col + 1.25, row + 1), isoY(col + 1.25, row + 1), 90, 35, 0, 0, Math.PI * 2);
+  ctx.fill();
 
-  // Sofa base left face — deep rich purple
-  ctx.fillStyle = "#1C1035";
+  // Sofa left face — dark burnt orange
+  ctx.fillStyle = "#7A2E0C";
   ctx.beginPath();
   ctx.moveTo(isoX(col, row), isoY(col, row));
   ctx.lineTo(isoX(col, row + 2), isoY(col, row + 2));
@@ -1055,8 +1063,8 @@ function drawSofa(ctx: CanvasRenderingContext2D): void {
   ctx.closePath();
   ctx.fill();
 
-  // Sofa base front face
-  ctx.fillStyle = "#261848";
+  // Sofa front face — mid burnt orange
+  ctx.fillStyle = "#A83E16";
   ctx.beginPath();
   ctx.moveTo(isoX(col, row + 2), isoY(col, row + 2));
   ctx.lineTo(isoX(col + 2.5, row + 2), isoY(col + 2.5, row + 2));
@@ -1065,8 +1073,14 @@ function drawSofa(ctx: CanvasRenderingContext2D): void {
   ctx.closePath();
   ctx.fill();
 
-  // Sofa seat top — rich violet
-  ctx.fillStyle = "#2E2055";
+  // Seat top — warm terracotta with radial highlight
+  const seatTopCx = isoX(col + 1.25, row + 1);
+  const seatTopCy = isoY(col + 1.25, row + 1) - SOFA_H;
+  const seatGrad  = ctx.createRadialGradient(seatTopCx - 20, seatTopCy - 10, 0, seatTopCx, seatTopCy, 80);
+  seatGrad.addColorStop(0, "#E85A22");
+  seatGrad.addColorStop(0.55, "#C24818");
+  seatGrad.addColorStop(1, "#943010");
+  ctx.fillStyle = seatGrad;
   ctx.beginPath();
   ctx.moveTo(isoX(col, row), isoY(col, row) - SOFA_H);
   ctx.lineTo(isoX(col + 2.5, row), isoY(col + 2.5, row) - SOFA_H);
@@ -1075,9 +1089,28 @@ function drawSofa(ctx: CanvasRenderingContext2D): void {
   ctx.closePath();
   ctx.fill();
 
-  // Backrest
-  const BACK_H = 28;
-  ctx.fillStyle = "#3A2868";
+  // Cushion seam lines on seat
+  ctx.strokeStyle = "rgba(80,20,0,0.35)";
+  ctx.lineWidth = 1.2;
+  [0.83, 1.67].forEach((frac) => {
+    const lx = isoX(col + frac * 2.5, row);
+    const ly = isoY(col + frac * 2.5, row) - SOFA_H;
+    const lx2 = isoX(col + frac * 2.5, row + 2);
+    const ly2 = isoY(col + frac * 2.5, row + 2) - SOFA_H;
+    ctx.beginPath();
+    ctx.moveTo(lx, ly);
+    ctx.lineTo(lx2, ly2);
+    ctx.stroke();
+  });
+
+  // Backrest — richer orange, Apple radial gradient
+  const backCx  = isoX(col + 1.25, row);
+  const backCy  = isoY(col + 1.25, row) - SOFA_H - BACK_H * 0.5;
+  const backGrad = ctx.createRadialGradient(backCx - 18, backCy - 12, 0, backCx, backCy, 70);
+  backGrad.addColorStop(0, "#D85018");
+  backGrad.addColorStop(0.6, "#A83A12");
+  backGrad.addColorStop(1, "#7A2808");
+  ctx.fillStyle = backGrad;
   ctx.beginPath();
   ctx.moveTo(isoX(col, row), isoY(col, row) - SOFA_H);
   ctx.lineTo(isoX(col + 2.5, row), isoY(col + 2.5, row) - SOFA_H);
@@ -1086,32 +1119,32 @@ function drawSofa(ctx: CanvasRenderingContext2D): void {
   ctx.closePath();
   ctx.fill();
 
-  // Cushion dividers on backrest
-  ctx.strokeStyle = "#160E30";
-  ctx.lineWidth = 1.5;
-  [0.83, 1.67].forEach((frac) => {
-    const cx1 = isoX(col + frac * 2.5, row);
-    const cy1 = isoY(col + frac * 2.5, row) - SOFA_H;
-    ctx.beginPath();
-    ctx.moveTo(cx1, cy1);
-    ctx.lineTo(cx1, cy1 - BACK_H);
-    ctx.stroke();
-  });
-
-  // Highlight on top of backrest
-  ctx.fillStyle = "rgba(255,255,255,0.04)";
+  // Backrest specular top edge
+  ctx.fillStyle = "rgba(255,200,140,0.09)";
   ctx.beginPath();
   ctx.moveTo(isoX(col, row), isoY(col, row) - SOFA_H - BACK_H);
   ctx.lineTo(isoX(col + 2.5, row), isoY(col + 2.5, row) - SOFA_H - BACK_H);
-  ctx.lineTo(isoX(col + 2.5, row), isoY(col + 2.5, row) - SOFA_H - BACK_H + 4);
-  ctx.lineTo(isoX(col, row), isoY(col, row) - SOFA_H - BACK_H + 4);
+  ctx.lineTo(isoX(col + 2.5, row), isoY(col + 2.5, row) - SOFA_H - BACK_H + 5);
+  ctx.lineTo(isoX(col, row), isoY(col, row) - SOFA_H - BACK_H + 5);
   ctx.closePath();
   ctx.fill();
 
-  // Coffee table in front of sofa
+  // Cushion dividers on backrest
+  ctx.strokeStyle = "rgba(80,20,0,0.3)";
+  ctx.lineWidth = 1.2;
+  [0.83, 1.67].forEach((frac) => {
+    const lx = isoX(col + frac * 2.5, row);
+    const ly = isoY(col + frac * 2.5, row) - SOFA_H;
+    ctx.beginPath();
+    ctx.moveTo(lx, ly);
+    ctx.lineTo(lx, ly - BACK_H);
+    ctx.stroke();
+  });
+
+  // Coffee table
   const ctCol = col + 0.5, ctRow = row + 2.2;
   const CT_H = 12;
-  ctx.fillStyle = "#0E1420";
+  ctx.fillStyle = "#1A1208";
   ctx.beginPath();
   ctx.moveTo(isoX(ctCol, ctRow), isoY(ctCol, ctRow));
   ctx.lineTo(isoX(ctCol, ctRow + 1), isoY(ctCol, ctRow + 1));
@@ -1119,8 +1152,7 @@ function drawSofa(ctx: CanvasRenderingContext2D): void {
   ctx.lineTo(isoX(ctCol, ctRow), isoY(ctCol, ctRow) - CT_H);
   ctx.closePath();
   ctx.fill();
-
-  ctx.fillStyle = "#141C2C";
+  ctx.fillStyle = "#221808";
   ctx.beginPath();
   ctx.moveTo(isoX(ctCol, ctRow + 1), isoY(ctCol, ctRow + 1));
   ctx.lineTo(isoX(ctCol + 1.8, ctRow + 1), isoY(ctCol + 1.8, ctRow + 1));
@@ -1128,13 +1160,25 @@ function drawSofa(ctx: CanvasRenderingContext2D): void {
   ctx.lineTo(isoX(ctCol, ctRow + 1), isoY(ctCol, ctRow + 1) - CT_H);
   ctx.closePath();
   ctx.fill();
-
-  ctx.fillStyle = "#1A2438";
+  // Coffee table top — dark warm wood
+  const ctGrad = ctx.createLinearGradient(isoX(ctCol, ctRow), 0, isoX(ctCol + 1.8, ctRow + 1), 0);
+  ctGrad.addColorStop(0, "#3A2810");
+  ctGrad.addColorStop(1, "#2A1C0C");
+  ctx.fillStyle = ctGrad;
   ctx.beginPath();
   ctx.moveTo(isoX(ctCol, ctRow), isoY(ctCol, ctRow) - CT_H);
   ctx.lineTo(isoX(ctCol + 1.8, ctRow), isoY(ctCol + 1.8, ctRow) - CT_H);
   ctx.lineTo(isoX(ctCol + 1.8, ctRow + 1), isoY(ctCol + 1.8, ctRow + 1) - CT_H);
   ctx.lineTo(isoX(ctCol, ctRow + 1), isoY(ctCol, ctRow + 1) - CT_H);
+  ctx.closePath();
+  ctx.fill();
+  // Table top specular
+  ctx.fillStyle = "rgba(255,240,200,0.06)";
+  ctx.beginPath();
+  ctx.moveTo(isoX(ctCol, ctRow), isoY(ctCol, ctRow) - CT_H);
+  ctx.lineTo(isoX(ctCol + 0.9, ctRow), isoY(ctCol + 0.9, ctRow) - CT_H);
+  ctx.lineTo(isoX(ctCol + 0.9, ctRow + 0.5), isoY(ctCol + 0.9, ctRow + 0.5) - CT_H);
+  ctx.lineTo(isoX(ctCol, ctRow + 0.5), isoY(ctCol, ctRow + 0.5) - CT_H);
   ctx.closePath();
   ctx.fill();
 }
@@ -1320,6 +1364,428 @@ function drawWallDecor(ctx: CanvasRenderingContext2D): void {
     ctx.fill();
   }
 }
+
+// ─── Color Utilities (Apple Emoji Pipeline) ──────────────────────────────────
+
+function hexToRgb(hex: string): [number, number, number] {
+  const h = hex.replace("#", "");
+  const len = h.length === 3 ? 1 : 2;
+  const r = parseInt(h.substring(0, len), 16) * (len === 1 ? 17 : 1);
+  const g = parseInt(h.substring(len, len * 2), 16) * (len === 1 ? 17 : 1);
+  const b = parseInt(h.substring(len * 2, len * 3), 16) * (len === 1 ? 17 : 1);
+  return [r, g, b];
+}
+
+function blendHex(hex1: string, hex2: string, t: number): string {
+  const [r1, g1, b1] = hexToRgb(hex1.length >= 7 ? hex1 : "#808080");
+  const [r2, g2, b2] = hexToRgb(hex2.length >= 7 ? hex2 : "#808080");
+  const r = Math.round(r1 + (r2 - r1) * t).toString(16).padStart(2, "0");
+  const g = Math.round(g1 + (g2 - g1) * t).toString(16).padStart(2, "0");
+  const b2s = Math.round(b1 + (b2 - b1) * t).toString(16).padStart(2, "0");
+  return `#${r}${g}${b2s}`;
+}
+
+function appleGrad(
+  ctx: CanvasRenderingContext2D,
+  cx: number, cy: number, rx: number, ry: number,
+  base: string, highlight: string
+): CanvasGradient {
+  const g = ctx.createRadialGradient(cx - rx * 0.3, cy - ry * 0.4, 0, cx, cy, Math.max(rx, ry));
+  g.addColorStop(0, highlight);
+  g.addColorStop(0.62, base);
+  g.addColorStop(1, blendHex(base, "#1A1410", 0.2));
+  return g;
+}
+
+// ─── Sims-Style Hair (Apple Emoji Rendering) ──────────────────────────────────
+
+function drawSimsHair(
+  ctx: CanvasRenderingContext2D,
+  style: AgentConfig["hairStyle"],
+  headY: number,
+  headR: number,
+  color: string,
+  layer: "back" | "front"
+): void {
+  const hl  = blendHex(color, "#FFF4E0", 0.22);
+  const shd = blendHex(color, "#1A1410", 0.3);
+
+  if (style === "short") {
+    if (layer === "front") {
+      ctx.fillStyle = appleGrad(ctx, 0, headY - headR, headR, headR * 0.6, color, hl);
+      ctx.beginPath();
+      ctx.arc(0, headY, headR, Math.PI * 1.05, 0);
+      ctx.arc(0, headY - headR * 0.3, headR, 0, Math.PI);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+  } else if (style === "long") {
+    if (layer === "back") {
+      const g = ctx.createLinearGradient(0, headY - headR, 0, headY + headR * 3.2);
+      g.addColorStop(0, color);
+      g.addColorStop(1, shd);
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.ellipse(0, headY + headR * 1.6, headR * 0.9, headR * 2.1, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.fillStyle = appleGrad(ctx, 0, headY - headR, headR, headR * 0.5, color, hl);
+      ctx.beginPath();
+      ctx.arc(0, headY, headR, Math.PI * 1.05, 0);
+      ctx.arc(0, headY - headR * 0.2, headR, 0, Math.PI);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.ellipse(-headR * 0.88, headY + headR * 0.6, headR * 0.24, headR * 0.65, -0.18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(headR * 0.88, headY + headR * 0.6, headR * 0.24, headR * 0.65, 0.18, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+  } else if (style === "curly") {
+    if (layer === "back") {
+      ctx.fillStyle = color;
+      for (const dx of [-headR * 0.48, headR * 0.48]) {
+        ctx.beginPath();
+        ctx.arc(dx, headY + headR * 0.35, headR * 0.52, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else {
+      ctx.fillStyle = appleGrad(ctx, 0, headY - headR, headR * 1.1, headR * 0.8, color, hl);
+      for (let i = 0; i < 5; i++) {
+        const a = (i / 5) * Math.PI - Math.PI * 0.1;
+        const bx = Math.cos(a) * headR * 0.78;
+        const by2 = headY - Math.abs(Math.sin(a)) * headR * 0.65 - headR * 0.42;
+        ctx.beginPath();
+        ctx.arc(bx, by2, headR * 0.44, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+  } else if (style === "bun") {
+    if (layer === "front") {
+      ctx.fillStyle = appleGrad(ctx, 0, headY - headR, headR, headR * 0.5, color, hl);
+      ctx.beginPath();
+      ctx.arc(0, headY, headR, Math.PI * 1.05, 0);
+      ctx.arc(0, headY - headR * 0.25, headR * 0.95, 0, Math.PI);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = appleGrad(ctx, 0, headY - headR * 1.5, headR * 0.6, headR * 0.55, color, hl);
+      ctx.beginPath();
+      ctx.arc(0, headY - headR * 1.36, headR * 0.52, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+  } else {
+    // spiky
+    if (layer === "front") {
+      const sg = appleGrad(ctx, 0, headY - headR, headR, headR * 0.5, color, hl);
+      ctx.fillStyle = sg;
+      ctx.beginPath();
+      ctx.arc(0, headY, headR, Math.PI * 1.1, 0);
+      ctx.arc(0, headY - headR * 0.2, headR, 0, Math.PI);
+      ctx.closePath();
+      ctx.fill();
+      for (let i = 0; i < 4; i++) {
+        const sx = (-1.5 + i) * headR * 0.45;
+        ctx.fillStyle = sg;
+        ctx.beginPath();
+        ctx.moveTo(sx - headR * 0.18, headY - headR * 0.55);
+        ctx.lineTo(sx + headR * 0.18, headY - headR * 0.55);
+        ctx.lineTo(sx + (i % 2 === 0 ? headR * 0.08 : -headR * 0.08), headY - headR * 1.3);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+  }
+}
+
+// ─── Sims-Style Avatar (Sims proportions + Apple Emoji rendering) ─────────────
+
+function drawSimsAvatar(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  t: number,
+  agent: Agent,
+  cfg: AgentConfig,
+  hovered: boolean,
+  selected: boolean
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  const isOffline = agent.status === "offline";
+  const breathe   = isOffline ? 0 : Math.sin(t * 1.4) * 0.9;
+
+  // ── Contact shadow ──
+  const shGrad = ctx.createRadialGradient(0, 8, 0, 0, 8, 20);
+  shGrad.addColorStop(0, "rgba(0,0,0,0.42)");
+  shGrad.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = shGrad;
+  ctx.beginPath();
+  ctx.ellipse(0, 8, 20, 7, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // ── Selection halo ──
+  if (hovered || selected) {
+    ctx.save();
+    ctx.shadowColor = cfg.color;
+    ctx.shadowBlur  = selected ? 26 : 11;
+    ctx.strokeStyle = cfg.color + (selected ? "AA" : "44");
+    ctx.lineWidth   = selected ? 2 : 1.4;
+    ctx.beginPath();
+    ctx.arc(0, -32, 34, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // ── Chair ──
+  ctx.fillStyle = appleGrad(ctx, 0, -8, 15, 9, "#201A38", "#2E2848");
+  ctx.beginPath();
+  ctx.roundRect(-13, -4, 26, 14, 3);
+  ctx.fill();
+  ctx.fillStyle = appleGrad(ctx, 0, -18, 12, 10, "#1C1630", "#2A2244");
+  ctx.beginPath();
+  ctx.roundRect(-11, -22, 22, 18, 3);
+  ctx.fill();
+  ctx.fillStyle = "rgba(255,252,245,0.04)";
+  ctx.beginPath();
+  ctx.roundRect(-11, -22, 22, 4, [3, 3, 0, 0]);
+  ctx.fill();
+
+  // ── Legs (Sims proportions — longer, thinner) ──
+  const pantsHL = blendHex(cfg.pants, "#FFF4E0", 0.12);
+  ctx.fillStyle = appleGrad(ctx, -6, -8, 6, 13, cfg.pants, pantsHL);
+  ctx.beginPath();
+  ctx.roundRect(-10, -8, 8, 17, 3);
+  ctx.fill();
+  ctx.fillStyle = appleGrad(ctx, 6, -8, 6, 13, cfg.pants, pantsHL);
+  ctx.beginPath();
+  ctx.roundRect(2, -8, 8, 17, 3);
+  ctx.fill();
+
+  // Shoes — Apple radial gradient, no outline
+  const mkShoeGrad = (ox: number) => {
+    const g = ctx.createRadialGradient(ox, 6, 0, ox, 8, 9);
+    g.addColorStop(0, "#2E2E36");
+    g.addColorStop(1, "#080810");
+    return g;
+  };
+  ctx.fillStyle = mkShoeGrad(-5);
+  ctx.beginPath();
+  ctx.ellipse(-5, 9, 7, 3, -0.12, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = mkShoeGrad(5);
+  ctx.beginPath();
+  ctx.ellipse(5, 9, 7, 3, 0.12, 0, Math.PI * 2);
+  ctx.fill();
+
+  // ── Body (breathes) ──
+  ctx.save();
+  ctx.translate(0, breathe);
+
+  const shirtHL = blendHex(cfg.shirt, "#FFF4E0", 0.18);
+  ctx.fillStyle  = appleGrad(ctx, -3, -34, 14, 20, cfg.shirt, shirtHL);
+  ctx.beginPath();
+  ctx.roundRect(-13, -48, 26, 40, [8, 8, 4, 4]);
+  ctx.fill();
+
+  // Dept collar accent
+  ctx.fillStyle = cfg.color + "55";
+  ctx.beginPath();
+  ctx.roundRect(-13, -48, 26, 8, [8, 8, 0, 0]);
+  ctx.fill();
+
+  // Arms
+  const skinHL = blendHex(cfg.skin, "#FFF4E0", 0.24);
+  ctx.save();
+  ctx.rotate(isOffline ? 0 : Math.sin(t * 3.1) * 0.05);
+  ctx.fillStyle = appleGrad(ctx, -20, -38, 7, 6, cfg.skin, skinHL);
+  ctx.beginPath();
+  ctx.roundRect(-27, -43, 14, 9, 4);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.rotate(isOffline ? 0 : Math.sin(t * 3.1 + 1.2) * 0.05);
+  ctx.fillStyle = appleGrad(ctx, 20, -38, 7, 6, cfg.skin, skinHL);
+  ctx.beginPath();
+  ctx.roundRect(13, -43, 14, 9, 4);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.restore(); // breathe
+
+  // ── Neck ──
+  ctx.fillStyle = appleGrad(ctx, 0, -52, 5, 7, cfg.skin, skinHL);
+  ctx.beginPath();
+  ctx.roundRect(-4, -58, 8, 10, 3);
+  ctx.fill();
+
+  // ── Head (Sims proportions: r=14, vs chibi r=26) ──
+  const headY = -76;
+  const headR = 14;
+
+  ctx.save();
+  if (isOffline) {
+    ctx.rotate(0.18);
+    ctx.translate(4, 4);
+  } else {
+    ctx.rotate(Math.sin(t * 0.4) * 0.03);
+  }
+
+  // Hair back layer
+  drawSimsHair(ctx, cfg.hairStyle, headY, headR, cfg.hair, "back");
+
+  // Skin — multi-stop radial gradient (Apple emoji style)
+  const skinBG = blendHex(cfg.skin, "#1A1410", 0.2);
+  const skinG  = ctx.createRadialGradient(-headR * 0.28, headY - headR * 0.32, 0, 0, headY, headR * 1.12);
+  skinG.addColorStop(0, blendHex(cfg.skin, "#FFF4E0", 0.3));
+  skinG.addColorStop(0.5, cfg.skin);
+  skinG.addColorStop(1, skinBG);
+  ctx.fillStyle = skinG;
+  ctx.beginPath();
+  ctx.arc(0, headY, headR, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Specular highlight (screen-blend style)
+  const specG = ctx.createRadialGradient(-headR * 0.3, headY - headR * 0.45, 0, -headR * 0.15, headY - headR * 0.25, headR * 0.7);
+  specG.addColorStop(0, "rgba(255,252,245,0.26)");
+  specG.addColorStop(0.5, "rgba(255,252,245,0.07)");
+  specG.addColorStop(1, "rgba(255,252,245,0)");
+  ctx.fillStyle = specG;
+  ctx.beginPath();
+  ctx.arc(0, headY, headR, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Hair front layer
+  drawSimsHair(ctx, cfg.hairStyle, headY, headR, cfg.hair, "front");
+
+  if (!isOffline) {
+    const eyeY = headY + 2;
+
+    // Left eye — realistic, no anime outlines
+    ctx.fillStyle = "#080808";
+    ctx.beginPath();
+    ctx.ellipse(-5, eyeY, 3.2, 2.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    const irisGL = ctx.createRadialGradient(-5, eyeY - 0.4, 0, -5, eyeY, 2.6);
+    irisGL.addColorStop(0, blendHex(cfg.irisColor, "#FFF4E0", 0.28));
+    irisGL.addColorStop(1, cfg.irisColor);
+    ctx.fillStyle = irisGL;
+    ctx.beginPath();
+    ctx.ellipse(-5, eyeY, 2.3, 2.1, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,0.82)";
+    ctx.beginPath();
+    ctx.ellipse(-6, eyeY - 1.1, 0.9, 0.7, -0.3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Right eye
+    ctx.fillStyle = "#080808";
+    ctx.beginPath();
+    ctx.ellipse(5, eyeY, 3.2, 2.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    const irisGR = ctx.createRadialGradient(5, eyeY - 0.4, 0, 5, eyeY, 2.6);
+    irisGR.addColorStop(0, blendHex(cfg.irisColor, "#FFF4E0", 0.28));
+    irisGR.addColorStop(1, cfg.irisColor);
+    ctx.fillStyle = irisGR;
+    ctx.beginPath();
+    ctx.ellipse(5, eyeY, 2.3, 2.1, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,0.82)";
+    ctx.beginPath();
+    ctx.ellipse(4, eyeY - 1.1, 0.9, 0.7, 0.3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Nose — subtle shadow, no shape
+    ctx.fillStyle = blendHex(cfg.skin, "#1A1410", 0.32) + "88";
+    ctx.beginPath();
+    ctx.arc(0, headY + 5, 1.1, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Mouth — small, natural smile
+    ctx.strokeStyle = blendHex(cfg.skin, "#1A1410", 0.38) + "CC";
+    ctx.lineWidth  = 1.3;
+    ctx.lineCap    = "round";
+    ctx.beginPath();
+    ctx.moveTo(-3.5, headY + 9);
+    ctx.quadraticCurveTo(0, headY + 11.2, 3.5, headY + 9);
+    ctx.stroke();
+
+  } else {
+    // Sleeping — closed eyes
+    ctx.strokeStyle = cfg.hair + "CC";
+    ctx.lineWidth  = 1.7;
+    ctx.lineCap    = "round";
+    ctx.beginPath();
+    ctx.moveTo(-7, headY + 1.5);
+    ctx.quadraticCurveTo(-4.5, headY - 1.5, -2, headY + 1.5);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(2, headY + 1.5);
+    ctx.quadraticCurveTo(4.5, headY - 1.5, 7, headY + 1.5);
+    ctx.stroke();
+    ctx.fillStyle = "rgba(111,91,255,0.5)";
+    ctx.font       = "bold 8px sans-serif";
+    ctx.textAlign  = "left";
+    ctx.fillText("z", headR + 1, headY - 14);
+    ctx.font       = "bold 6px sans-serif";
+    ctx.fillText("z", headR + 6, headY - 22);
+  }
+
+  ctx.restore(); // head rotation
+
+  // ── Status dot ──
+  const statusColors: Record<string, string> = {
+    online:  "#34D399",
+    busy:    "#C99647",
+    offline: "#4A4A5A",
+    error:   "#E05A6B",
+  };
+  const sColor = statusColors[agent.status] ?? "#4A4A5A";
+  const dotY   = headY - headR - 9;
+
+  if (agent.status === "online") {
+    const pulse  = (Math.sin(t * 2.8) + 1) * 0.5;
+    ctx.strokeStyle  = sColor;
+    ctx.lineWidth    = 1.2;
+    ctx.globalAlpha  = 0.55 * (1 - pulse);
+    ctx.beginPath();
+    ctx.arc(0, dotY, 5 + pulse * 7, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha  = 1;
+  }
+
+  const dotG = ctx.createRadialGradient(-1.5, dotY - 1.5, 0, 0, dotY, 4.5);
+  dotG.addColorStop(0, blendHex(sColor, "#FFF4E0", 0.38));
+  dotG.addColorStop(1, sColor);
+  ctx.fillStyle = dotG;
+  ctx.beginPath();
+  ctx.arc(0, dotY, 4.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // ── Name label ──
+  ctx.fillStyle   = cfg.color + "22";
+  ctx.strokeStyle = cfg.color + "66";
+  ctx.lineWidth   = 0.8;
+  ctx.beginPath();
+  ctx.roundRect(-28, 14, 56, 14, 7);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle  = cfg.color + "EE";
+  ctx.font       = 'bold 7.5px "JetBrains Mono", monospace';
+  ctx.textAlign  = "center";
+  ctx.fillText(agent.name.toUpperCase(), 0, 25);
+
+  ctx.restore();
+}
+
+// ─── CHIBI STUBS REMOVED — replaced above with drawSimsAvatar ────────────────
 
 function drawChibiHairBack(
   ctx: CanvasRenderingContext2D,
@@ -2081,7 +2547,7 @@ function drawScene(
     const cx = isoX(pos.col + 1.0, pos.row + 0.45);
     const cy = isoY(pos.col + 1.0, pos.row + 0.45, 0);
 
-    drawChibiAvatar(ctx, cx, cy, t, agent, cfg, agent.id === hoveredId, agent.id === selectedId);
+    drawSimsAvatar(ctx, cx, cy, t, agent, cfg, agent.id === hoveredId, agent.id === selectedId);
     hitboxes.set(agent.id, { x: cx, y: cy - 60, r: 32 });
   });
 
