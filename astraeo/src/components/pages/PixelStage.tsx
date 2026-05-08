@@ -1,653 +1,2277 @@
 "use client";
-import { useEffect, useRef, useState, useCallback } from "react";
+
+import React, {
+  useRef,
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAstraeo } from "@/store/astraeo";
-import type { Agent } from "@/lib/types";
+import type { Agent, AgentStatus } from "@/lib/types";
 
-// ─── Layout ───────────────────────────────────────────────────────────────────
-const ROOM_W = 195;
-const RH = 170;
-const WIN_H = 28;
-const RG = 18;
-const LAB_H = 66;
-const CANVAS_H = 640;
-// Row Y positions (3 rows fit perfectly): 28, 216, 404
-const ROW_Y = [WIN_H, WIN_H + RH + RG, WIN_H + (RH + RG) * 2];
+// ─── ISO Math ──────────────────────────────────────────────────────────────────
+const TILE_W = 96;
+const TILE_H = 48;
+const ORIGIN_X = 680;
+const ORIGIN_Y = 80;
 
-// ─── Agent room + visual config ───────────────────────────────────────────────
-interface AgentCfg {
-  dept: string; color: string; hair: string; shirt: string; pants: string;
-  col: "left" | "right"; row: number;
+function isoX(col: number, row: number): number {
+  return ORIGIN_X + (col - row) * (TILE_W / 2);
 }
-const AGENT_CFG: Record<string, AgentCfg> = {
-  "agent-1": { dept: "COMMAND",    color: "#00D4FF", hair: "#1A0800", shirt: "#007A99", pants: "#1A2744", col: "left",  row: 0 },
-  "agent-2": { dept: "PAID MEDIA", color: "#FF4757", hair: "#1A0000", shirt: "#BB2030", pants: "#1A0A0A", col: "right", row: 0 },
-  "agent-3": { dept: "CRM",        color: "#FF6B9D", hair: "#3A1020", shirt: "#BB2060", pants: "#1A0A12", col: "left",  row: 1 },
-  "agent-4": { dept: "CONTENT",    color: "#FFB800", hair: "#2A1800", shirt: "#BB7800", pants: "#1A1200", col: "right", row: 1 },
-  "agent-5": { dept: "ANALYTICS",  color: "#7B61FF", hair: "#0A0020", shirt: "#4A30BB", pants: "#0A0A1A", col: "right", row: 2 },
-  "agent-6": { dept: "AI TECH",    color: "#00E5A0", hair: "#001510", shirt: "#008855", pants: "#0A1A12", col: "left",  row: 3 },
-  "agent-7": { dept: "SALES",      color: "#CC785C", hair: "#200800", shirt: "#994030", pants: "#1A0800", col: "left",  row: 2 },
-  "agent-8": { dept: "SEO",        color: "#64B5F6", hair: "#001020", shirt: "#3070AA", pants: "#0A0A1A", col: "right", row: 3 },
+function isoY(col: number, row: number, z = 0): number {
+  return ORIGIN_Y + (col + row) * (TILE_H / 2) - z;
+}
+
+// ─── Static star positions (generated once) ────────────────────────────────────
+const STAR_POSITIONS: [number, number][] = Array.from({ length: 120 }, (_, i) => {
+  const seed = (i * 2654435769) >>> 0;
+  const x = (seed % 1500);
+  const y = ((seed * 1234567) >>> 0) % 320;
+  return [x, y];
+});
+
+// ─── Agent desk positions in the grid ─────────────────────────────────────────
+const DESK_POSITIONS: Record<string, { col: number; row: number }> = {
+  "agent-1": { col: 1,  row: 2  },
+  "agent-2": { col: 6,  row: 1  },
+  "agent-3": { col: 1,  row: 6  },
+  "agent-4": { col: 6,  row: 5  },
+  "agent-5": { col: 1,  row: 10 },
+  "agent-6": { col: 6,  row: 9  },
+  "agent-7": { col: 11, row: 3  },
+  "agent-8": { col: 11, row: 7  },
 };
 
-const BUBBLES: Record<string, string[]> = {
-  "agent-1": ["Coordinando equipo", "Revisando KPIs", "Alineando estrategia", "Briefing listo"],
-  "agent-2": ["CTR: 4.2%", "ROAS: 8x", "Campaña activa", "CPL bajando"],
-  "agent-3": ["CRM sync", "Pipeline OK", "Lead nurture", "GHL al día"],
-  "agent-4": ["Post listo", "Copy ON", "Trend alert!", "Viral check"],
-  "agent-5": ["GA4 data", "Métricas OK", "Dashboard live", "Reporte listo"],
-  "agent-7": ["Pipeline +1", "Deal closed!", "Follow-up", "Reunión x3"],
+interface AgentConfig {
+  skin: string;
+  shirt: string;
+  pants: string;
+  hair: string;
+  hairStyle: "short" | "long" | "curly" | "bun" | "spiky";
+  irisColor: string;
+  color: string;
+  dept: string;
+}
+
+const AGENT_CONFIG: Record<string, AgentConfig> = {
+  "agent-1": { dept: "COMMAND",    color: "#00D4FF", skin: "#F5C5A3", shirt: "#004A60", pants: "#0D1B3E", hair: "#1A0800", hairStyle: "short",  irisColor: "#00D4FF" },
+  "agent-2": { dept: "PAID MEDIA", color: "#FF4757", skin: "#E8A882", shirt: "#6B1219", pants: "#1A0A0A", hair: "#0A0A0A", hairStyle: "curly",  irisColor: "#FF4757" },
+  "agent-3": { dept: "CRM",        color: "#FF6B9D", skin: "#FDDBB4", shirt: "#5A1535", pants: "#1A0A12", hair: "#3A1020", hairStyle: "long",   irisColor: "#FF6B9D" },
+  "agent-4": { dept: "CONTENT",    color: "#FFB800", skin: "#F0D090", shirt: "#5A4000", pants: "#1A1200", hair: "#2A1800", hairStyle: "bun",    irisColor: "#FFB800" },
+  "agent-5": { dept: "ANALYTICS",  color: "#7B61FF", skin: "#D4A574", shirt: "#2A1A60", pants: "#0A0A1A", hair: "#0A0020", hairStyle: "short",  irisColor: "#7B61FF" },
+  "agent-6": { dept: "AI TECH",    color: "#00E5A0", skin: "#C68642", shirt: "#003830", pants: "#0A1A12", hair: "#001510", hairStyle: "spiky",  irisColor: "#00E5A0" },
+  "agent-7": { dept: "SALES",      color: "#CC785C", skin: "#F0C090", shirt: "#4A2010", pants: "#1A0800", hair: "#200800", hairStyle: "curly",  irisColor: "#CC785C" },
+  "agent-8": { dept: "SEO",        color: "#64B5F6", skin: "#FDDBB4", shirt: "#14305A", pants: "#0A0A1A", hair: "#001020", hairStyle: "long",   irisColor: "#64B5F6" },
 };
 
-// ─── Room helpers ─────────────────────────────────────────────────────────────
-function getRoomBounds(id: string, cw: number) {
-  const cfg = AGENT_CFG[id];
-  if (!cfg || cfg.row >= 3) return null;
-  return { x: cfg.col === "left" ? 0 : cw - ROOM_W, y: ROW_Y[cfg.row], w: ROOM_W, h: RH };
-}
-function getDeskPos(id: string, cw: number) {
-  const r = getRoomBounds(id, cw);
-  if (!r) return null;
-  const cfg = AGENT_CFG[id]!;
-  return { x: cfg.col === "left" ? r.x + 58 : r.x + 18, y: r.y + 32 };
-}
+// ─── Activity phrases per dept ────────────────────────────────────────────────
+const ACTIVITY_PHRASES: Record<string, string[]> = {
+  "agent-1": ["Reviewing dashboards", "Strategy planning", "Monitoring KPIs"],
+  "agent-2": ["Optimizing ads", "A/B testing copy", "Budget allocation"],
+  "agent-3": ["Segmenting leads", "Email automation", "CRM cleanup"],
+  "agent-4": ["Writing blog post", "Editing content", "SEO research"],
+  "agent-5": ["Running queries", "Building reports", "Data modeling"],
+  "agent-6": ["Training model", "Debugging pipeline", "API integration"],
+  "agent-7": ["Cold outreach", "Pipeline review", "Closing deals"],
+  "agent-8": ["Keyword research", "Link building", "Tech SEO audit"],
+};
 
-// ─── Draw: tiles ─────────────────────────────────────────────────────────────
-function drawTiles(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number,
-  bg: string, grid: string, ts: number) {
-  ctx.fillStyle = bg;
-  ctx.fillRect(x, y, w, h);
-  ctx.strokeStyle = grid;
-  ctx.lineWidth = 1;
-  for (let tx = x; tx <= x + w; tx += ts) { ctx.beginPath(); ctx.moveTo(tx, y); ctx.lineTo(tx, y + h); ctx.stroke(); }
-  for (let ty = y; ty <= y + h; ty += ts) { ctx.beginPath(); ctx.moveTo(x, ty); ctx.lineTo(x + w, ty); ctx.stroke(); }
-}
+// ─── Canvas drawing helpers ────────────────────────────────────────────────────
 
-// ─── Draw: room ──────────────────────────────────────────────────────────────
-function drawRoom(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, cfg: AgentCfg) {
-  drawTiles(ctx, x, y, w, h, "#0B0E1A", "rgba(255,255,255,0.022)", 24);
-  ctx.strokeStyle = "#1C2040";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
-  // Accent strip on hub side
-  const sx = cfg.col === "left" ? x + w - 3 : x;
-  ctx.globalAlpha = 0.45;
-  ctx.fillStyle = cfg.color;
-  ctx.fillRect(sx, y, 3, h);
-  ctx.globalAlpha = 1;
-  ctx.shadowColor = cfg.color;
-  ctx.shadowBlur = 14;
-  ctx.globalAlpha = 0.1;
-  ctx.fillStyle = cfg.color;
-  ctx.fillRect(sx, y, 3, h);
-  ctx.globalAlpha = 1;
-  ctx.shadowBlur = 0;
-  // Dept label
-  ctx.font = 'bold 7px "Share Tech Mono", monospace';
-  ctx.textAlign = cfg.col === "left" ? "left" : "right";
-  ctx.globalAlpha = 0.65;
-  ctx.fillStyle = cfg.color;
-  ctx.fillText(cfg.dept, cfg.col === "left" ? x + 8 : x + w - 8, y + 14);
-  ctx.globalAlpha = 1;
-  // Door gap on hub side
-  const doorX = cfg.col === "left" ? x + w - 2 : x;
-  ctx.fillStyle = "#090C16";
-  ctx.fillRect(doorX, y + RH / 2 - 15, 2, 30);
-}
+function drawExterior(ctx: CanvasRenderingContext2D): void {
+  // Twilight sky — deep purple/indigo with warm horizon glow
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, 380);
+  skyGrad.addColorStop(0, "#08042A");
+  skyGrad.addColorStop(0.35, "#120835");
+  skyGrad.addColorStop(0.65, "#1E0C42");
+  skyGrad.addColorStop(0.85, "#2A1030");
+  skyGrad.addColorStop(1, "#3A1820");
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, 1500, 800);
 
-// ─── Draw: desk ──────────────────────────────────────────────────────────────
-function drawDesk(ctx: CanvasRenderingContext2D, x: number, y: number, color: string, glowing: boolean) {
-  ctx.fillStyle = "#181210";
-  ctx.fillRect(x, y, 56, 30);
-  ctx.strokeStyle = "#2C2010";
-  ctx.lineWidth = 1;
-  ctx.strokeRect(x, y, 56, 30);
-  ctx.fillStyle = "#060810";
-  ctx.fillRect(x + 6, y + 4, 28, 16);
-  if (glowing) {
-    ctx.fillStyle = color;
-    ctx.globalAlpha = 0.2;
-    ctx.fillRect(x + 8, y + 6, 24, 12);
-    ctx.globalAlpha = 1;
-    ctx.shadowColor = color;
-    ctx.shadowBlur = 10;
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 0.5;
-    ctx.globalAlpha = 0.5;
-    ctx.strokeRect(x + 8, y + 6, 24, 12);
-    ctx.globalAlpha = 1;
-    ctx.shadowBlur = 0;
-  }
-  ctx.fillStyle = "#151520";
-  ctx.fillRect(x + 38, y + 10, 13, 9);
-  ctx.fillStyle = "#0D0F1C";
-  ctx.strokeStyle = "#181A28";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.arc(x + 28, y + 44, 10, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-}
+  // Warm horizon glow (city light pollution)
+  const horizonGrad = ctx.createLinearGradient(0, 260, 0, 380);
+  horizonGrad.addColorStop(0, "rgba(0,0,0,0)");
+  horizonGrad.addColorStop(0.5, "rgba(80, 30, 20, 0.18)");
+  horizonGrad.addColorStop(1, "rgba(120, 50, 20, 0.25)");
+  ctx.fillStyle = horizonGrad;
+  ctx.fillRect(0, 260, 1500, 120);
 
-// ─── Draw: plant ─────────────────────────────────────────────────────────────
-function drawPlant(ctx: CanvasRenderingContext2D, px: number, py: number) {
-  ctx.fillStyle = "#2A1A10";
-  ctx.fillRect(px - 5, py + 5, 10, 8);
-  ctx.fillStyle = "#1A3818";
-  ctx.beginPath(); ctx.arc(px, py, 8, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = "#2A5030";
-  ctx.beginPath(); ctx.arc(px - 4, py - 3, 5, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(px + 4, py - 2, 5, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = "#3A6840";
-  ctx.beginPath(); ctx.arc(px, py - 4, 4, 0, Math.PI * 2); ctx.fill();
-}
+  // Moon glow top right
+  const moonGlow = ctx.createRadialGradient(1300, 40, 0, 1300, 40, 120);
+  moonGlow.addColorStop(0, "rgba(200, 180, 255, 0.12)");
+  moonGlow.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = moonGlow;
+  ctx.fillRect(1180, 0, 240, 160);
 
-// ─── Draw: windows ───────────────────────────────────────────────────────────
-function drawWindowStrip(ctx: CanvasRenderingContext2D, cw: number, tod: string) {
-  ctx.fillStyle = "#0D1628";
-  ctx.fillRect(0, 0, cw, WIN_H);
-  const skyBg = tod === "noche" ? "#0A1A30" : tod === "tarde" ? "#2A1A0A" : "#0E2A48";
-  const skyFg = tod === "noche" ? "rgba(20,40,80,0.15)" : tod === "tarde" ? "rgba(255,120,30,0.1)" : "rgba(80,160,255,0.12)";
-  const pw = 56;
-  for (let wx = 6; wx + pw <= cw - 6; wx += pw + 6) {
-    ctx.fillStyle = skyBg;
-    ctx.fillRect(wx, 4, pw, WIN_H - 8);
-    ctx.fillStyle = skyFg;
-    ctx.fillRect(wx + 2, 4, pw - 4, WIN_H - 8);
-  }
-  ctx.fillStyle = "#1A2440";
-  ctx.fillRect(0, WIN_H - 3, cw, 3);
-}
-
-// ─── Draw: hub center ────────────────────────────────────────────────────────
-function drawHub(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
-  drawTiles(ctx, x, y, w, h, "#090C16", "rgba(255,255,255,0.015)", 32);
-  const cx = x + w / 2;
-  const cy = y + h / 2;
-  // Meeting table
-  ctx.fillStyle = "#14100A";
-  ctx.strokeStyle = "#2A2010";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.ellipse(cx, cy, 55, 30, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-  // Table chairs
-  for (const [chx, chy] of [[cx - 66, cy], [cx + 66, cy], [cx - 42, cy - 40], [cx + 42, cy - 40], [cx - 42, cy + 40], [cx + 42, cy + 40]]) {
-    ctx.fillStyle = "#0D0F1C";
-    ctx.strokeStyle = "#181A28";
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.arc(chx, chy, 9, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-  }
-  // Hub plants
-  drawPlant(ctx, x + 28, y + 38);
-  drawPlant(ctx, x + w - 28, y + 38);
-  drawPlant(ctx, x + 28, y + h - 42);
-  drawPlant(ctx, x + w - 28, y + h - 42);
-  // Central label
-  ctx.font = 'bold 10px "Share Tech Mono", monospace';
-  ctx.textAlign = "center";
-  ctx.fillStyle = "rgba(100,130,200,0.15)";
-  ctx.fillText("ASTRAEO MISSION CONTROL", cx, cy - 52);
-}
-
-// ─── Draw: skill lab ─────────────────────────────────────────────────────────
-function drawSkillLab(ctx: CanvasRenderingContext2D, cw: number, tick: number, offlineAgents: Agent[]) {
-  const y = CANVAS_H - LAB_H;
-  ctx.fillStyle = "#070A12";
-  ctx.fillRect(0, y, cw, LAB_H);
-  ctx.shadowColor = "#00E5A0";
-  ctx.shadowBlur = 6;
-  ctx.strokeStyle = "rgba(0,229,160,0.25)";
-  ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(cw, y); ctx.stroke();
-  ctx.shadowBlur = 0;
-  const pulse = 0.65 + 0.3 * Math.sin(tick * 0.04);
-  ctx.globalAlpha = pulse;
-  ctx.shadowColor = "#00E5A0";
-  ctx.shadowBlur = 10;
-  ctx.fillStyle = "#00E5A0";
-  ctx.font = 'bold 9px "Share Tech Mono", monospace';
-  ctx.textAlign = "center";
-  ctx.fillText("⚡ SKILL LAB — UPGRADING", cw / 2, y + 18);
-  ctx.shadowBlur = 0;
-  ctx.globalAlpha = 1;
-  offlineAgents.forEach((agent, i) => {
-    const cfg = AGENT_CFG[agent.id];
-    if (!cfg) return;
-    const tx = cw / 2 + (i - offlineAgents.length / 2 + 0.5) * 140;
-    ctx.globalAlpha = 0.55;
-    ctx.fillStyle = "rgba(0,0,0,0.6)";
+  // Stars
+  STAR_POSITIONS.forEach(([sx, sy]) => {
+    const brightness = 0.4 + (sx % 7) * 0.08;
+    ctx.fillStyle = `rgba(220,210,255,${brightness})`;
     ctx.beginPath();
-    ctx.roundRect(tx - 42, y + 28, 84, 24, 4);
+    ctx.arc(sx, sy, 0.8 + (sy % 3) * 0.25, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = cfg.color;
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    ctx.fillStyle = cfg.color;
-    ctx.font = '7px "Share Tech Mono", monospace';
-    ctx.textAlign = "center";
-    ctx.fillText(`${agent.name.toUpperCase()} · OFFLINE`, tx, y + 43);
-    ctx.globalAlpha = 1;
   });
-  // Barbell decoration
-  const bx = 80, by = y + 44;
-  ctx.fillStyle = "#222230";
-  ctx.fillRect(bx - 28, by - 3, 56, 6);
-  [[bx - 28, by], [bx + 28, by]].forEach(([wx, wy]) => {
-    ctx.fillStyle = "#333345";
-    ctx.beginPath(); ctx.arc(wx, wy, 8, 0, Math.PI * 2); ctx.fill();
+
+  // Distant city skyline silhouettes
+  const buildingData: [number, number, number, number][] = [
+    [0, 180, 60, 140], [55, 195, 45, 120], [95, 170, 80, 160],
+    [170, 200, 50, 110], [215, 185, 70, 145], [280, 175, 55, 165],
+    [330, 205, 45, 105], [870, 185, 65, 145], [930, 175, 50, 165],
+    [975, 195, 70, 125], [1040, 180, 55, 150], [1090, 200, 45, 110],
+    [1130, 170, 80, 160], [1205, 190, 50, 130], [1250, 178, 60, 142],
+    [1305, 198, 45, 112], [1345, 185, 70, 145], [1410, 172, 60, 158],
+    [1465, 202, 50, 118],
+  ];
+  buildingData.forEach(([bx, by, bw, bh]) => {
+    // Building body with warm dark tone
+    ctx.fillStyle = "#100A1A";
+    ctx.fillRect(bx, by, bw, bh);
+    // Lit windows — warm amber/yellow for life, plus some blue offices
+    for (let wy = by + 8; wy < by + bh - 8; wy += 14) {
+      for (let wx = bx + 6; wx < bx + bw - 6; wx += 12) {
+        const seed = (wx * 7 + wy * 3) % 40;
+        if (seed < 14) {
+          ctx.fillStyle = seed < 6 ? "rgba(255, 200, 80, 0.55)" : "rgba(100, 160, 255, 0.35)";
+          ctx.fillRect(wx, wy, 6, 8);
+        }
+      }
+    }
+  });
+
+  // Tree silhouettes — richer greens
+  const treeData: [number, number, number][] = [
+    [350, 200, 28], [390, 210, 22], [420, 198, 30], [455, 208, 24],
+    [490, 200, 26], [820, 205, 25], [850, 195, 32], [885, 207, 22],
+    [910, 198, 28], [940, 210, 20],
+  ];
+  treeData.forEach(([tx, ty, tr]) => {
+    // Trunk
+    ctx.fillStyle = "#0E0A06";
+    ctx.fillRect(tx - 3, ty + tr - 8, 6, 24);
+    // Dark foliage layers
+    ctx.fillStyle = "#0A1A0C";
+    ctx.beginPath();
+    ctx.arc(tx, ty + 8, tr * 1.1, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#0E2210";
+    ctx.beginPath();
+    ctx.arc(tx, ty, tr, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#142E16";
+    ctx.beginPath();
+    ctx.arc(tx - 4, ty - 6, tr * 0.72, 0, Math.PI * 2);
+    ctx.fill();
   });
 }
 
-// ─── Draw: person ─────────────────────────────────────────────────────────────
-function drawPerson(
+function drawFloorTile(
   ctx: CanvasRenderingContext2D,
-  cx: number, cy: number, cfg: AgentCfg,
-  walking: boolean, facingRight: boolean,
-  name: string, selected: boolean, bubble?: string
-) {
-  if (selected) { ctx.shadowColor = cfg.color; ctx.shadowBlur = 18; }
-  ctx.fillStyle = "rgba(0,0,0,0.3)";
+  col: number,
+  row: number,
+  topColor: string,
+  lineColor: string
+): void {
+  const cx = isoX(col, row);
+  const cy = isoY(col, row);
+  const hw = TILE_W / 2;
+  const hh = TILE_H / 2;
+
+  ctx.fillStyle = topColor;
   ctx.beginPath();
-  ctx.ellipse(cx, cy + 19, 9, 3, 0, 0, Math.PI * 2);
+  ctx.moveTo(cx, cy - hh);
+  ctx.lineTo(cx + hw, cy);
+  ctx.lineTo(cx, cy + hh);
+  ctx.lineTo(cx - hw, cy);
+  ctx.closePath();
+  ctx.fill();
+
+  // Grid line — slightly more visible for wood plank effect
+  ctx.strokeStyle = lineColor;
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - hh);
+  ctx.lineTo(cx + hw, cy);
+  ctx.lineTo(cx, cy + hh);
+  ctx.lineTo(cx - hw, cy);
+  ctx.closePath();
+  ctx.stroke();
+
+  // Wood grain line along the tile (diagonal highlight)
+  if ((col + row) % 2 === 0) {
+    ctx.strokeStyle = "rgba(255, 200, 120, 0.04)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx - hw * 0.5, cy - hh * 0.4);
+    ctx.lineTo(cx + hw * 0.5, cy + hh * 0.4);
+    ctx.stroke();
+  }
+}
+
+function drawAllFloorTiles(ctx: CanvasRenderingContext2D): void {
+  // Main workspace — rich warm mahogany wood planks, clearly visible
+  for (let c = 0; c < 14; c++) {
+    for (let r = 0; r < 14; r++) {
+      const shade = (c + r) % 2 === 0 ? "#3E2A10" : "#362410";
+      drawFloorTile(ctx, c, r, shade, "#281808");
+    }
+  }
+  // Meeting room — cool polished slate/marble
+  for (let c = 14; c < 19; c++) {
+    for (let r = 0; r < 9; r++) {
+      const shade = (c + r) % 2 === 0 ? "#1C2840" : "#182238";
+      drawFloorTile(ctx, c, r, shade, "#101830");
+    }
+  }
+  // Lounge zone — plum/warm purple carpet base
+  for (let c = 10; c < 14; c++) {
+    for (let r = 10; r < 14; r++) {
+      const shade = (c + r) % 2 === 0 ? "#281838" : "#221430";
+      drawFloorTile(ctx, c, r, shade, "#1C0E28");
+    }
+  }
+}
+
+function drawZoneHighlight(
+  ctx: CanvasRenderingContext2D,
+  col: number,
+  row: number,
+  color: string,
+  selected: boolean
+): void {
+  // Draw a vivid colored carpet covering the desk area — Sowork-style zone highlight
+  const C0 = col - 0.12, R0 = row - 0.12;
+  const C1 = col + 2.12, R1 = row + 1.25;
+
+  const pts = [
+    { x: isoX(C0, R0), y: isoY(C0, R0) },
+    { x: isoX(C1, R0), y: isoY(C1, R0) },
+    { x: isoX(C1, R1), y: isoY(C1, R1) },
+    { x: isoX(C0, R1), y: isoY(C0, R1) },
+  ];
+
+  ctx.save();
+
+  // Main carpet fill — high opacity, vivid
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  ctx.lineTo(pts[1].x, pts[1].y);
+  ctx.lineTo(pts[2].x, pts[2].y);
+  ctx.lineTo(pts[3].x, pts[3].y);
+  ctx.closePath();
+  ctx.fillStyle = color + (selected ? "70" : "45");
+  ctx.fill();
+
+  // Carpet border stroke
+  ctx.strokeStyle = color + (selected ? "FF" : "CC");
+  ctx.lineWidth = selected ? 3 : 2;
+  ctx.stroke();
+
+  // Inner decorative border (carpet frame effect)
+  const m = 7; // pixel margin for inner border
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x + m, pts[0].y + m * 0.3);
+  ctx.lineTo(pts[1].x - m, pts[1].y + m * 0.3);
+  ctx.lineTo(pts[2].x - m, pts[2].y - m * 0.3);
+  ctx.lineTo(pts[3].x + m, pts[3].y - m * 0.3);
+  ctx.closePath();
+  ctx.strokeStyle = color + "55";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawWalls(ctx: CanvasRenderingContext2D, t: number): void {
+  const wallH = 80;
+
+  // Back wall — warm dark charcoal with slight wood warmth
+  for (let c = 0; c < 10; c++) {
+    const x0 = isoX(c, 0);
+    const y0 = isoY(c, 0);
+    const x1 = isoX(c + 1, 0);
+    const y1 = isoY(c + 1, 0);
+
+    // Wall face — warm dark brown-charcoal
+    ctx.fillStyle = "#1C1610";
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.lineTo(x1, y1 - wallH);
+    ctx.lineTo(x0, y0 - wallH);
+    ctx.closePath();
+    ctx.fill();
+
+    // Subtle vertical panel texture
+    ctx.strokeStyle = "rgba(255,220,160,0.04)";
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo((x0 + x1) / 2, y0 - wallH + 5);
+    ctx.lineTo((x0 + x1) / 2, y0 - 2);
+    ctx.stroke();
+
+    // Top cap — slightly lighter warm tone
+    ctx.fillStyle = "#2A2018";
+    ctx.beginPath();
+    ctx.moveTo(x0, y0 - wallH);
+    ctx.lineTo(x1, y1 - wallH);
+    ctx.lineTo(x1, y1 - wallH + TILE_H / 2);
+    ctx.lineTo(x0, y0 - wallH + TILE_H / 2);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Windows in the back wall
+  const windowCols = [1, 4, 7];
+  windowCols.forEach((wc) => {
+    const wx = isoX(wc + 0.3, 0) - 18;
+    const wy = isoY(wc + 0.3, 0) - wallH + 10;
+    drawWindow(ctx, wx, wy, 36, 42, t);
+  });
+
+  // Left wall — slightly darker warm brown
+  for (let r = 0; r < 13; r++) {
+    const x0 = isoX(0, r);
+    const y0 = isoY(0, r);
+    const x1 = isoX(0, r + 1);
+    const y1 = isoY(0, r + 1);
+
+    ctx.fillStyle = "#181210";
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.lineTo(x1, y1 - wallH);
+    ctx.lineTo(x0, y0 - wallH);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Wall base trim — warm amber accent line where wall meets floor
+  for (let c = 0; c < 10; c++) {
+    const x0 = isoX(c, 0);
+    const y0 = isoY(c, 0);
+    const x1 = isoX(c + 1, 0);
+    const y1 = isoY(c + 1, 0);
+    ctx.strokeStyle = "rgba(200, 140, 60, 0.15)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.stroke();
+  }
+}
+
+function drawWindow(
+  ctx: CanvasRenderingContext2D,
+  wx: number,
+  wy: number,
+  ww: number,
+  wh: number,
+  t: number
+): void {
+  // Window frame — warm dark wood
+  ctx.fillStyle = "#2A1E10";
+  ctx.beginPath();
+  ctx.roundRect(wx - 3, wy - 3, ww + 6, wh + 6, 3);
+  ctx.fill();
+
+  // Glass showing twilight purple/indigo sky
+  const glassGrad = ctx.createLinearGradient(wx, wy, wx, wy + wh);
+  glassGrad.addColorStop(0, "#120830");
+  glassGrad.addColorStop(0.45, "#1A0C3E");
+  glassGrad.addColorStop(0.8, "#280E38");
+  glassGrad.addColorStop(1, "#3A1820");
+  ctx.fillStyle = glassGrad;
+  ctx.fillRect(wx, wy, ww, wh);
+
+  // Warm city glow at window bottom
+  const cityGlow = ctx.createLinearGradient(wx, wy + wh * 0.6, wx, wy + wh);
+  cityGlow.addColorStop(0, "rgba(0,0,0,0)");
+  cityGlow.addColorStop(1, "rgba(255, 120, 40, 0.12)");
+  ctx.fillStyle = cityGlow;
+  ctx.fillRect(wx, wy + wh * 0.6, ww, wh * 0.4);
+
+  // Window pane dividers — warm tone
+  ctx.strokeStyle = "#3A2818";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(wx + ww / 2, wy);
+  ctx.lineTo(wx + ww / 2, wy + wh);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(wx, wy + wh / 2);
+  ctx.lineTo(wx + ww, wy + wh / 2);
+  ctx.stroke();
+
+  // Animated purple star-glow pulse
+  const pulse = (Math.sin(t * 0.7) + 1) * 0.5;
+  ctx.fillStyle = `rgba(80, 40, 160, ${0.06 + pulse * 0.08})`;
+  ctx.fillRect(wx, wy, ww, wh);
+
+  // Light reflection diagonal
+  ctx.fillStyle = "rgba(200, 180, 255, 0.07)";
+  ctx.beginPath();
+  ctx.moveTo(wx, wy);
+  ctx.lineTo(wx + ww * 0.55, wy);
+  ctx.lineTo(wx + ww * 0.25, wy + wh * 0.55);
+  ctx.lineTo(wx, wy + wh * 0.28);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawDesk(
+  ctx: CanvasRenderingContext2D,
+  col: number,
+  row: number,
+  agentColor: string,
+  t: number
+): void {
+  const DESK_H = 24;
+
+  const tl  = { x: isoX(col,   row),   y: isoY(col,   row,   DESK_H) };
+  const tr  = { x: isoX(col+2, row),   y: isoY(col+2, row,   DESK_H) };
+  const br  = { x: isoX(col+2, row+1), y: isoY(col+2, row+1, DESK_H) };
+  const bl  = { x: isoX(col,   row+1), y: isoY(col,   row+1, DESK_H) };
+  const bl0 = { x: isoX(col,   row+1), y: isoY(col,   row+1, 0) };
+  const br0 = { x: isoX(col+2, row+1), y: isoY(col+2, row+1, 0) };
+  const tl0 = { x: isoX(col,   row),   y: isoY(col,   row,   0) };
+  const tr0 = { x: isoX(col+2, row),   y: isoY(col+2, row,   0) };
+
+  // Left face — dark warm mahogany
+  ctx.fillStyle = "#241408";
+  ctx.beginPath();
+  ctx.moveTo(tl0.x, tl0.y);
+  ctx.lineTo(bl0.x, bl0.y);
+  ctx.lineTo(bl.x,  bl.y);
+  ctx.lineTo(tl.x,  tl.y);
+  ctx.closePath();
+  ctx.fill();
+
+  // Front face — slightly warmer
+  ctx.fillStyle = "#2E1A0A";
+  ctx.beginPath();
+  ctx.moveTo(bl0.x, bl0.y);
+  ctx.lineTo(br0.x, br0.y);
+  ctx.lineTo(br.x,  br.y);
+  ctx.lineTo(bl.x,  bl.y);
+  ctx.closePath();
+  ctx.fill();
+
+  // Accent stripe on front — agent dept color
+  ctx.fillStyle = agentColor + "40";
+  ctx.beginPath();
+  ctx.moveTo(bl0.x, bl0.y - 4);
+  ctx.lineTo(br0.x, br0.y - 4);
+  ctx.lineTo(br.x + 1, br.y - 4);
+  ctx.lineTo(bl.x - 1, bl.y - 4);
+  ctx.closePath();
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = agentColor + "AA";
+  ctx.stroke();
+
+  // Desktop surface — warm wood with slight color tint from agent
+  const surfGrad = ctx.createLinearGradient(tl.x, tl.y, br.x, br.y);
+  surfGrad.addColorStop(0, "#3E2A12");
+  surfGrad.addColorStop(0.5, "#342210");
+  surfGrad.addColorStop(1, "#2A1A0C");
+  ctx.fillStyle = surfGrad;
+  ctx.beginPath();
+  ctx.moveTo(tl.x, tl.y);
+  ctx.lineTo(tr.x, tr.y);
+  ctx.lineTo(br.x, br.y);
+  ctx.lineTo(bl.x, bl.y);
+  ctx.closePath();
+  ctx.fill();
+
+  // Subtle agent-color overlay on surface
+  ctx.fillStyle = agentColor + "12";
+  ctx.beginPath();
+  ctx.moveTo(tl.x, tl.y);
+  ctx.lineTo(tr.x, tr.y);
+  ctx.lineTo(br.x, br.y);
+  ctx.lineTo(bl.x, bl.y);
+  ctx.closePath();
+  ctx.fill();
+
+  // Surface highlight corner
+  ctx.fillStyle = "rgba(255,220,160,0.07)";
+  ctx.beginPath();
+  ctx.moveTo(tl.x, tl.y);
+  ctx.lineTo(tl.x + (tr.x - tl.x) * 0.35, tl.y + (tr.y - tl.y) * 0.35);
+  ctx.lineTo(
+    tl.x + (tr.x - tl.x) * 0.35 + (bl.x - tl.x) * 0.25,
+    tl.y + (tr.y - tl.y) * 0.35 + (bl.y - tl.y) * 0.25
+  );
+  ctx.lineTo(tl.x + (bl.x - tl.x) * 0.25, tl.y + (bl.y - tl.y) * 0.25);
+  ctx.closePath();
+  ctx.fill();
+
+  // Monitor (centrado en la superficie del escritorio)
+  const mcx = isoX(col + 0.9, row + 0.35);
+  const mcy = isoY(col + 0.9, row + 0.35, DESK_H);
+  drawMonitor(ctx, mcx, mcy, agentColor, t);
+
+  // Keyboard
+  const kcx = isoX(col + 0.75, row + 0.72);
+  const kcy = isoY(col + 0.75, row + 0.72, DESK_H);
+  drawKeyboard(ctx, kcx, kcy);
+
+  // Coffee mug
+  const tcx = isoX(col + 1.55, row + 0.2);
+  const tcy = isoY(col + 1.55, row + 0.2, DESK_H);
+  drawCoffeeMug(ctx, tcx, tcy, agentColor);
+}
+
+function drawMonitor(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  glowColor: string,
+  t: number
+): void {
+  // Stand base
+  ctx.fillStyle = "#080C18";
+  ctx.beginPath();
+  ctx.roundRect(cx - 7, cy + 2, 14, 6, 2);
+  ctx.fill();
+
+  // Stand neck
+  ctx.fillStyle = "#0A0E1C";
+  ctx.fillRect(cx - 2, cy - 8, 4, 12);
+
+  // Monitor body
+  ctx.fillStyle = "#080C18";
+  ctx.beginPath();
+  ctx.roundRect(cx - 22, cy - 40, 44, 34, 4);
+  ctx.fill();
+
+  // Bezel highlight
+  ctx.strokeStyle = "#1A2030";
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  ctx.roundRect(cx - 22, cy - 40, 44, 34, 4);
+  ctx.stroke();
+
+  // Screen glow
+  const pulse = (Math.sin(t * 1.8 + cx * 0.01) + 1) * 0.5;
+  const screenGrad = ctx.createLinearGradient(cx - 18, cy - 38, cx + 18, cy - 8);
+  screenGrad.addColorStop(0, glowColor + Math.round(40 + pulse * 20).toString(16).padStart(2, "0"));
+  screenGrad.addColorStop(0.5, glowColor + "18");
+  screenGrad.addColorStop(1, glowColor + "08");
+  ctx.fillStyle = screenGrad;
+  ctx.shadowColor = glowColor;
+  ctx.shadowBlur = 12 + pulse * 6;
+  ctx.beginPath();
+  ctx.roundRect(cx - 18, cy - 37, 36, 28, 2);
   ctx.fill();
   ctx.shadowBlur = 0;
+
+  // Screen content lines
+  ctx.fillStyle = glowColor + "90";
+  const lines = [cy - 32, cy - 26, cy - 20, cy - 14];
+  const widths = [28, 20, 24, 16];
+  lines.forEach((ly, i) => {
+    ctx.beginPath();
+    ctx.roundRect(cx - 14, ly, widths[i], 2, 1);
+    ctx.fill();
+  });
+
+  // Tiny chart-like block
+  ctx.fillStyle = glowColor + "50";
+  ctx.beginPath();
+  ctx.roundRect(cx + 4, cy - 30, 10, 16, 1);
+  ctx.fill();
+}
+
+function drawKeyboard(ctx: CanvasRenderingContext2D, cx: number, cy: number): void {
+  // Keyboard base
+  ctx.fillStyle = "#0C1020";
+  ctx.beginPath();
+  ctx.roundRect(cx - 18, cy - 5, 36, 10, 2);
+  ctx.fill();
+
+  // Key rows
+  ctx.fillStyle = "#181E30";
+  [[0, -3, 28, 3], [0, 2, 32, 3]].forEach(([ox, oy, kw, kh]) => {
+    ctx.beginPath();
+    ctx.roundRect(cx - kw / 2 + ox, cy + oy, kw, kh, 1);
+    ctx.fill();
+  });
+}
+
+function drawCoffeeMug(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  accentColor: string
+): void {
+  // Mug body
+  ctx.fillStyle = "#1A1A2E";
+  ctx.beginPath();
+  ctx.roundRect(cx - 5, cy - 10, 10, 12, 2);
+  ctx.fill();
+
+  // Mug accent stripe
+  ctx.fillStyle = accentColor + "80";
+  ctx.beginPath();
+  ctx.roundRect(cx - 5, cy - 7, 10, 3, 0);
+  ctx.fill();
+
+  // Handle
+  ctx.strokeStyle = "#1A1A2E";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(cx + 6, cy - 5, 4, -0.8, 0.8);
+  ctx.stroke();
+
+  // Steam wisps
+  ctx.strokeStyle = "rgba(180,200,255,0.25)";
+  ctx.lineWidth = 1.2;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(cx - 2, cy - 12);
+  ctx.quadraticCurveTo(cx, cy - 16, cx - 2, cy - 20);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx + 2, cy - 12);
+  ctx.quadraticCurveTo(cx + 4, cy - 16, cx + 2, cy - 20);
+  ctx.stroke();
+}
+
+function drawPlant(
+  ctx: CanvasRenderingContext2D,
+  col: number,
+  row: number,
+  size: number,
+  t: number
+): void {
+  const px = isoX(col, row);
+  const py = isoY(col, row);
+  const sway = Math.sin(t * 0.6 + col * 1.3) * 1.5;
+
+  // Pot face left — terracotta
+  ctx.fillStyle = "#5A2A10";
+  ctx.beginPath();
+  ctx.moveTo(px - 8, py + 4);
+  ctx.lineTo(px, py + 8);
+  ctx.lineTo(px, py + 18);
+  ctx.lineTo(px - 8, py + 14);
+  ctx.closePath();
+  ctx.fill();
+
+  // Pot face front — warmer terracotta
+  ctx.fillStyle = "#7A3A16";
+  ctx.beginPath();
+  ctx.moveTo(px, py + 8);
+  ctx.lineTo(px + 8, py + 4);
+  ctx.lineTo(px + 8, py + 14);
+  ctx.lineTo(px, py + 18);
+  ctx.closePath();
+  ctx.fill();
+
+  // Pot top rim
+  ctx.fillStyle = "#8A4420";
+  ctx.beginPath();
+  ctx.moveTo(px, py + 2);
+  ctx.lineTo(px + 8, py - 2);
+  ctx.lineTo(px, py + 8 - 4);
+  ctx.lineTo(px - 8, py + 4);
+  ctx.closePath();
+  ctx.fill();
+
+  // Soil
+  ctx.fillStyle = "#1E1008";
+  ctx.beginPath();
+  ctx.ellipse(px, py + 5, 7, 3.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Leaves (layered blobs with sway) — richer greens
+  ctx.save();
+  ctx.translate(px, py);
+  ctx.rotate(sway * 0.02);
+
+  const leafData: [number, number, number, string][] = [
+    [-size * 0.6,  -size * 0.5 - 8, size * 0.7, "#0E2E10"],
+    [size * 0.5,   -size * 0.4 - 6, size * 0.65,"#0E2E10"],
+    [0,            -size - 12,       size * 0.8, "#143818"],
+    [-size * 0.3,  -size * 0.8 - 10,size * 0.6, "#1A4220"],
+    [size * 0.3,   -size * 0.9 - 8, size * 0.55,"#1A4220"],
+    [0,            -size * 1.2 - 14, size * 0.5, "#204E28"],
+  ];
+
+  leafData.forEach(([lx, ly, lr, lc]) => {
+    ctx.fillStyle = lc;
+    ctx.beginPath();
+    ctx.arc(lx, ly, lr, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  ctx.restore();
+}
+
+function drawHangingPlant(
+  ctx: CanvasRenderingContext2D,
+  wx: number,
+  wy: number,
+  size: number,
+  t: number
+): void {
+  const sway = Math.sin(t * 0.5 + wx * 0.01) * 2;
+  // Hanging rope
+  ctx.strokeStyle = "#4A3010";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(wx, wy);
+  ctx.lineTo(wx + sway, wy + 18);
+  ctx.stroke();
+
+  // Pot body
+  ctx.fillStyle = "#6A3518";
+  ctx.beginPath();
+  ctx.arc(wx + sway, wy + 22, size * 0.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Trailing vines
+  const leafColors = ["#1A4A1C", "#1E5A20", "#244E24"];
+  for (let i = 0; i < 4; i++) {
+    const angle = (i / 4) * Math.PI + sway * 0.02;
+    const lx = wx + sway + Math.cos(angle) * size * 0.4;
+    const ly = wy + 22 + Math.sin(angle) * size * 0.6 + i * 6;
+    ctx.fillStyle = leafColors[i % leafColors.length];
+    ctx.beginPath();
+    ctx.ellipse(lx, ly, size * 0.35, size * 0.25, angle + Math.PI * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // Draping strand
+  ctx.strokeStyle = "#1E501E";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(wx + sway, wy + 26);
+  ctx.bezierCurveTo(wx + sway - 8, wy + 38, wx + sway + 5, wy + 50, wx + sway - 4, wy + 62);
+  ctx.stroke();
+}
+
+function drawAllPlants(ctx: CanvasRenderingContext2D, t: number): void {
+  // Floor plants
+  const plants: [number, number, number][] = [
+    [0, 0, 22],
+    [4.5, 0.4, 18],
+    [9.2, 0.3, 20],
+    [0.2, 6.5, 24],
+    [0.3, 12.5, 20],
+    [9.5, 13.5, 18],
+    [13.5, 10.5, 22],
+    [10.5, 13.5, 16],
+  ];
+  plants.forEach(([c, r, s]) => drawPlant(ctx, c, r, s, t));
+
+  // Hanging plants along the back wall (above the wall, in screen space)
+  const hangPositions: [number, number, number][] = [
+    [isoX(2, 0) + 20, isoY(2, 0) - 72, 12],
+    [isoX(4, 0) + 10, isoY(4, 0) - 78, 10],
+    [isoX(6, 0) + 15, isoY(6, 0) - 75, 11],
+    [isoX(8, 0) + 10, isoY(8, 0) - 72, 10],
+  ];
+  hangPositions.forEach(([hx, hy, hs]) => drawHangingPlant(ctx, hx, hy, hs, t));
+}
+
+function drawMeetingTable(ctx: CanvasRenderingContext2D): void {
+  const col = 14.5, row = 1.5;
+  const TABLE_H = 22;
+
+  const corners = [
+    { c: col,     r: row,     z: TABLE_H },
+    { c: col + 3, r: row,     z: TABLE_H },
+    { c: col + 3, r: row + 4, z: TABLE_H },
+    { c: col,     r: row + 4, z: TABLE_H },
+  ];
+  const [tl, tr, br, bl] = corners.map(({ c, r, z }) => ({
+    x: isoX(c, r), y: isoY(c, r, z),
+  }));
+  const [tl0, _tr0, br0, bl0] = corners.map(({ c, r }) => ({
+    x: isoX(c, r), y: isoY(c, r, 0),
+  }));
+
+  // Table left face — deep slate blue
+  ctx.fillStyle = "#0E1830";
+  ctx.beginPath();
+  ctx.moveTo(tl0.x, tl0.y);
+  ctx.lineTo(bl0.x, bl0.y);
+  ctx.lineTo(bl.x, bl.y);
+  ctx.lineTo(tl.x, tl.y);
+  ctx.closePath();
+  ctx.fill();
+
+  // Table front face
+  ctx.fillStyle = "#14203C";
+  ctx.beginPath();
+  ctx.moveTo(bl0.x, bl0.y);
+  ctx.lineTo(br0.x, br0.y);
+  ctx.lineTo(br.x, br.y);
+  ctx.lineTo(bl.x, bl.y);
+  ctx.closePath();
+  ctx.fill();
+
+  // Table top — cool blue-gray glass look
+  ctx.fillStyle = "#1E304E";
+  ctx.beginPath();
+  ctx.moveTo(tl.x, tl.y);
+  ctx.lineTo(tr.x, tr.y);
+  ctx.lineTo(br.x, br.y);
+  ctx.lineTo(bl.x, bl.y);
+  ctx.closePath();
+  ctx.fill();
+
+  // Top highlight
+  ctx.fillStyle = "rgba(255,255,255,0.04)";
+  ctx.beginPath();
+  ctx.moveTo(tl.x, tl.y);
+  ctx.lineTo(tr.x, tr.y);
+  ctx.lineTo(tl.x + (tr.x - tl.x) * 0.5 + (bl.x - tl.x) * 0.2, tl.y + (tr.y - tl.y) * 0.5 + (bl.y - tl.y) * 0.2);
+  ctx.lineTo(tl.x + (bl.x - tl.x) * 0.2, tl.y + (bl.y - tl.y) * 0.2);
+  ctx.closePath();
+  ctx.fill();
+
+  // Chairs around the table
+  const chairPositions = [
+    { c: col + 0.5, r: row - 0.8 },
+    { c: col + 1.5, r: row - 0.8 },
+    { c: col + 2.5, r: row - 0.8 },
+    { c: col - 0.8, r: row + 0.5 },
+    { c: col - 0.8, r: row + 1.5 },
+    { c: col - 0.8, r: row + 2.5 },
+  ];
+  chairPositions.forEach(({ c, r }) => drawChair(ctx, c, r));
+}
+
+function drawChair(ctx: CanvasRenderingContext2D, col: number, row: number): void {
+  const cx = isoX(col, row);
+  const cy = isoY(col, row, 14);
+
+  // Chair seat — teal/slate
+  ctx.fillStyle = "#1A2838";
+  ctx.beginPath();
+  ctx.roundRect(cx - 10, cy - 6, 20, 14, 3);
+  ctx.fill();
+
+  // Chair backrest — slightly lighter
+  ctx.fillStyle = "#22344A";
+  ctx.beginPath();
+  ctx.roundRect(cx - 9, cy - 22, 18, 18, 3);
+  ctx.fill();
+
+  // Backrest highlight
+  ctx.fillStyle = "rgba(100,180,255,0.06)";
+  ctx.beginPath();
+  ctx.roundRect(cx - 9, cy - 22, 18, 4, [3, 3, 0, 0]);
+  ctx.fill();
+}
+
+function drawSofa(ctx: CanvasRenderingContext2D): void {
+  const col = 10.5, row = 10.5;
+  const SOFA_H = 20;
+
+  const sx = isoX(col, row);
+  const sy = isoY(col, row, SOFA_H);
+
+  // Sofa base left face — deep rich purple
+  ctx.fillStyle = "#1C1035";
+  ctx.beginPath();
+  ctx.moveTo(isoX(col, row), isoY(col, row));
+  ctx.lineTo(isoX(col, row + 2), isoY(col, row + 2));
+  ctx.lineTo(isoX(col, row + 2), isoY(col, row + 2) - SOFA_H);
+  ctx.lineTo(isoX(col, row), isoY(col, row) - SOFA_H);
+  ctx.closePath();
+  ctx.fill();
+
+  // Sofa base front face
+  ctx.fillStyle = "#261848";
+  ctx.beginPath();
+  ctx.moveTo(isoX(col, row + 2), isoY(col, row + 2));
+  ctx.lineTo(isoX(col + 2.5, row + 2), isoY(col + 2.5, row + 2));
+  ctx.lineTo(isoX(col + 2.5, row + 2), isoY(col + 2.5, row + 2) - SOFA_H);
+  ctx.lineTo(isoX(col, row + 2), isoY(col, row + 2) - SOFA_H);
+  ctx.closePath();
+  ctx.fill();
+
+  // Sofa seat top — rich violet
+  ctx.fillStyle = "#2E2055";
+  ctx.beginPath();
+  ctx.moveTo(isoX(col, row), isoY(col, row) - SOFA_H);
+  ctx.lineTo(isoX(col + 2.5, row), isoY(col + 2.5, row) - SOFA_H);
+  ctx.lineTo(isoX(col + 2.5, row + 2), isoY(col + 2.5, row + 2) - SOFA_H);
+  ctx.lineTo(isoX(col, row + 2), isoY(col, row + 2) - SOFA_H);
+  ctx.closePath();
+  ctx.fill();
+
+  // Backrest
+  const BACK_H = 28;
+  ctx.fillStyle = "#3A2868";
+  ctx.beginPath();
+  ctx.moveTo(isoX(col, row), isoY(col, row) - SOFA_H);
+  ctx.lineTo(isoX(col + 2.5, row), isoY(col + 2.5, row) - SOFA_H);
+  ctx.lineTo(isoX(col + 2.5, row), isoY(col + 2.5, row) - SOFA_H - BACK_H);
+  ctx.lineTo(isoX(col, row), isoY(col, row) - SOFA_H - BACK_H);
+  ctx.closePath();
+  ctx.fill();
+
+  // Cushion dividers on backrest
+  ctx.strokeStyle = "#160E30";
+  ctx.lineWidth = 1.5;
+  [0.83, 1.67].forEach((frac) => {
+    const cx1 = isoX(col + frac * 2.5, row);
+    const cy1 = isoY(col + frac * 2.5, row) - SOFA_H;
+    ctx.beginPath();
+    ctx.moveTo(cx1, cy1);
+    ctx.lineTo(cx1, cy1 - BACK_H);
+    ctx.stroke();
+  });
+
+  // Highlight on top of backrest
+  ctx.fillStyle = "rgba(255,255,255,0.04)";
+  ctx.beginPath();
+  ctx.moveTo(isoX(col, row), isoY(col, row) - SOFA_H - BACK_H);
+  ctx.lineTo(isoX(col + 2.5, row), isoY(col + 2.5, row) - SOFA_H - BACK_H);
+  ctx.lineTo(isoX(col + 2.5, row), isoY(col + 2.5, row) - SOFA_H - BACK_H + 4);
+  ctx.lineTo(isoX(col, row), isoY(col, row) - SOFA_H - BACK_H + 4);
+  ctx.closePath();
+  ctx.fill();
+
+  // Coffee table in front of sofa
+  const ctCol = col + 0.5, ctRow = row + 2.2;
+  const CT_H = 12;
+  ctx.fillStyle = "#0E1420";
+  ctx.beginPath();
+  ctx.moveTo(isoX(ctCol, ctRow), isoY(ctCol, ctRow));
+  ctx.lineTo(isoX(ctCol, ctRow + 1), isoY(ctCol, ctRow + 1));
+  ctx.lineTo(isoX(ctCol, ctRow + 1), isoY(ctCol, ctRow + 1) - CT_H);
+  ctx.lineTo(isoX(ctCol, ctRow), isoY(ctCol, ctRow) - CT_H);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = "#141C2C";
+  ctx.beginPath();
+  ctx.moveTo(isoX(ctCol, ctRow + 1), isoY(ctCol, ctRow + 1));
+  ctx.lineTo(isoX(ctCol + 1.8, ctRow + 1), isoY(ctCol + 1.8, ctRow + 1));
+  ctx.lineTo(isoX(ctCol + 1.8, ctRow + 1), isoY(ctCol + 1.8, ctRow + 1) - CT_H);
+  ctx.lineTo(isoX(ctCol, ctRow + 1), isoY(ctCol, ctRow + 1) - CT_H);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = "#1A2438";
+  ctx.beginPath();
+  ctx.moveTo(isoX(ctCol, ctRow), isoY(ctCol, ctRow) - CT_H);
+  ctx.lineTo(isoX(ctCol + 1.8, ctRow), isoY(ctCol + 1.8, ctRow) - CT_H);
+  ctx.lineTo(isoX(ctCol + 1.8, ctRow + 1), isoY(ctCol + 1.8, ctRow + 1) - CT_H);
+  ctx.lineTo(isoX(ctCol, ctRow + 1), isoY(ctCol, ctRow + 1) - CT_H);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawCeilingLights(ctx: CanvasRenderingContext2D, t: number): void {
+  // Overhead pendant lights creating warm pools on the floor
+  const lightPositions: [number, number, string][] = [
+    [1.5, 3,   "#FFF0D0"],  // warm white
+    [6,   2,   "#D0F0FF"],  // cool white
+    [1.5, 7,   "#FFF0D0"],
+    [6,   6,   "#D0F0FF"],
+    [1.5, 11,  "#FFF0D0"],
+    [6,   10,  "#D0F0FF"],
+    [11.5,4,   "#E0DDFF"],  // right zone
+    [11.5,8,   "#E0DDFF"],
+    [16,  4,   "#D0FFEE"],  // meeting room
+  ];
+
+  lightPositions.forEach(([lc, lr, lcolor]) => {
+    const lx = isoX(lc, lr);
+    const ly = isoY(lc, lr);
+    const pulse = 1 + Math.sin(t * 0.3 + lc * 2) * 0.04;
+
+    const r = parseInt(lcolor.slice(1, 3), 16);
+    const g = parseInt(lcolor.slice(3, 5), 16);
+    const b = parseInt(lcolor.slice(5, 7), 16);
+
+    const grad = ctx.createRadialGradient(lx, ly, 0, lx, ly, 100 * pulse);
+    grad.addColorStop(0,   `rgba(${r},${g},${b},0.14)`);
+    grad.addColorStop(0.4, `rgba(${r},${g},${b},0.07)`);
+    grad.addColorStop(1,   `rgba(${r},${g},${b},0)`);
+
+    ctx.save();
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.ellipse(lx, ly, 100 * pulse, 50 * pulse, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+}
+
+function drawWallDecor(ctx: CanvasRenderingContext2D): void {
+  // Tech-tool posters on the back wall (above desks)
+  const posterData = [
+    { col: 2,   row: 0, label: "notion", color: "#FFFFFF" },
+    { col: 4.5, row: 0, label: "miro",   color: "#FFD02F" },
+    { col: 7,   row: 0, label: "asana",  color: "#F06A6A" },
+  ];
+
+  // LED strip accent light along top of back wall
+  for (let c = 0; c < 10; c++) {
+    const lx0 = isoX(c, 0);
+    const lx1 = isoX(c + 1, 0);
+    const ly0 = isoY(c, 0) - 78;
+    const ly1 = isoY(c + 1, 0) - 78;
+    const ledGrad = ctx.createLinearGradient(lx0, ly0, lx1, ly1);
+    ledGrad.addColorStop(0, `rgba(120, 60, 255, ${0.15 + (c % 3) * 0.05})`);
+    ledGrad.addColorStop(0.5, `rgba(60, 150, 255, ${0.10 + (c % 2) * 0.06})`);
+    ledGrad.addColorStop(1, `rgba(120, 60, 255, ${0.12 + (c % 3) * 0.04})`);
+    ctx.fillStyle = ledGrad;
+    ctx.fillRect(lx0 - 1, ly0 - 3, lx1 - lx0 + 2, 4);
+  }
+
+  posterData.forEach(({ col, row, label, color }) => {
+    const px = isoX(col, row) - 16;
+    const py = isoY(col, row) - 98;
+
+    // Poster outer frame — warm wood
+    ctx.fillStyle = "#3A2810";
+    ctx.beginPath();
+    ctx.roundRect(px - 3, py - 3, 34, 26, 4);
+    ctx.fill();
+
+    // Poster bg — dark with gradient
+    const posterBg = ctx.createLinearGradient(px, py, px + 28, py + 20);
+    posterBg.addColorStop(0, "#12101E");
+    posterBg.addColorStop(1, "#0C0C18");
+    ctx.fillStyle = posterBg;
+    ctx.beginPath();
+    ctx.roundRect(px, py, 28, 20, 2);
+    ctx.fill();
+
+    // Top color bar
+    ctx.fillStyle = color + "AA";
+    ctx.beginPath();
+    ctx.roundRect(px, py, 28, 5, [2, 2, 0, 0]);
+    ctx.fill();
+
+    // Tool icon circle
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(px + 6, py + 13, 4.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = "bold 6.5px 'JetBrains Mono', monospace";
+    ctx.textAlign = "left";
+    ctx.fillText(label.toUpperCase(), px + 13, py + 16);
+  });
+}
+
+function drawChibiHairBack(
+  ctx: CanvasRenderingContext2D,
+  style: string,
+  headY: number,
+  r: number,
+  hairColor: string
+): void {
+  ctx.fillStyle = hairColor;
+  switch (style) {
+    case "short":
+      ctx.beginPath();
+      ctx.arc(0, headY, r + 3, Math.PI * 0.85, 0.15 * Math.PI);
+      ctx.lineTo(r + 3, headY + 6);
+      ctx.lineTo(-r - 3, headY + 6);
+      ctx.closePath();
+      ctx.fill();
+      break;
+
+    case "long":
+      ctx.beginPath();
+      ctx.arc(0, headY, r + 3, Math.PI * 0.8, 0.2 * Math.PI);
+      ctx.fill();
+      // Long side strands
+      ctx.beginPath();
+      ctx.roundRect(-r - 10, headY - 4, 13, 68, 7);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.roundRect(r - 3, headY - 4, 13, 65, 7);
+      ctx.fill();
+      break;
+
+    case "curly":
+      ctx.beginPath();
+      ctx.arc(0, headY, r + 5, Math.PI, 0);
+      ctx.fill();
+      break;
+
+    case "bun":
+      ctx.beginPath();
+      ctx.arc(0, headY, r + 2, Math.PI * 0.9, 0.1 * Math.PI);
+      ctx.fill();
+      // Bun circle
+      ctx.beginPath();
+      ctx.arc(0, headY - r - 11, 13, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+
+    case "spiky":
+      ctx.beginPath();
+      ctx.arc(0, headY, r + 2, Math.PI, 0);
+      ctx.fill();
+      break;
+  }
+}
+
+function drawChibiHairFront(
+  ctx: CanvasRenderingContext2D,
+  style: string,
+  headY: number,
+  r: number,
+  hairColor: string
+): void {
+  ctx.fillStyle = hairColor;
+  switch (style) {
+    case "short":
+      ctx.beginPath();
+      ctx.arc(0, headY, r, Math.PI, 0);
+      ctx.fill();
+      // Side bangs
+      ctx.beginPath();
+      ctx.roundRect(-r - 2, headY - 6, 11, 14, 4);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.roundRect(r - 9, headY - 6, 11, 12, 4);
+      ctx.fill();
+      break;
+
+    case "long":
+      ctx.beginPath();
+      ctx.arc(0, headY, r, Math.PI * 1.05, -0.05 * Math.PI);
+      ctx.fill();
+      // Front face-framing strands
+      ctx.beginPath();
+      ctx.roundRect(-r - 2, headY - 10, 13, 22, 5);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.roundRect(r - 11, headY - 10, 13, 20, 5);
+      ctx.fill();
+      break;
+
+    case "curly":
+      // Curl blobs along forehead
+      [-13, -5, 4, 12].forEach((bx, i) => {
+        ctx.beginPath();
+        ctx.arc(bx, headY - r + 2 + (i % 2 === 0 ? 0 : 4), 6.5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      break;
+
+    case "bun":
+      ctx.beginPath();
+      ctx.arc(0, headY, r, Math.PI, 0);
+      ctx.fill();
+      // Straight fringe
+      ctx.beginPath();
+      ctx.roundRect(-r, headY - 4, r * 2, 13, [0, 0, 6, 6]);
+      ctx.fill();
+      // Bun connector
+      ctx.beginPath();
+      ctx.roundRect(-4, headY - r - 5, 8, 9, 2);
+      ctx.fill();
+      break;
+
+    case "spiky":
+      // Spikes along top
+      const spikes: [number, number][] = [[-14, -10], [-7, -17], [0, -20], [7, -17], [14, -10]];
+      spikes.forEach(([sx, sy]) => {
+        ctx.beginPath();
+        ctx.moveTo(sx - 5, headY + sy + 16);
+        ctx.lineTo(sx, headY + sy);
+        ctx.lineTo(sx + 5, headY + sy + 16);
+        ctx.closePath();
+        ctx.fill();
+      });
+      ctx.beginPath();
+      ctx.arc(0, headY, r, Math.PI * 1.05, -0.05 * Math.PI);
+      ctx.fill();
+      break;
+  }
+}
+
+function drawAnimeEye(
+  ctx: CanvasRenderingContext2D,
+  ex: number,
+  ey: number,
+  irisColor: string
+): void {
+  const EW = 7, EH = 9;
+
+  // Outer border
+  ctx.fillStyle = "#05050F";
+  ctx.beginPath();
+  ctx.ellipse(ex, ey, EW + 1.5, EH + 1, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Eye white (slightly blue-tinted for anime)
+  ctx.fillStyle = "#E6EAF6";
+  ctx.beginPath();
+  ctx.ellipse(ex, ey, EW, EH, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Iris gradient
+  const irisGrad = ctx.createRadialGradient(ex - 1, ey - 2, 1, ex, ey, 6);
+  irisGrad.addColorStop(0, irisColor);
+  irisGrad.addColorStop(0.65, irisColor + "CC");
+  irisGrad.addColorStop(1, irisColor + "88");
+  ctx.fillStyle = irisGrad;
+  ctx.beginPath();
+  ctx.ellipse(ex, ey, 5.5, 7, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Pupil
+  ctx.fillStyle = "#030310";
+  ctx.beginPath();
+  ctx.ellipse(ex, ey + 1, 2.5, 3.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Bottom iris shadow
+  const iShadow = ctx.createLinearGradient(ex, ey - EH, ex, ey + EH);
+  iShadow.addColorStop(0, "rgba(0,0,0,0)");
+  iShadow.addColorStop(0.55, "rgba(0,0,0,0)");
+  iShadow.addColorStop(1, "rgba(0,0,0,0.35)");
+  ctx.fillStyle = iShadow;
+  ctx.beginPath();
+  ctx.ellipse(ex, ey, EW, EH, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Main highlight — large oval top-left
+  ctx.fillStyle = "rgba(255,255,255,0.95)";
+  ctx.beginPath();
+  ctx.ellipse(ex - 2.5, ey - 3.5, 2.8, 2.2, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Secondary highlight — small dot
+  ctx.fillStyle = "rgba(255,255,255,0.7)";
+  ctx.beginPath();
+  ctx.arc(ex + 2.5, ey + 1.5, 1.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Top lash (thick arc)
+  ctx.strokeStyle = "#05050F";
+  ctx.lineWidth = 2.8;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(ex - EW - 1, ey - 2);
+  ctx.quadraticCurveTo(ex, ey - EH - 4, ex + EW + 1, ey - 2);
+  ctx.stroke();
+
+  // Bottom lash (thin arc)
+  ctx.strokeStyle = "#10101E";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(ex - EW + 1, ey + EH - 2);
+  ctx.quadraticCurveTo(ex, ey + EH + 1, ex + EW - 1, ey + EH - 2);
+  ctx.stroke();
+}
+
+function drawChibiAvatar(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  t: number,
+  agent: Agent,
+  cfg: AgentConfig,
+  hovered: boolean,
+  selected: boolean
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  // Floor shadow
+  ctx.fillStyle = "rgba(0,0,0,0.40)";
+  ctx.beginPath();
+  ctx.ellipse(0, 10, 22, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Hover / select glow halo
+  if (hovered || selected) {
+    ctx.save();
+    ctx.shadowColor = cfg.color;
+    ctx.shadowBlur = selected ? 30 : 14;
+    ctx.strokeStyle = cfg.color + (selected ? "AA" : "55");
+    ctx.lineWidth = selected ? 2.5 : 1.5;
+    ctx.beginPath();
+    ctx.arc(0, -40, 38, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  const isOffline = agent.status === "offline";
+  const breathe = isOffline ? 0 : Math.sin(t * 1.5) * 1.4;
+
+  // ── CHAIR (behind avatar) ──
+  ctx.fillStyle = "#14142A";
+  ctx.beginPath();
+  ctx.roundRect(-14, -8, 28, 18, 4);
+  ctx.fill();
+  // Chair backrest
+  ctx.fillStyle = "#1E1E3A";
+  ctx.beginPath();
+  ctx.roundRect(-12, -26, 24, 20, 3);
+  ctx.fill();
+  // Backrest highlight
+  ctx.fillStyle = "rgba(255,255,255,0.035)";
+  ctx.beginPath();
+  ctx.roundRect(-12, -26, 24, 5, [3, 3, 0, 0]);
+  ctx.fill();
+
+  // ── LEGS ──
+  ctx.fillStyle = cfg.pants;
+  // Left leg
+  ctx.beginPath();
+  ctx.roundRect(-11, -10, 9, 18, 3);
+  ctx.fill();
+  // Right leg
+  ctx.beginPath();
+  ctx.roundRect(2, -10, 9, 18, 3);
+  ctx.fill();
   // Shoes
   ctx.fillStyle = "#080810";
-  ctx.fillRect(cx - 5, cy + 14, 4, 4);
-  ctx.fillRect(cx + 2, cy + 14, 4, 4);
-  // Pants
-  ctx.fillStyle = cfg.pants;
-  ctx.fillRect(cx - 5, cy + 8, 4, 7);
-  ctx.fillRect(cx + 2, cy + 8, 4, 7);
-  // Body
-  ctx.fillStyle = cfg.shirt;
-  ctx.fillRect(cx - 6, cy, 13, 9);
-  // Arms
-  if (walking) {
-    ctx.fillRect(cx - 9, cy + 1, 3, 6);
-    ctx.fillRect(cx + 7, cy + 4, 3, 6);
-  } else {
-    ctx.fillRect(cx - 9, cy + 2, 3, 5);
-    ctx.fillRect(cx + 7, cy + 2, 3, 5);
-  }
-  // Head
-  ctx.fillStyle = "#FDBCB4";
-  ctx.fillRect(cx - 5, cy - 9, 11, 9);
-  // Hair
-  ctx.fillStyle = cfg.hair;
-  ctx.fillRect(cx - 5, cy - 12, 11, 5);
-  // Eye
-  ctx.fillStyle = "#111";
-  ctx.fillRect(facingRight ? cx + 2 : cx - 3, cy - 6, 2, 2);
-  // Dept dot
-  ctx.shadowColor = cfg.color;
-  ctx.shadowBlur = 8;
-  ctx.fillStyle = cfg.color;
   ctx.beginPath();
-  ctx.arc(cx, cy - 17, 3, 0, Math.PI * 2);
+  ctx.ellipse(-6, 9, 7, 3.5, -0.15, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(6, 9, 7, 3.5, 0.15, 0, Math.PI * 2);
+  ctx.fill();
+
+  // ── BODY (breathes) ──
+  ctx.save();
+  ctx.translate(0, breathe);
+
+  // Torso
+  ctx.fillStyle = cfg.shirt;
+  ctx.beginPath();
+  ctx.roundRect(-12, -27, 24, 21, 5);
+  ctx.fill();
+
+  // Dept collar stripe
+  ctx.fillStyle = cfg.color + "55";
+  ctx.beginPath();
+  ctx.roundRect(-12, -27, 24, 6, [5, 5, 0, 0]);
+  ctx.fill();
+
+  // Shirt highlight
+  ctx.fillStyle = "rgba(255,255,255,0.06)";
+  ctx.beginPath();
+  ctx.roundRect(-10, -25, 11, 15, 3);
+  ctx.fill();
+
+  // Left arm (extended toward keyboard, slight typing motion)
+  ctx.fillStyle = cfg.skin;
+  const lArmRot = isOffline ? 0 : Math.sin(t * 3.2) * 0.06;
+  ctx.save();
+  ctx.rotate(lArmRot);
+  ctx.beginPath();
+  ctx.roundRect(-24, -22, 13, 8, 4);
+  ctx.fill();
+  ctx.restore();
+
+  // Right arm
+  const rArmRot = isOffline ? 0 : Math.sin(t * 3.2 + 1.2) * 0.06;
+  ctx.save();
+  ctx.rotate(rArmRot);
+  ctx.beginPath();
+  ctx.roundRect(11, -22, 13, 8, 4);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.restore(); // end breathe
+
+  // ── NECK ──
+  ctx.fillStyle = cfg.skin;
+  ctx.beginPath();
+  ctx.roundRect(-4, -32, 8, 9, 3);
+  ctx.fill();
+
+  // ── HEAD (r = 22, chibi proportions) ──
+  const headY = -56;
+  const headR = 22;
+
+  ctx.save();
+  if (isOffline) {
+    ctx.rotate(0.22);
+    ctx.translate(5, 6);
+  } else {
+    ctx.rotate(Math.sin(t * 0.45) * 0.04);
+  }
+
+  // Head shadow on body
+  ctx.fillStyle = "rgba(0,0,0,0.18)";
+  ctx.beginPath();
+  ctx.ellipse(2, headY + 27, 17, 6, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Hair back
+  drawChibiHairBack(ctx, cfg.hairStyle, headY, headR, cfg.hair);
+
+  // Skin base
+  ctx.fillStyle = cfg.skin;
+  ctx.beginPath();
+  ctx.arc(0, headY, headR, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Head highlight
+  const headHL = ctx.createRadialGradient(-7, headY - 11, 2, 0, headY, headR);
+  headHL.addColorStop(0, "rgba(255,255,255,0.20)");
+  headHL.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = headHL;
+  ctx.beginPath();
+  ctx.arc(0, headY, headR, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Hair front (drawn over skin)
+  drawChibiHairFront(ctx, cfg.hairStyle, headY, headR, cfg.hair);
+
+  if (!isOffline) {
+    // Eyes
+    const eyeY = headY + 2;
+    const eyeLX = -8, eyeRX = 8;
+
+    // Eyebrows
+    ctx.strokeStyle = cfg.hair;
+    ctx.lineWidth = 2.2;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(eyeLX - 7, eyeY - 12);
+    ctx.quadraticCurveTo(eyeLX, eyeY - 17, eyeLX + 7, eyeY - 12);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(eyeRX - 7, eyeY - 12);
+    ctx.quadraticCurveTo(eyeRX, eyeY - 17, eyeRX + 7, eyeY - 12);
+    ctx.stroke();
+
+    drawAnimeEye(ctx, eyeLX, eyeY, cfg.irisColor);
+    drawAnimeEye(ctx, eyeRX, eyeY, cfg.irisColor);
+
+    // Nose
+    ctx.fillStyle = cfg.skin + "BB";
+    ctx.beginPath();
+    ctx.arc(0, headY + 10, 1.6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Smile
+    ctx.strokeStyle = cfg.skin + "85";
+    ctx.lineWidth = 1.9;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(-5, headY + 15);
+    ctx.quadraticCurveTo(0, headY + 19, 5, headY + 15);
+    ctx.stroke();
+
+    // Blush
+    ctx.fillStyle = "#FF7070";
+    ctx.globalAlpha = 0.20;
+    ctx.beginPath();
+    ctx.ellipse(-14, headY + 9, 6.5, 4.5, 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(14, headY + 9, 6.5, 4.5, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  } else {
+    // Sleeping eyes
+    ctx.strokeStyle = cfg.hair;
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(-14, headY + 4);
+    ctx.quadraticCurveTo(-8, headY + 0, -2, headY + 4);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(2, headY + 4);
+    ctx.quadraticCurveTo(8, headY + 0, 14, headY + 4);
+    ctx.stroke();
+
+    // Zzz
+    ctx.fillStyle = "#4A5570";
+    ctx.font = "bold 9px sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText("z", headR + 2, headY - 22);
+    ctx.font = "bold 7px sans-serif";
+    ctx.fillText("z", headR + 8, headY - 32);
+  }
+
+  ctx.restore(); // head rotation
+
+  // ── STATUS INDICATOR ──
+  const statusColors: Record<string, string> = {
+    online: "#00E5A0",
+    busy:   "#FFB800",
+    offline:"#4A5570",
+    error:  "#FF4757",
+  };
+  const sColor = statusColors[agent.status] ?? "#4A5570";
+  const dotY = -56 - 22 - 12;
+
+  if (agent.status === "online") {
+    const pulse = (Math.sin(t * 2.8) + 1) * 0.5;
+    ctx.strokeStyle = sColor;
+    ctx.lineWidth = 1.5;
+    ctx.globalAlpha = 1 - pulse;
+    ctx.beginPath();
+    ctx.arc(0, dotY, 8 + pulse * 9, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  ctx.fillStyle = sColor;
+  ctx.shadowColor = sColor;
+  ctx.shadowBlur = 10;
+  ctx.beginPath();
+  ctx.arc(0, dotY, 5.5, 0, Math.PI * 2);
   ctx.fill();
   ctx.shadowBlur = 0;
-  // Name tag
-  ctx.font = '700 7px "Share Tech Mono", monospace';
+
+  // ── NAME LABEL — dept-colored pill ──
+  ctx.fillStyle = cfg.color + "28";
+  ctx.strokeStyle = cfg.color + "88";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(-30, 16, 60, 16, 8);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = cfg.color + "EE";
+  ctx.font = 'bold 8.5px "JetBrains Mono", monospace';
   ctx.textAlign = "center";
-  ctx.fillStyle = "rgba(0,0,0,0.75)";
-  ctx.fillRect(cx - 14, cy - 30, 28, 11);
-  ctx.fillStyle = cfg.color;
-  ctx.fillText(name, cx, cy - 21);
-  // Bubble
-  if (bubble) {
-    ctx.font = '6px "Share Tech Mono", monospace';
-    const bw = Math.max(ctx.measureText(bubble).width + 14, 40);
-    const bx = cx - bw / 2;
-    const by = cy - 52;
-    ctx.fillStyle = "rgba(8,10,20,0.92)";
-    ctx.strokeStyle = cfg.color;
-    ctx.lineWidth = 1;
+  ctx.fillText(agent.name.toUpperCase(), 0, 28);
+
+  ctx.restore();
+}
+
+function drawActivityBubble(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  agent: Agent,
+  t: number
+): void {
+  if (agent.status === "offline") return;
+
+  const phrases = ACTIVITY_PHRASES[agent.id] ?? ["Working..."];
+  const idx = Math.floor(t / 5) % phrases.length;
+  const text = phrases[idx];
+
+  const bubbleX = cx + 30;
+  const bubbleY = cy - 105;
+  const pad = 8;
+
+  ctx.font = '10px "JetBrains Mono", monospace';
+  const tw = ctx.measureText(text).width;
+  const bw = tw + pad * 2;
+  const bh = 20;
+
+  // Bubble background
+  ctx.fillStyle = "rgba(8,12,28,0.92)";
+  ctx.strokeStyle = (AGENT_CONFIG[agent.id]?.color ?? "#FFFFFF") + "80";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(bubbleX, bubbleY, bw, bh, 4);
+  ctx.fill();
+  ctx.stroke();
+
+  // Tail
+  ctx.fillStyle = "rgba(8,12,28,0.92)";
+  ctx.beginPath();
+  ctx.moveTo(bubbleX, bubbleY + 8);
+  ctx.lineTo(bubbleX - 7, bubbleY + 12);
+  ctx.lineTo(bubbleX, bubbleY + 16);
+  ctx.closePath();
+  ctx.fill();
+
+  // Text
+  ctx.fillStyle = "#8898BB";
+  ctx.font = '10px "JetBrains Mono", monospace';
+  ctx.textAlign = "left";
+  ctx.fillText(text, bubbleX + pad, bubbleY + 13);
+}
+
+function drawScene(
+  ctx: CanvasRenderingContext2D,
+  t: number,
+  agents: Agent[],
+  hoveredId: string | null,
+  selectedId: string | null,
+  hitboxes: Map<string, { x: number; y: number; r: number }>
+): void {
+  // 1. Exterior (sky, trees, buildings)
+  drawExterior(ctx);
+
+  // 2. Floor tiles
+  drawAllFloorTiles(ctx);
+
+  // 2b. Interior ambient — warm overhead room light pools
+  const roomLights: [number, number, number, number, number, number, number][] = [
+    // cx, cy, rx, ry, r, g, b
+    [isoX(3, 3),  isoY(3, 3),  160, 80,  255, 220, 160],
+    [isoX(8, 2),  isoY(8, 2),  140, 70,  200, 220, 255],
+    [isoX(2, 8),  isoY(2, 8),  140, 70,  255, 200, 180],
+    [isoX(7, 7),  isoY(7, 7),  150, 75,  200, 180, 255],
+    [isoX(2, 12), isoY(2, 12), 130, 65,  255, 230, 160],
+    [isoX(7, 11), isoY(7, 11), 130, 65,  180, 220, 255],
+    [isoX(12, 4), isoY(12, 4), 120, 60,  220, 180, 255],
+    [isoX(12, 8), isoY(12, 8), 120, 60,  180, 255, 220],
+  ];
+  roomLights.forEach(([lx, ly, rx, ry, r, g, b]) => {
+    const grad = ctx.createRadialGradient(lx, ly - 10, 0, lx, ly, rx);
+    grad.addColorStop(0,   `rgba(${r},${g},${b},0.08)`);
+    grad.addColorStop(0.6, `rgba(${r},${g},${b},0.03)`);
+    grad.addColorStop(1,   "rgba(0,0,0,0)");
+    ctx.save();
+    ctx.fillStyle = grad;
     ctx.beginPath();
-    ctx.roundRect(bx, by, bw, 15, 3);
+    ctx.ellipse(lx, ly, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // 3. Zone carpets per agent — signature colored zones (Sowork-style)
+  agents.forEach((agent) => {
+    const pos = DESK_POSITIONS[agent.id];
+    if (!pos) return;
+    const cfg = AGENT_CONFIG[agent.id];
+    if (!cfg) return;
+    drawZoneHighlight(ctx, pos.col, pos.row, cfg.color, agent.id === selectedId);
+  });
+
+  // 3b. Ambient overhead light cones per desk zone
+  agents.forEach((agent) => {
+    const pos = DESK_POSITIONS[agent.id];
+    if (!pos) return;
+    const cfg = AGENT_CONFIG[agent.id];
+    if (!cfg) return;
+    if (agent.status === "offline") return;
+    const cx = isoX(pos.col + 1, pos.row + 0.5);
+    const cy = isoY(pos.col + 1, pos.row + 0.5);
+    const lightGrad = ctx.createRadialGradient(cx, cy - 30, 0, cx, cy, 80);
+    lightGrad.addColorStop(0, cfg.color + "18");
+    lightGrad.addColorStop(0.5, cfg.color + "08");
+    lightGrad.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.save();
+    ctx.fillStyle = lightGrad;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 80, 40, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // 3c. Ceiling light pools on the floor
+  drawCeilingLights(ctx, t);
+
+  // 4. Walls with windows
+  drawWalls(ctx, t);
+
+  // 5. Wall decor (posters + LED strip)
+  drawWallDecor(ctx);
+
+  // 5b. Lounge area rug — purple/violet under the sofa
+  {
+    const lc0 = 9.6, lr0 = 9.8, lc1 = 13.2, lr1 = 13.8;
+    const loungeRugPts = [
+      { x: isoX(lc0, lr0), y: isoY(lc0, lr0) },
+      { x: isoX(lc1, lr0), y: isoY(lc1, lr0) },
+      { x: isoX(lc1, lr1), y: isoY(lc1, lr1) },
+      { x: isoX(lc0, lr1), y: isoY(lc0, lr1) },
+    ];
+    ctx.save();
+    ctx.beginPath();
+    loungeRugPts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+    ctx.closePath();
+    ctx.fillStyle = "rgba(100, 60, 180, 0.42)";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(160, 100, 255, 0.80)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // Inner border
+    const im = 8;
+    ctx.beginPath();
+    ctx.moveTo(loungeRugPts[0].x + im, loungeRugPts[0].y + im * 0.3);
+    ctx.lineTo(loungeRugPts[1].x - im, loungeRugPts[1].y + im * 0.3);
+    ctx.lineTo(loungeRugPts[2].x - im, loungeRugPts[2].y - im * 0.3);
+    ctx.lineTo(loungeRugPts[3].x + im, loungeRugPts[3].y - im * 0.3);
+    ctx.closePath();
+    ctx.strokeStyle = "rgba(160, 100, 255, 0.35)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // 5c. Meeting room rug — teal/cyan under the meeting table
+  {
+    const mc0 = 13.8, mr0 = 0.8, mc1 = 18.5, mr1 = 8.2;
+    const meetRugPts = [
+      { x: isoX(mc0, mr0), y: isoY(mc0, mr0) },
+      { x: isoX(mc1, mr0), y: isoY(mc1, mr0) },
+      { x: isoX(mc1, mr1), y: isoY(mc1, mr1) },
+      { x: isoX(mc0, mr1), y: isoY(mc0, mr1) },
+    ];
+    ctx.save();
+    ctx.beginPath();
+    meetRugPts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+    ctx.closePath();
+    ctx.fillStyle = "rgba(0, 160, 140, 0.28)";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(0, 220, 200, 0.65)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    const im = 10;
+    ctx.beginPath();
+    ctx.moveTo(meetRugPts[0].x + im, meetRugPts[0].y + im * 0.3);
+    ctx.lineTo(meetRugPts[1].x - im, meetRugPts[1].y + im * 0.3);
+    ctx.lineTo(meetRugPts[2].x - im, meetRugPts[2].y - im * 0.3);
+    ctx.lineTo(meetRugPts[3].x + im, meetRugPts[3].y - im * 0.3);
+    ctx.closePath();
+    ctx.strokeStyle = "rgba(0, 220, 200, 0.30)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // 6. Meeting table
+  drawMeetingTable(ctx);
+
+  // 7. Sofa / lounge
+  drawSofa(ctx);
+
+  // 8. Desks + furniture — sorted by depth (col+row)
+  const agentsByDepth = [...agents].sort((a, b) => {
+    const pa = DESK_POSITIONS[a.id] ?? { col: 0, row: 0 };
+    const pb = DESK_POSITIONS[b.id] ?? { col: 0, row: 0 };
+    return pa.col + pa.row - (pb.col + pb.row);
+  });
+
+  agentsByDepth.forEach((agent) => {
+    const pos = DESK_POSITIONS[agent.id];
+    if (!pos) return;
+    const cfg = AGENT_CONFIG[agent.id];
+    if (!cfg) return;
+    drawDesk(ctx, pos.col, pos.row, cfg.color, t);
+  });
+
+  // 9. Plants (on top of desks/floor)
+  drawAllPlants(ctx, t);
+
+  // 10. Avatars (sorted by depth)
+  hitboxes.clear();
+  agentsByDepth.forEach((agent) => {
+    const pos = DESK_POSITIONS[agent.id];
+    if (!pos) return;
+    const cfg = AGENT_CONFIG[agent.id];
+    if (!cfg) return;
+
+    const cx = isoX(pos.col + 1.0, pos.row + 0.45);
+    const cy = isoY(pos.col + 1.0, pos.row + 0.45, 0);
+
+    drawChibiAvatar(ctx, cx, cy, t, agent, cfg, agent.id === hoveredId, agent.id === selectedId);
+    hitboxes.set(agent.id, { x: cx, y: cy - 55, r: 28 });
+  });
+
+  // 10b. Zone dept labels — floating above each carpet
+  agentsByDepth.forEach((agent) => {
+    const pos = DESK_POSITIONS[agent.id];
+    if (!pos) return;
+    const cfg = AGENT_CONFIG[agent.id];
+    if (!cfg) return;
+
+    const lx = isoX(pos.col + 1, pos.row - 0.4);
+    const ly = isoY(pos.col + 1, pos.row - 0.4) - 12;
+
+    ctx.save();
+    ctx.font = 'bold 9px "JetBrains Mono", monospace';
+    const tw = ctx.measureText(cfg.dept).width;
+
+    // Label background
+    ctx.fillStyle = cfg.color + "20";
+    ctx.strokeStyle = cfg.color + "60";
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.roundRect(lx - tw / 2 - 6, ly - 9, tw + 12, 13, 3);
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = "#CDD5E0";
-    ctx.fillText(bubble, cx, by + 10);
-  }
+
+    // Label text
+    ctx.fillStyle = cfg.color + "CC";
+    ctx.textAlign = "center";
+    ctx.fillText(cfg.dept, lx, ly);
+    ctx.restore();
+  });
+
+  // 11. Activity bubbles (topmost layer)
+  agentsByDepth.forEach((agent) => {
+    const pos = DESK_POSITIONS[agent.id];
+    if (!pos) return;
+    const cx = isoX(pos.col + 1.0, pos.row + 0.45);
+    const cy = isoY(pos.col + 1.0, pos.row + 0.45, 0);
+    drawActivityBubble(ctx, cx, cy, agent, t);
+  });
 }
 
-// ─── Agent animation state ────────────────────────────────────────────────────
-interface AgentAnim {
-  id: string;
-  x: number; y: number; vx: number;
-  seated: boolean; walkTimer: number;
-  facing: boolean;
-  bubble?: string; bubbleTimer?: number;
+// ─── Sub-components ────────────────────────────────────────────────────────────
+
+interface NexusHeaderProps {
+  stats: { online: number; total: number; tokens: number; tasks: number };
 }
 
-function initAnim(id: string, cw: number): AgentAnim {
-  const desk = getDeskPos(id, cw);
-  const bounds = getRoomBounds(id, cw);
-  const x = desk ? desk.x + 28 : (bounds ? bounds.x + bounds.w / 2 : cw / 2);
-  const y = desk ? desk.y + 50 : (bounds ? bounds.y + bounds.h / 2 : 300);
-  return {
-    id, x, y, vx: 0, seated: true,
-    walkTimer: 180 + Math.floor(Math.random() * 200),
-    facing: true,
+function NexusHeader({ stats }: NexusHeaderProps) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "12px 24px",
+        background: "rgba(5,8,20,0.96)",
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
+        backdropFilter: "blur(12px)",
+        flexShrink: 0,
+        zIndex: 10,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
+            background: "#00E5A0",
+            boxShadow: "0 0 8px #00E5A0",
+          }}
+        />
+        <span
+          style={{
+            color: "#8898BB",
+            fontSize: 11,
+            fontFamily: "'JetBrains Mono', monospace",
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+          }}
+        >
+          NEXUS — OFICINA VIRTUAL
+        </span>
+      </div>
+
+      <div style={{ display: "flex", gap: 32 }}>
+        {[
+          { label: "AGENTS ONLINE", value: `${stats.online}/${stats.total}`, color: "#00E5A0" },
+          { label: "TOKENS HOY",   value: stats.tokens.toLocaleString(),     color: "#7B61FF" },
+          { label: "TAREAS",       value: stats.tasks.toString(),            color: "#FFB800" },
+        ].map(({ label, value, color }) => (
+          <div key={label} style={{ textAlign: "center" }}>
+            <div style={{ color: "#4A5570", fontSize: 9, fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.1em" }}>
+              {label}
+            </div>
+            <div style={{ color, fontSize: 14, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>
+              {value}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+interface AgentPanelProps {
+  agent: Agent;
+  onClose: () => void;
+  onChat: () => void;
+  onStatusChange: (s: AgentStatus) => void;
+}
+
+function AgentPanel({ agent, onClose, onChat, onStatusChange }: AgentPanelProps) {
+  const cfg = AGENT_CONFIG[agent.id];
+  const statusColors: Record<string, string> = {
+    online: "#00E5A0", busy: "#FFB800", offline: "#4A5570", error: "#FF4757",
   };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 40, scale: 0.96 }}
+      animate={{ opacity: 1, x: 0, scale: 1 }}
+      exit={{ opacity: 0, x: 40, scale: 0.96 }}
+      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+      style={{
+        position: "absolute",
+        top: 20,
+        right: 20,
+        width: 300,
+        background: "rgba(8,10,22,0.97)",
+        border: `1px solid ${cfg?.color ?? "#FFFFFF"}30`,
+        borderRadius: 12,
+        padding: 20,
+        zIndex: 100,
+        boxShadow: `0 24px 64px rgba(0,0,0,0.7), 0 0 0 1px ${cfg?.color ?? "#FFFFFF"}18`,
+        backdropFilter: "blur(20px)",
+      }}
+    >
+      {/* Close */}
+      <button
+        onClick={onClose}
+        style={{
+          position: "absolute",
+          top: 12,
+          right: 12,
+          background: "rgba(255,255,255,0.06)",
+          border: "none",
+          color: "#6070A0",
+          width: 24,
+          height: 24,
+          borderRadius: 6,
+          cursor: "pointer",
+          fontSize: 14,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        ×
+      </button>
+
+      {/* Agent header */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+        <div
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 10,
+            background: `${cfg?.color ?? "#FFFFFF"}18`,
+            border: `1px solid ${cfg?.color ?? "#FFFFFF"}40`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 20,
+          }}
+        >
+          {agent.icon}
+        </div>
+        <div>
+          <div style={{ color: "#E8ECF8", fontSize: 14, fontWeight: 700, marginBottom: 2 }}>
+            {agent.name}
+          </div>
+          <div style={{ color: "#4A5570", fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>
+            {agent.role}
+          </div>
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 4,
+              marginTop: 3,
+              padding: "1px 7px",
+              borderRadius: 20,
+              background: `${cfg?.color ?? "#FFFFFF"}18`,
+              border: `1px solid ${cfg?.color ?? "#FFFFFF"}40`,
+            }}
+          >
+            <div
+              style={{
+                width: 5,
+                height: 5,
+                borderRadius: "50%",
+                background: statusColors[agent.status] ?? "#4A5570",
+                boxShadow: `0 0 5px ${statusColors[agent.status] ?? "#4A5570"}`,
+              }}
+            />
+            <span
+              style={{
+                color: statusColors[agent.status] ?? "#4A5570",
+                fontSize: 9,
+                fontFamily: "'JetBrains Mono', monospace",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+              }}
+            >
+              {agent.status}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Dept badge */}
+      {cfg && (
+        <div
+          style={{
+            display: "inline-block",
+            padding: "3px 10px",
+            borderRadius: 4,
+            background: cfg.color + "20",
+            border: `1px solid ${cfg.color}50`,
+            color: cfg.color,
+            fontSize: 9,
+            fontFamily: "'JetBrains Mono', monospace",
+            letterSpacing: "0.12em",
+            marginBottom: 14,
+          }}
+        >
+          {cfg.dept}
+        </div>
+      )}
+
+      {/* Metrics */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr 1fr",
+          gap: 8,
+          marginBottom: 14,
+        }}
+      >
+        {[
+          { label: "TAREAS", value: agent.tasksCompleted },
+          { label: "TOKENS", value: `${(agent.tokensUsed / 1000).toFixed(1)}k` },
+          { label: "LATENCIA", value: `${agent.avgResponseMs}ms` },
+        ].map(({ label, value }) => (
+          <div
+            key={label}
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              borderRadius: 6,
+              padding: "8px 6px",
+              textAlign: "center",
+              border: "1px solid rgba(255,255,255,0.05)",
+            }}
+          >
+            <div style={{ color: "#3A4560", fontSize: 8, fontFamily: "'JetBrains Mono', monospace", marginBottom: 3 }}>
+              {label}
+            </div>
+            <div style={{ color: "#8090B0", fontSize: 12, fontWeight: 700 }}>
+              {value}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Skills */}
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ color: "#3A4560", fontSize: 9, fontFamily: "'JetBrains Mono', monospace", marginBottom: 6, letterSpacing: "0.1em" }}>
+          SKILLS
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+          {agent.skills.slice(0, 6).map((skill) => (
+            <span
+              key={skill}
+              style={{
+                padding: "2px 8px",
+                background: "rgba(255,255,255,0.05)",
+                borderRadius: 4,
+                color: "#5A6A90",
+                fontSize: 9,
+                fontFamily: "'JetBrains Mono', monospace",
+                border: "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
+              {skill}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Status selector */}
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ color: "#3A4560", fontSize: 9, fontFamily: "'JetBrains Mono', monospace", marginBottom: 6, letterSpacing: "0.1em" }}>
+          CAMBIAR ESTADO
+        </div>
+        <div style={{ display: "flex", gap: 6 }}>
+          {(["online", "busy", "offline"] as AgentStatus[]).map((s) => (
+            <button
+              key={s}
+              onClick={() => onStatusChange(s)}
+              style={{
+                flex: 1,
+                padding: "5px 0",
+                borderRadius: 5,
+                border: `1px solid ${agent.status === s ? statusColors[s] + "80" : "rgba(255,255,255,0.07)"}`,
+                background: agent.status === s ? statusColors[s] + "20" : "rgba(255,255,255,0.03)",
+                color: agent.status === s ? statusColors[s] : "#3A4560",
+                fontSize: 9,
+                fontFamily: "'JetBrains Mono', monospace",
+                cursor: "pointer",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+              }}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Chat CTA */}
+      <button
+        onClick={onChat}
+        style={{
+          width: "100%",
+          padding: "10px 0",
+          background: `linear-gradient(135deg, ${cfg?.color ?? "#00D4FF"}25, ${cfg?.color ?? "#00D4FF"}10)`,
+          border: `1px solid ${cfg?.color ?? "#00D4FF"}60`,
+          borderRadius: 8,
+          color: cfg?.color ?? "#00D4FF",
+          fontSize: 11,
+          fontFamily: "'JetBrains Mono', monospace",
+          fontWeight: 700,
+          cursor: "pointer",
+          letterSpacing: "0.1em",
+          textTransform: "uppercase",
+          transition: "all 0.2s",
+        }}
+      >
+        INICIAR CHAT →
+      </button>
+    </motion.div>
+  );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
-type TimeOfDay = "dia" | "tarde" | "noche";
+// ─── Main page component ───────────────────────────────────────────────────────
 
-export default function PixelStage() {
-  const { agents, sendMessage, createChatSession, chatSessions } = useAstraeo();
-  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
-  const selectAgent = (id: string | null) => setSelectedAgentId(id);
+export default function NexusPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animRef = useRef<AgentAnim[]>([]);
-  const tickRef = useRef(0);
   const rafRef = useRef<number>(0);
-  const [tod, setTod] = useState<TimeOfDay>("dia");
-  const [chatInput, setChatInput] = useState("");
-  const [chatting, setChatting] = useState(false);
+  const timeRef = useRef<number>(0);
 
-  // Sync animRef: only track visible (non-offline) agents
-  useEffect(() => {
-    const cw = canvasRef.current?.offsetWidth ?? 1100;
-    const existing = new Map(animRef.current.map(s => [s.id, s]));
-    animRef.current = agents
-      .filter(a => a.status !== "offline")
-      .map(a => existing.get(a.id) ?? initAnim(a.id, cw));
-  }, [agents]);
+  const { agents, setPage, createChatSession, setActiveChat, setAgentStatus } = useAstraeo();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
-  // Canvas resize
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ro = new ResizeObserver(() => {
-      canvas.width = canvas.offsetWidth;
-      canvas.height = CANVAS_H;
-    });
-    ro.observe(canvas);
-    canvas.width = canvas.offsetWidth || 1100;
-    canvas.height = CANVAS_H;
-    return () => ro.disconnect();
-  }, []);
+  const avatarHitboxes = useRef<Map<string, { x: number; y: number; r: number }>>(new Map());
 
-  // Time of day cycle
-  useEffect(() => {
-    const seq: TimeOfDay[] = ["dia", "tarde", "noche"];
-    let i = 0;
-    const id = setInterval(() => { i = (i + 1) % 3; setTod(seq[i]); }, 20000);
-    return () => clearInterval(id);
-  }, []);
+  const stats = useMemo(
+    () => ({
+      online: agents.filter((a) => a.status === "online").length,
+      total:  agents.length,
+      tokens: agents.reduce((s, a) => s + a.tokensUsed, 0),
+      tasks:  agents.reduce((s, a) => s + a.tasksCompleted, 0),
+    }),
+    [agents]
+  );
 
-  // Animation loop
+  // RAF render loop
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const loop = () => {
-      const cw = canvas.width;
-      const tick = tickRef.current++;
+    const dpr = window.devicePixelRatio || 1;
+    const W = 1500, H = 800;
+    canvas.width  = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width  = `${W}px`;
+    canvas.style.height = `${H}px`;
+    ctx.scale(dpr, dpr);
 
-      // Background
-      ctx.fillStyle = "#06080F";
-      ctx.fillRect(0, 0, cw, CANVAS_H);
+    let running = true;
 
-      // Window strip
-      drawWindowStrip(ctx, cw, tod);
+    function frame(ts: number) {
+      if (!running) return;
+      timeRef.current = ts / 1000;
+      ctx!.clearRect(0, 0, W, H);
+      drawScene(ctx!, timeRef.current, agents, hoveredId, selectedId, avatarHitboxes.current);
+      rafRef.current = requestAnimationFrame(frame);
+    }
 
-      // Hub (center between room columns)
-      const hubX = ROOM_W;
-      const hubW = cw - 2 * ROOM_W;
-      drawHub(ctx, hubX, WIN_H, hubW, CANVAS_H - WIN_H - LAB_H);
-
-      // Skill lab
-      const offlineAgents = agents.filter(a => a.status === "offline");
-      drawSkillLab(ctx, cw, tick, offlineAgents);
-
-      // Rooms + desks
-      const visibleAgents = agents.filter(a => a.status !== "offline");
-      for (const agent of visibleAgents) {
-        const cfg = AGENT_CFG[agent.id];
-        if (!cfg || cfg.row >= 3) continue;
-        const rx = cfg.col === "left" ? 0 : cw - ROOM_W;
-        const ry = ROW_Y[cfg.row];
-        drawRoom(ctx, rx, ry, ROOM_W, RH, cfg);
-        const desk = getDeskPos(agent.id, cw);
-        if (desk) {
-          const anim = animRef.current.find(a => a.id === agent.id);
-          drawDesk(ctx, desk.x, desk.y, cfg.color, anim?.seated ?? true);
-        }
-        // Corner plant
-        const plantX = cfg.col === "left" ? rx + 16 : rx + ROOM_W - 16;
-        drawPlant(ctx, plantX, ry + RH - 32);
-      }
-
-      // Memory network lines between active desks
-      const activeDesks = visibleAgents
-        .filter(a => a.active)
-        .map(a => getDeskPos(a.id, cw))
-        .filter((d): d is { x: number; y: number } => d !== null);
-      const netA = 0.06 + 0.04 * Math.sin(tick * 0.025);
-      ctx.strokeStyle = `rgba(0,212,255,${netA})`;
-      ctx.lineWidth = 1;
-      for (let i = 0; i < activeDesks.length; i++) {
-        for (let j = i + 1; j < activeDesks.length; j++) {
-          ctx.beginPath();
-          ctx.moveTo(activeDesks[i].x + 28, activeDesks[i].y + 15);
-          ctx.lineTo(activeDesks[j].x + 28, activeDesks[j].y + 15);
-          ctx.stroke();
-        }
-      }
-
-      // Time-of-day tint overlay
-      if (tod === "tarde") {
-        ctx.fillStyle = "rgba(60,30,0,0.06)";
-        ctx.fillRect(0, 0, cw, CANVAS_H);
-      } else if (tod === "noche") {
-        ctx.fillStyle = "rgba(0,5,20,0.15)";
-        ctx.fillRect(0, 0, cw, CANVAS_H);
-      }
-
-      // Update + draw agents
-      for (const s of animRef.current) {
-        const agent = agents.find(a => a.id === s.id);
-        if (!agent || agent.status === "offline") continue;
-        const cfg = AGENT_CFG[s.id];
-        if (!cfg) continue;
-        const bounds = getRoomBounds(s.id, cw);
-        const desk = getDeskPos(s.id, cw);
-        if (!bounds || !desk) continue;
-
-        // Walk logic
-        s.walkTimer--;
-        if (s.walkTimer <= 0) {
-          if (s.seated) {
-            s.seated = false;
-            s.y = bounds.y + RH - 46;
-            s.vx = Math.random() < 0.5 ? 0.55 : -0.55;
-            s.walkTimer = 40 + Math.floor(Math.random() * 50);
-          } else {
-            s.seated = true;
-            s.x = desk.x + 28;
-            s.y = desk.y + 50;
-            s.vx = 0;
-            s.walkTimer = 220 + Math.floor(Math.random() * 200);
-          }
-        }
-        if (!s.seated) {
-          s.x += s.vx;
-          if (s.vx !== 0) s.facing = s.vx > 0;
-          const pad = 14;
-          if (s.x < bounds.x + pad) { s.x = bounds.x + pad; s.vx = 0.55; s.facing = true; }
-          if (s.x > bounds.x + bounds.w - pad) { s.x = bounds.x + bounds.w - pad; s.vx = -0.55; s.facing = false; }
-        } else {
-          s.x = desk.x + 28;
-          s.y = desk.y + 50;
-        }
-
-        // Bubbles
-        if (!s.bubble && Math.random() < 0.003) {
-          const list = BUBBLES[s.id] ?? ["..."];
-          s.bubble = list[Math.floor(Math.random() * list.length)];
-          s.bubbleTimer = 160;
-        }
-        if (s.bubbleTimer !== undefined) {
-          s.bubbleTimer--;
-          if (s.bubbleTimer <= 0) { s.bubble = undefined; s.bubbleTimer = undefined; }
-        }
-
-        const label = agent.name.length <= 5 ? agent.name.toUpperCase() : agent.name.split(" ")[0].toUpperCase();
-        drawPerson(ctx, s.x, s.y, cfg, !s.seated, s.facing, label, s.id === selectedAgentId, s.bubble);
-      }
-
-      rafRef.current = requestAnimationFrame(loop);
+    rafRef.current = requestAnimationFrame(frame);
+    return () => {
+      running = false;
+      cancelAnimationFrame(rafRef.current);
     };
+  }, [agents, hoveredId, selectedId]);
 
-    rafRef.current = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [agents, selectedAgentId, tod]);
+  const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    const rect = canvasRef.current!.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
 
-  const handleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
-    const my = (e.clientY - rect.top) * (canvas.height / rect.height);
-    for (const s of animRef.current) {
-      const dx = mx - s.x, dy = my - s.y;
-      if (dx * dx + dy * dy < 900) {
-        selectAgent(s.id === selectedAgentId ? null : s.id);
+    for (const [id, box] of avatarHitboxes.current) {
+      const dist = Math.sqrt((mx - box.x) ** 2 + (my - box.y) ** 2);
+      if (dist <= box.r + 12) {
+        setSelectedId((prev) => (prev === id ? null : id));
         return;
       }
     }
-    selectAgent(null);
-  }, [selectAgent, selectedAgentId]);
+    setSelectedId(null);
+  }, []);
 
-  const handleChat = async () => {
-    if (!chatInput.trim() || !selectedAgentId || chatting) return;
-    setChatting(true);
-    const existing = chatSessions.find(c => c.agentId === selectedAgentId);
-    const sid = existing?.id ?? createChatSession(selectedAgentId);
-    await sendMessage(sid, chatInput.trim(), selectedAgentId);
-    setChatInput("");
-    setChatting(false);
-    const anim = animRef.current.find(s => s.id === selectedAgentId);
-    if (anim) { anim.bubble = "Pensando..."; anim.bubbleTimer = 80; }
-  };
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    const rect = canvasRef.current!.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
 
-  const selectedAgent = selectedAgentId ? agents.find(a => a.id === selectedAgentId) : null;
-  const lastReply = selectedAgentId
-    ? chatSessions.find(c => c.agentId === selectedAgentId)?.messages.filter(m => m.role === "agent").at(-1)
-    : null;
-  const visibleCount = agents.filter(a => a.status !== "offline").length;
+    let found: string | null = null;
+    for (const [id, box] of avatarHitboxes.current) {
+      const dist = Math.sqrt((mx - box.x) ** 2 + (my - box.y) ** 2);
+      if (dist <= box.r + 16) {
+        found = id;
+        break;
+      }
+    }
+    setHoveredId(found);
+    if (canvasRef.current) {
+      canvasRef.current.style.cursor = found ? "pointer" : "default";
+    }
+  }, []);
+
+  const selectedAgent = useMemo(
+    () => agents.find((a) => a.id === selectedId),
+    [agents, selectedId]
+  );
+
+  const handleStartChat = useCallback(
+    (agentId: string) => {
+      const sessionId = createChatSession(agentId);
+      setActiveChat(sessionId);
+      setPage("chat");
+    },
+    [createChatSession, setActiveChat, setPage]
+  );
 
   return (
-    <div className="flex flex-col h-full bg-[#06080F] select-none">
-      {/* Top controls */}
-      <div className="flex items-center gap-3 px-5 py-3 border-b border-[#1A2040] bg-[#080B14] flex-shrink-0 flex-wrap">
-        <span className="text-[10px] font-mono text-[#3A4A70] uppercase tracking-widest">
-          Pixel Stage — ASTRAEO Office
-        </span>
-        <div className="flex gap-1 ml-2">
-          {(["dia", "tarde", "noche"] as TimeOfDay[]).map(t => (
-            <button key={t} onClick={() => setTod(t)}
-              className="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all"
-              style={{
-                background: tod === t ? "rgba(0,212,255,0.12)" : "transparent",
-                color: tod === t ? "#00D4FF" : "#3A4A70",
-                border: `1px solid ${tod === t ? "#00D4FF30" : "#1A2040"}`,
-              }}>
-              {t === "dia" ? "☀ Día" : t === "tarde" ? "🌆 Tarde" : "🌙 Noche"}
-            </button>
-          ))}
-        </div>
-        <div className="flex gap-1.5 ml-auto flex-wrap">
-          {agents.map(agent => {
-            const cfg = AGENT_CFG[agent.id];
-            if (!cfg) return null;
-            const offline = agent.status === "offline";
-            return (
-              <button key={agent.id}
-                onClick={() => !offline && selectAgent(agent.id === selectedAgentId ? null : agent.id)}
-                className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[9px] font-mono transition-all"
-                style={{
-                  opacity: offline ? 0.3 : 1,
-                  background: selectedAgentId === agent.id ? `${cfg.color}18` : "transparent",
-                  border: `1px solid ${selectedAgentId === agent.id ? cfg.color : "#1A2040"}`,
-                  color: offline ? "#2A3A60" : cfg.color,
-                  cursor: offline ? "not-allowed" : "pointer",
-                }}>
-                <span style={{ width: 6, height: 6, borderRadius: "50%", display: "inline-block", background: offline ? "#2A3A60" : cfg.color }} />
-                {agent.name}
-                {offline && <span className="opacity-40 text-[8px]">OFF</span>}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+    <div
+      style={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        background: "linear-gradient(180deg, #080420 0%, #0A0618 50%, #060318 100%)",
+        overflow: "hidden",
+      }}
+    >
+      <NexusHeader stats={stats} />
 
-      {/* Canvas */}
-      <div className="flex-1 relative overflow-hidden">
-        <canvas ref={canvasRef} onClick={handleClick}
-          className="w-full cursor-pointer"
-          style={{ height: CANVAS_H, display: "block", imageRendering: "pixelated" }} />
-      </div>
+      <div
+        style={{
+          flex: 1,
+          overflow: "auto",
+          position: "relative",
+          background: "transparent",
+        }}
+      >
+        <canvas
+          ref={canvasRef}
+          onClick={handleCanvasClick}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={() => setHoveredId(null)}
+          style={{ display: "block" }}
+        />
 
-      {/* Agent chat panel */}
-      {selectedAgent && (
-        <div className="border-t border-[#1A2040] bg-[#080B14] px-5 py-3 flex-shrink-0">
-          <div className="flex items-start gap-3">
-            <div className="flex-1 min-w-0">
-              {lastReply && (
-                <div className="mb-2 px-3 py-2 rounded text-[11px] font-mono text-[#C0CDE0] bg-[#0D1020] border border-[#1A2040] leading-relaxed max-h-16 overflow-y-auto">
-                  {lastReply.content}
-                </div>
-              )}
-              <div className="flex gap-2">
-                <input
-                  className="flex-1 px-3 py-1.5 rounded text-[11px] font-mono bg-[#0D1020] border border-[#1A2040] text-[#C0CDE0] placeholder-[#2A3A60] focus:outline-none focus:border-[#00D4FF40]"
-                  placeholder={`Hablar con ${selectedAgent.name}...`}
-                  value={chatInput}
-                  onChange={e => setChatInput(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && handleChat()}
-                />
-                <button onClick={handleChat} disabled={chatting || !chatInput.trim()}
-                  className="px-4 py-1.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider transition-all disabled:opacity-40"
-                  style={{
-                    background: `${AGENT_CFG[selectedAgent.id]?.color ?? "#00D4FF"}20`,
-                    color: AGENT_CFG[selectedAgent.id]?.color ?? "#00D4FF",
-                    border: `1px solid ${AGENT_CFG[selectedAgent.id]?.color ?? "#00D4FF"}40`,
-                  }}>
-                  {chatting ? "..." : "Enviar"}
-                </button>
-              </div>
-            </div>
-            <div className="text-right flex-shrink-0">
-              <div className="text-[10px] font-mono font-bold" style={{ color: AGENT_CFG[selectedAgent.id]?.color ?? "#00D4FF" }}>
-                {selectedAgent.name.toUpperCase()}
-              </div>
-              <div className="text-[9px] font-mono text-[#3A4A70] mt-0.5">{AGENT_CFG[selectedAgent.id]?.dept}</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Footer */}
-      <div className="px-5 py-1.5 border-t border-[#1A2040] bg-[#080B14] flex items-center justify-between flex-shrink-0">
-        <span className="text-[9px] font-mono text-[#2A3A60]">
-          Click en un agente para interactuar · {visibleCount} agentes en oficina
-        </span>
-        <span className="text-[9px] font-mono text-[#1A2A40]">
-          ⚡ {offlineCount(agents)} agentes en Skill Lab
-        </span>
+        <AnimatePresence>
+          {selectedAgent && (
+            <AgentPanel
+              agent={selectedAgent}
+              onClose={() => setSelectedId(null)}
+              onChat={() => handleStartChat(selectedAgent.id)}
+              onStatusChange={(s: AgentStatus) => setAgentStatus(selectedAgent.id, s)}
+            />
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
-}
-
-function offlineCount(agents: Agent[]) {
-  return agents.filter(a => a.status === "offline").length;
 }

@@ -276,41 +276,90 @@ export const useAstraeo = create<AstraeoState>()(
             .slice(-20)
             .map((m) => ({ role: m.role === "agent" ? "assistant" as const : "user" as const, content: m.content }));
 
-          const res = await fetch("https://api.anthropic.com/v1/messages", {
+          const systemPrompt = [
+            agent?.systemPrompt ?? "Eres un asistente útil.",
+            state.settings.companyContext?.trim()
+              ? `\n\nContexto de la empresa:\n${state.settings.companyContext}`
+              : "",
+          ].join("");
+
+          const res = await fetch("/api/chat", {
             method: "POST",
-            headers: {
-              "content-type": "application/json",
-              "x-api-key": apiKey,
-              "anthropic-version": "2023-06-01",
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              model: state.settings.claudeModel,
-              max_tokens: 1024,
-              system: [
-                agent?.systemPrompt ?? "Eres un asistente útil.",
-                state.settings.companyContext?.trim()
-                  ? `\n\nContexto de la empresa:\n${state.settings.companyContext}`
-                  : "",
-              ].join(""),
               messages: history,
+              systemPrompt,
+              model: state.settings.claudeModel,
+              apiKey,
             }),
           });
 
           if (!res.ok) throw new Error(`API Error ${res.status}`);
-          const data = await res.json();
-          const replyText = data.content?.[0]?.text ?? "Sin respuesta";
-          const tokens = data.usage?.output_tokens ?? 0;
 
-          const agentMsg: ChatMessage = {
-            id: nanoid(), role: "agent", agentId,
-            content: replyText, timestamp: new Date().toISOString(), tokens,
-          };
-          addMsg(agentMsg);
+          const reader = res.body!.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
+          let replyText = "";
+          let tokens = 0;
+
+          const assistantMsgId = nanoid();
+          addMsg({ id: assistantMsgId, role: "agent", agentId, content: "", timestamp: new Date().toISOString() });
+
+          const updateContent = (text: string) =>
+            set((s) => ({
+              chatSessions: s.chatSessions.map((c) =>
+                c.id === sessionId
+                  ? {
+                      ...c,
+                      messages: c.messages.map((m) =>
+                        m.id === assistantMsgId ? { ...m, content: text } : m
+                      ),
+                      updatedAt: new Date().toISOString(),
+                    }
+                  : c
+              ),
+            }));
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n\n");
+            buffer = lines.pop() ?? "";
+
+            for (const line of lines) {
+              if (!line.startsWith("data: ")) continue;
+              const data = JSON.parse(line.slice(6)) as
+                | { type: "text"; delta: string }
+                | { type: "done"; tokens: number }
+                | { type: "error"; message: string };
+
+              if (data.type === "text") {
+                replyText += data.delta;
+                updateContent(replyText);
+              } else if (data.type === "done") {
+                tokens = data.tokens;
+              } else if (data.type === "error") {
+                throw new Error(data.message);
+              }
+            }
+          }
 
           set((s) => ({
+            chatSessions: s.chatSessions.map((c) =>
+              c.id === sessionId
+                ? {
+                    ...c,
+                    messages: c.messages.map((m) =>
+                      m.id === assistantMsgId ? { ...m, tokens } : m
+                    ),
+                  }
+                : c
+            ),
             agents: s.agents.map((a) =>
               a.id === agentId
-                ? { ...a, tokensUsed: a.tokensUsed + (data.usage?.total_tokens ?? 0), tasksCompleted: a.tasksCompleted + 1 }
+                ? { ...a, tokensUsed: a.tokensUsed + tokens, tasksCompleted: a.tasksCompleted + 1 }
                 : a
             ),
           }));

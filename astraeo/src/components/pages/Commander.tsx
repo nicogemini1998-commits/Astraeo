@@ -373,25 +373,21 @@ export default function Commander() {
       const toolCallsAccum: CmdMessage["toolCalls"] = [];
 
       while (continueLoop) {
-        const res = await fetch("https://api.anthropic.com/v1/messages", {
+        const res = await fetch("/api/commander", {
           method: "POST",
-          headers: {
-            "content-type": "application/json",
-            "x-api-key": apiKey,
-            "anthropic-version": "2023-06-01",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            model: settings.claudeModel,
-            max_tokens: 2048,
-            system: buildSystemPrompt(),
-            tools: COMMANDER_TOOLS,
             messages: iterMessages,
+            systemPrompt: buildSystemPrompt(),
+            tools: COMMANDER_TOOLS,
+            model: settings.claudeModel,
+            apiKey,
           }),
         });
 
         if (!res.ok) {
-          const err = await res.text();
-          throw new Error(`API ${res.status}: ${err}`);
+          const errData = await res.json().catch(() => ({ error: res.statusText }));
+          throw new Error(errData.error ?? `Error del servidor ${res.status}`);
         }
 
         const data = await res.json();

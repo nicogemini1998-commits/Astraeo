@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useAstraeo } from "@/store/astraeo";
 import Sidebar from "@/components/layout/Sidebar";
 import TopBar from "@/components/layout/TopBar";
@@ -16,6 +17,26 @@ import Analytics from "@/components/pages/Analytics";
 import Integrations from "@/components/pages/Integrations";
 import SettingsPage from "@/components/pages/Settings";
 import Commander from "@/components/pages/Commander";
+
+import type { Variants } from "framer-motion";
+
+const EASE_STANDARD: [number, number, number, number] = [0.4, 0, 0.2, 1];
+
+const pageVariants: Variants = {
+  initial: { opacity: 0, x: -8, filter: "blur(4px)" },
+  enter: {
+    opacity: 1,
+    x: 0,
+    filter: "blur(0px)",
+    transition: { duration: 0.3, ease: EASE_STANDARD },
+  },
+  exit: {
+    opacity: 0,
+    x: 8,
+    filter: "blur(4px)",
+    transition: { duration: 0.15, ease: EASE_STANDARD },
+  },
+};
 
 function Starfield({ density = 80 }: { density?: number }) {
   const count = Math.max(20, Math.min(200, density));
@@ -36,17 +57,23 @@ function Starfield({ density = 80 }: { density?: number }) {
           key={s.id}
           className="star"
           style={{
-            left: s.left, top: s.top,
-            width: s.size, height: s.size,
+            left: s.left,
+            top: s.top,
+            width: s.size,
+            height: s.size,
             opacity: s.opacity,
             animation: `twinkle ${s.duration}s ease-in-out ${s.delay}s infinite`,
           }}
         />
       ))}
-      <div style={{
-        position: "absolute", inset: 0,
-        background: "radial-gradient(ellipse at 20% 50%, rgba(0,212,255,0.03) 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, rgba(123,97,255,0.03) 0%, transparent 50%)",
-      }} />
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "radial-gradient(ellipse at 20% 50%, rgba(0,212,255,0.03) 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, rgba(123,97,255,0.03) 0%, transparent 50%)",
+        }}
+      />
     </div>
   );
 }
@@ -68,7 +95,20 @@ function PageContent() {
     commander: <Commander />,
   };
 
-  return <div className="h-full overflow-hidden">{pageMap[currentPage] ?? <Overview />}</div>;
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={currentPage}
+        variants={pageVariants}
+        initial="initial"
+        animate="enter"
+        exit="exit"
+        className="h-full overflow-hidden"
+      >
+        {pageMap[currentPage] ?? <Overview />}
+      </motion.div>
+    </AnimatePresence>
+  );
 }
 
 export default function App() {
