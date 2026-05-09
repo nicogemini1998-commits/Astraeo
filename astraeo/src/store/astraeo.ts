@@ -115,40 +115,37 @@ interface AstraeoState {
 const defaultSettings: AppSettings = {
   claudeApiKey: "",
   claudeModel: "claude-sonnet-4-6",
-  theme: "dark",
+  userName: "Comandante",
+  userRole: "Director de Operaciones",
   language: "es",
+  timezone: "Europe/Madrid",
+  maxTokens: 4096,
+  temperature: 0.7,
+  streamingEnabled: true,
+  systemBehavior: "balanced",
+  agentTimeout: 30,
+  agentRetries: 2,
+  maxConcurrentAgents: 4,
+  memoryRetentionDays: 30,
+  autoSaveMemory: true,
+  companyName: "CLIENDER",
+  companyIndustry: "consultoria",
+  companyContext: `CLIENDER — Consultora Tecnológica de Ventas\nUbicación: Puerto de Sagunto (Valencia, España) | Equipo: ~12 profesionales\n\nMISIÓN: Reconstruye sistemas de ventas completos para empresas con mínimo 5 empleados, estructura comercial activa y capacidad de inversión.\n\nTRES PILARES:\n1. Captación de clientes — Meta Ads, Google Ads, optimización de CPL, creatividades IA.\n2. Sistema comercial — CRM Go High Level, WhatsApp/email automation, flujos de cualificación.\n3. Visibilidad digital — SEO, redes sociales, web, reputación online.`,
+  brandValues: ["Precisión", "Resultados", "Automatización"],
+  theme: "dark",
+  animationSpeed: "normal",
+  compactMode: false,
+  starfieldDensity: 80,
+  fontSize: "normal",
+  sidebarCollapsed: false,
   notifications: true,
   soundEffects: false,
+  notifyOnAgentComplete: true,
+  notifyOnError: true,
+  notifyOnWorkflowEnd: true,
+  analyticsEnabled: false,
+  webhookUrl: "",
   realtimeUpdates: true,
-  userName: "Comandante",
-  userRole: "Admin Level 5",
-  starfieldDensity: 80,
-  compactMode: false,
-  companyContext: `CLIENDER — Consultora Tecnológica de Ventas
-Ubicación: Puerto de Sagunto (Valencia, España) | Equipo: ~12 profesionales
-
-MISIÓN: No gestiona marketing. Reconstruye sistemas de ventas completos para empresas con mínimo 5 empleados, estructura comercial activa y capacidad de inversión.
-
-TRES PILARES:
-1. Captación de clientes — Meta Ads, Google Ads, optimización de CPL, creatividades IA, calidad de leads.
-2. Sistema comercial y automatización — CRM Go High Level, WhatsApp/email automation, flujos de cualificación de leads, reducción de carga manual del equipo comercial.
-3. Visibilidad digital — SEO, redes sociales, web, reputación online (reseñas), imagen de marca.
-
-METODOLOGÍA (4 fases):
-1. Auditoría estratégica — análisis completo del sistema actual del cliente.
-2. Diseño del sistema — rediseño del flujo comercial + arquitectura de automatizaciones.
-3. Implementación — CRM, automatizaciones, campañas en marcha.
-4. Optimización continua — mejora de conversión, ajuste de campañas, refinamiento.
-
-STACK TECNOLÓGICO: Go High Level (CRM principal), automatización WhatsApp + email, IA para creatividades (UGC, vídeo hiperrealista), chatbots de cualificación, sistemas de captación de reseñas.
-
-IA EN CLIENDER: Integrada en captación (creatividades ganadoras, copies), procesos comerciales (chatbots, filtrado automático de leads, nutrición de contactos) y visibilidad digital (calendario de contenido, SEO, web).
-
-CLIENDER TECH (línea emergente): Desarrollo de software a medida para empresas avanzadas. Tickets 2.000€–5.000€+. Integra múltiples herramientas en un solo entorno. En fase de validación.
-
-PROPUESTA DE VALOR: Más leads cualificados, mejor conversión, menos trabajo manual, procesos automatizados, estructura comercial profesionalizada, crecimiento predecible.
-
-FILOSOFÍA: "CLIENDER no vende servicios. CLIENDER resuelve problemas concretos con precisión."`,
 };
 
 const makeLatencyHistory = (): MetricPoint[] => {

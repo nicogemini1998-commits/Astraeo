@@ -136,18 +136,47 @@ export interface Notification {
 }
 
 export interface AppSettings {
+  // Perfil
   claudeApiKey: string;
   claudeModel: string;
-  theme: "dark" | "light";
-  language: string;
-  notifications: boolean;
-  soundEffects: boolean;
-  realtimeUpdates: boolean;
   userName: string;
   userRole: string;
-  starfieldDensity: number;
-  compactMode: boolean;
+  language: string;
+  timezone: string;
+  // IA
+  maxTokens: number;
+  temperature: number;
+  streamingEnabled: boolean;
+  systemBehavior: "precise" | "balanced" | "creative";
+  // Agentes
+  agentTimeout: number;
+  agentRetries: number;
+  maxConcurrentAgents: number;
+  memoryRetentionDays: number;
+  autoSaveMemory: boolean;
+  // Empresa
+  companyName: string;
+  companyIndustry: string;
   companyContext: string;
+  brandValues: string[];
+  // Interfaz
+  theme: "dark" | "light";
+  animationSpeed: "fast" | "normal" | "slow";
+  compactMode: boolean;
+  starfieldDensity: number;
+  fontSize: "small" | "normal" | "large";
+  sidebarCollapsed: boolean;
+  // Notificaciones
+  notifications: boolean;
+  soundEffects: boolean;
+  notifyOnAgentComplete: boolean;
+  notifyOnError: boolean;
+  notifyOnWorkflowEnd: boolean;
+  // Privacidad
+  analyticsEnabled: boolean;
+  // Webhook
+  webhookUrl: string;
+  realtimeUpdates: boolean;
 }
 
 // ─── Skills ───────────────────────────────────────────────────────────────────

@@ -3,67 +3,37 @@ import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAstraeo } from "@/store/astraeo";
 import type { AppSettings } from "@/lib/types";
+import type { Section } from "@/components/settings/types";
+import {
+  SectionCard, FieldGroup, ToggleRow, SliderField, SegmentedControl, DangerRow,
+  INPUT, SELECT, GHOST, DANGER_BTN, EASE,
+} from "@/components/settings/SettingsComponents";
 
-// ── Constants ──────────────────────────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const MODELS = [
-  {
-    id: "claude-haiku-4-5-20251001",
-    icon: "🌿",
-    label: "Claude Haiku 4.5",
-    sub: "Rápido · Económico",
-    desc: "Respuestas rápidas, agentes frecuentes",
-    badge: "#3D8A60",
-    speedDots: 3,
-    costDots: 1,
-  },
-  {
-    id: "claude-sonnet-4-6",
-    icon: "⚡",
-    label: "Claude Sonnet 4.6",
-    sub: "Balanceado · Recomendado",
-    desc: "Tareas generales, desarrollo, análisis",
-    badge: "#4A8EB8",
-    speedDots: 2,
-    costDots: 2,
-  },
-  {
-    id: "claude-opus-4-7",
-    icon: "🔮",
-    label: "Claude Opus 4.7",
-    sub: "Máxima inteligencia",
-    desc: "Razonamiento profundo, análisis complejo",
-    badge: "#CC785C",
-    speedDots: 1,
-    costDots: 3,
-  },
+  { id: "claude-haiku-4-5-20251001", icon: "🌿", label: "Haiku 4.5",  sub: "Rápido · Económico",        badge: "#3D8A60", speed: 3, cost: 1 },
+  { id: "claude-sonnet-4-6",         icon: "⚡",  label: "Sonnet 4.6", sub: "Balanceado · Recomendado",  badge: "#4A8EB8", speed: 2, cost: 2 },
+  { id: "claude-opus-4-7",           icon: "🔮", label: "Opus 4.7",   sub: "Máxima inteligencia",        badge: "#CC785C", speed: 1, cost: 3 },
 ] as const;
 
-type ModelId = (typeof MODELS)[number]["id"];
-
-const LANGUAGES = [
-  { code: "es", label: "Español" },
-  { code: "en", label: "English" },
-];
-
-const ANIMATION_SPEEDS = [
-  { value: "fast", label: "Rápida" },
-  { value: "normal", label: "Normal" },
-  { value: "slow", label: "Lenta" },
-];
-
-type Section = "general" | "api" | "appearance" | "security" | "context" | "danger";
-
-const NAV_SECTIONS: { id: Section; label: string; icon: string; color: string }[] = [
-  { id: "general",    label: "General",         icon: "◉",  color: "#4A8EB8" },
-  { id: "api",        label: "IA / API",         icon: "🤖", color: "#CC785C" },
-  { id: "appearance", label: "Apariencia",       icon: "◈",  color: "#B04858" },
-  { id: "security",   label: "Seguridad",        icon: "⬡",  color: "#6655CC" },
-  { id: "context",    label: "Contexto Empresa", icon: "🏢", color: "#3D8A60" },
-  { id: "danger",     label: "Zona de Peligro",  icon: "⚠",  color: "#A83C50" },
-];
-
 type ApiStatus = "idle" | "verifying" | "valid" | "invalid";
+
+const INDUSTRIES = [
+  "Consultoría", "Tecnología", "Marketing", "E-commerce",
+  "SaaS", "Fintech", "Retail", "Salud", "Educación", "Otro",
+];
+
+const NAV: { id: Section; label: string; icon: string; color: string }[] = [
+  { id: "perfil",         label: "Perfil",           icon: "◉",  color: "#4A8EB8" },
+  { id: "ia",             label: "IA & API",          icon: "🤖", color: "#CC785C" },
+  { id: "agentes",        label: "Agentes",           icon: "⬡",  color: "#6655CC" },
+  { id: "empresa",        label: "Empresa",           icon: "🏢", color: "#3D8A60" },
+  { id: "interfaz",       label: "Interfaz",          icon: "◈",  color: "#B04858" },
+  { id: "notificaciones", label: "Notificaciones",    icon: "◎",  color: "#B88530" },
+  { id: "privacidad",     label: "Privacidad",        icon: "🔒", color: "#6F5BFF" },
+  { id: "peligro",        label: "Zona de Peligro",   icon: "⚠",  color: "#A83C50" },
+];
 
 const COMPANY_DEFAULT = `CLIENDER — Consultora Tecnológica de Ventas
 Ubicación: Puerto de Sagunto (Valencia, España) | Equipo: ~12 profesionales
@@ -71,11 +41,11 @@ Ubicación: Puerto de Sagunto (Valencia, España) | Equipo: ~12 profesionales
 MISIÓN: Reconstruye sistemas de ventas completos para empresas con mínimo 5 empleados, estructura comercial activa y capacidad de inversión.
 
 TRES PILARES:
-1. Captación de clientes — Meta Ads, Google Ads, optimización de CPL, creatividades IA.
+1. Captación — Meta Ads, Google Ads, optimización de CPL, creatividades IA.
 2. Sistema comercial — CRM Go High Level, WhatsApp/email automation, flujos de cualificación.
 3. Visibilidad digital — SEO, redes sociales, web, reputación online.`;
 
-// ── Main component ─────────────────────────────────────────────────────────────
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
   const {
@@ -83,8 +53,8 @@ export default function SettingsPage() {
     connectIntegration, showToast, chatSessions,
   } = useAstraeo();
 
-  const [localSettings, setLocalSettings] = useState<AppSettings>({ ...settings });
-  const [activeSection, setActiveSection] = useState<Section>("general");
+  const [local, setLocal] = useState<AppSettings>({ ...settings });
+  const [active, setActive] = useState<Section>("perfil");
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
   const [apiStatus, setApiStatus] = useState<ApiStatus>("idle");
   const [verifying, setVerifying] = useState(false);
@@ -92,29 +62,36 @@ export default function SettingsPage() {
   const [clearConfirm, setClearConfirm] = useState(false);
   const [restoreConfirm, setRestoreConfirm] = useState(false);
   const [brandTag, setBrandTag] = useState("");
-  const [brandTags, setBrandTags] = useState<string[]>(["Precisión", "Resultados", "Automatización"]);
+  const refs = useRef<Partial<Record<Section, HTMLElement>>>({});
 
-  const sectionRefs = useRef<Partial<Record<Section, HTMLElement>>>({});
+  const isDirty = JSON.stringify(local) !== JSON.stringify(settings);
   const claudeIntg = integrations.find((i) => i.id === "int-1");
-  const companyLen = (localSettings.companyContext ?? "").length;
+  const ctxLen = (local.companyContext ?? "").length;
 
-  const patch = useCallback(
-    (p: Partial<AppSettings>) => setLocalSettings((s) => ({ ...s, ...p })),
-    []
-  );
+  const patch = useCallback(<K extends keyof AppSettings>(k: K, v: AppSettings[K]) => {
+    setLocal((s) => ({ ...s, [k]: v }));
+  }, []);
 
-  const handleSave = () => {
-    updateSettings(localSettings);
-    if (localSettings.claudeApiKey && localSettings.claudeApiKey !== settings.claudeApiKey) {
-      connectIntegration("int-1", localSettings.claudeApiKey);
+  const handleSave = async () => {
+    updateSettings(local);
+    if (local.claudeApiKey && local.claudeApiKey !== settings.claudeApiKey) {
+      connectIntegration("int-1", local.claudeApiKey);
     }
+    try {
+      const { claudeApiKey: _k, ...payload } = local;
+      await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    } catch { /* non-fatal — settings still saved locally */ }
     setSaved(true);
     showToast("Ajustes guardados correctamente", "success");
     setTimeout(() => setSaved(false), 2500);
   };
 
   const verifyApiKey = async () => {
-    if (!localSettings.claudeApiKey) return;
+    if (!local.claudeApiKey) return;
     setVerifying(true);
     setApiStatus("verifying");
     try {
@@ -125,16 +102,11 @@ export default function SettingsPage() {
           messages: [{ role: "user", content: "hola" }],
           systemPrompt: "Responde solo con ok.",
           model: "claude-haiku-4-5-20251001",
-          apiKey: localSettings.claudeApiKey,
+          apiKey: local.claudeApiKey,
         }),
       });
-      if (res.ok) {
-        setApiStatus("valid");
-        showToast("API key verificada correctamente ✓", "success");
-      } else {
-        setApiStatus("invalid");
-        showToast("API key inválida — revisa el valor", "error");
-      }
+      setApiStatus(res.ok ? "valid" : "invalid");
+      showToast(res.ok ? "API key verificada ✓" : "API key inválida", res.ok ? "success" : "error");
     } catch {
       setApiStatus("invalid");
       showToast("No se pudo contactar el servidor", "error");
@@ -143,15 +115,14 @@ export default function SettingsPage() {
     }
   };
 
-  const scrollToSection = (id: Section) => {
-    setActiveSection(id);
-    sectionRefs.current[id]?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const scrollTo = (id: Section) => {
+    setActive(id);
+    refs.current[id]?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const exportConfig = () => {
-    const { claudeApiKey: _omit, ...safeSettings } = localSettings;
-    const data = JSON.stringify({ settings: safeSettings }, null, 2);
-    const blob = new Blob([data], { type: "application/json" });
+    const { claudeApiKey: _omit, ...safe } = local;
+    const blob = new Blob([JSON.stringify({ settings: safe }, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -164,500 +135,151 @@ export default function SettingsPage() {
   const clearConversations = () => {
     const store = useAstraeo.getState();
     chatSessions.forEach((s) => store.deleteChat(s.id));
-    showToast("Todas las conversaciones eliminadas", "info");
+    showToast("Conversaciones eliminadas", "info");
     setClearConfirm(false);
   };
 
   const restoreDemo = () => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("astraeo-store");
-      window.location.reload();
-    }
+    localStorage.removeItem("astraeo-store");
+    window.location.reload();
   };
 
-  const addBrandTag = () => {
-    const trimmed = brandTag.trim();
-    if (trimmed && !brandTags.includes(trimmed)) {
-      setBrandTags((prev) => [...prev, trimmed]);
+  const addBrandTag = (tag: string) => {
+    const t = tag.trim();
+    if (t && !(local.brandValues ?? []).includes(t)) {
+      patch("brandValues", [...(local.brandValues ?? []), t]);
     }
     setBrandTag("");
   };
 
-  const removeBrandTag = (tag: string) => {
-    setBrandTags((prev) => prev.filter((t) => t !== tag));
-  };
-
-  const apiStatusMeta = {
-    idle: {
-      color: claudeIntg?.connected ? "#3D8A60" : "var(--text-muted)",
-      label: claudeIntg?.connected ? "Conectada" : "No configurada",
-      bg: claudeIntg?.connected ? "rgba(61,138,96,0.08)" : "rgba(74,85,104,0.08)",
-    },
+  const apiMeta = {
+    idle:      { color: claudeIntg?.connected ? "#3D8A60" : "var(--text-muted)", label: claudeIntg?.connected ? "Conectada" : "No configurada", bg: claudeIntg?.connected ? "rgba(61,138,96,0.08)" : "rgba(74,85,104,0.08)" },
     verifying: { color: "#B88530", label: "Verificando...", bg: "rgba(184,133,48,0.08)" },
     valid:     { color: "#3D8A60", label: "Verificada ✓",  bg: "rgba(61,138,96,0.08)" },
-    invalid:   { color: "#A83C50", label: "Inválida ✗",    bg: "rgba(255,71,87,0.08)" },
-  };
+    invalid:   { color: "#A83C50", label: "Inválida ✗",    bg: "rgba(168,60,80,0.08)" },
+  }[apiStatus];
 
-  const currentApiMeta = apiStatusMeta[apiStatus];
+  const ref = (id: Section) => (el: HTMLElement | null) => { if (el) refs.current[id] = el; };
+
+  // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div style={{ display: "flex", height: "100%", overflow: "hidden" }}>
 
-      {/* ── Sidebar nav ─────────────────────────────────────────────────────── */}
-      <aside
-        style={{
-          width: 220,
-          flexShrink: 0,
-          borderRight: "1px solid var(--border-subtle)",
-          display: "flex",
-          flexDirection: "column",
-          padding: "20px 0",
-        }}
-      >
-        {/* Header */}
-        <div style={{ padding: "0 16px 16px", borderBottom: "1px solid var(--border-subtle)" }}>
-          <p style={{
-            fontSize: 9,
-            color: "var(--text-muted)",
-            fontFamily: "var(--font-mono)",
-            letterSpacing: "0.12em",
-            textTransform: "uppercase",
-            marginBottom: 4,
-          }}>
-            Sistema
-          </p>
-          <h2 style={{
-            fontSize: 20,
-            fontFamily: "var(--font-display)",
-            fontWeight: 600,
-            color: "var(--text-primary)",
-            letterSpacing: "0.01em",
-          }}>
-            Configuración
-          </h2>
+      {/* ── Sidebar nav ───────────────────────────────────────────────────── */}
+      <aside style={{ width: 220, flexShrink: 0, borderRight: "1px solid var(--border-subtle)", display: "flex", flexDirection: "column", padding: "20px 0" }}>
+        <div style={{ padding: "0 16px 14px", borderBottom: "1px solid var(--border-subtle)" }}>
+          <p style={{ fontSize: 9, color: "var(--text-muted)", fontFamily: "var(--font-mono)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 4 }}>Sistema</p>
+          <h2 style={{ fontSize: 20, fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--text-primary)", letterSpacing: "0.01em" }}>Configuración</h2>
         </div>
 
-        {/* Nav items */}
-        <nav style={{ flex: 1, padding: "0 8px", display: "flex", flexDirection: "column", gap: 2 }}>
-          {NAV_SECTIONS.map((sec) => {
-            const active = activeSection === sec.id;
+        <nav style={{ flex: 1, padding: "8px 8px 0", display: "flex", flexDirection: "column", gap: 2, overflowY: "auto" }}>
+          {NAV.map((sec) => {
+            const on = active === sec.id;
             return (
-              <motion.button
-                key={sec.id}
-                onClick={() => scrollToSection(sec.id)}
-                whileHover={{ x: 2 }}
-                whileTap={{ scale: 0.97 }}
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  padding: "9px 12px",
-                  borderRadius: 10,
-                  border: `1px solid ${active ? sec.color + "28" : "transparent"}`,
-                  background: active ? `${sec.color}0D` : "transparent",
-                  color: active ? sec.color : "var(--text-muted)",
-                  fontSize: 12,
-                  fontWeight: active ? 600 : 500,
-                  cursor: "pointer",
-                  textAlign: "left",
-                  transition: "all 0.15s",
-                }}
-              >
-                <span style={{ fontSize: 14, opacity: active ? 1 : 0.7 }}>{sec.icon}</span>
+              <motion.button key={sec.id} onClick={() => scrollTo(sec.id)} whileHover={{ x: 2 }} whileTap={{ scale: 0.97 }} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 10, border: `1px solid ${on ? sec.color + "28" : "transparent"}`, background: on ? `${sec.color}0D` : "transparent", color: on ? sec.color : "var(--text-muted)", fontSize: 12, fontWeight: on ? 600 : 500, cursor: "pointer", textAlign: "left", transition: "all 0.15s" }}>
+                <span style={{ fontSize: 14, opacity: on ? 1 : 0.7 }}>{sec.icon}</span>
                 <span>{sec.label}</span>
-                {active && (
-                  <motion.div
-                    layoutId="nav-indicator"
-                    style={{
-                      marginLeft: "auto",
-                      width: 4,
-                      height: 4,
-                      borderRadius: "50%",
-                      background: sec.color,
-                    }}
-                  />
-                )}
+                {on && <motion.div layoutId="nav-dot" style={{ marginLeft: "auto", width: 4, height: 4, borderRadius: "50%", background: sec.color }} />}
               </motion.button>
             );
           })}
         </nav>
 
-        {/* Save controls */}
-        <div style={{ padding: "12px 8px 0", borderTop: "1px solid rgba(26,39,68,0.5)", display: "flex", flexDirection: "column", gap: 6 }}>
-          <button
-            onClick={() => setLocalSettings({ ...settings })}
-            style={{
-              padding: "8px 12px",
-              borderRadius: 8,
-              border: "1px solid rgba(26,39,68,0.7)",
-              background: "transparent",
-              color: "var(--text-muted)",
-              fontSize: 11,
-              fontWeight: 500,
-              cursor: "pointer",
-              width: "100%",
-            }}
-          >
-            Restaurar
-          </button>
+        <div style={{ padding: "12px 8px 0", borderTop: "1px solid var(--border-subtle)", display: "flex", flexDirection: "column", gap: 6 }}>
+          <button onClick={() => setLocal({ ...settings })} style={{ ...GHOST, width: "100%", textAlign: "center" as const }}>Descartar</button>
           <motion.button
             onClick={handleSave}
             whileTap={{ scale: 0.96 }}
-            style={{
-              padding: "9px 12px",
-              borderRadius: 8,
-              border: "1px solid rgba(74,142,184,0.3)",
-              background: saved ? "rgba(61,138,96,0.15)" : "rgba(74,142,184,0.1)",
-              color: saved ? "#3D8A60" : "#4A8EB8",
-              fontSize: 11,
-              fontWeight: 600,
-              cursor: "pointer",
-              width: "100%",
-              transition: "all 0.2s",
-            }}
+            style={{ padding: "9px 12px", borderRadius: 8, border: `1px solid ${saved ? "rgba(61,138,96,0.4)" : isDirty ? "rgba(74,142,184,0.4)" : "transparent"}`, background: saved ? "rgba(61,138,96,0.12)" : isDirty ? "rgba(74,142,184,0.12)" : "rgba(74,142,184,0.04)", color: saved ? "#3D8A60" : isDirty ? "#4A8EB8" : "var(--text-muted)", fontSize: 11, fontWeight: 600, cursor: "pointer", width: "100%", transition: "all 0.2s" }}
           >
-            {saved ? "✓ Guardado" : "Guardar cambios"}
+            {saved ? "✓ Guardado" : isDirty ? "Guardar cambios" : "Sin cambios"}
           </motion.button>
         </div>
       </aside>
 
-      {/* ── Scrollable content ───────────────────────────────────────────────── */}
-      <main style={{ flex: 1, overflowY: "auto", padding: "28px 32px" }}>
-        <div style={{ maxWidth: 680, display: "flex", flexDirection: "column", gap: 20, paddingBottom: 48 }}>
+      {/* ── Scrollable content ────────────────────────────────────────────── */}
+      <main style={{ flex: 1, overflowY: "auto", padding: "28px 32px", position: "relative" }}>
+        <div style={{ maxWidth: 680, display: "flex", flexDirection: "column", gap: 20, paddingBottom: 80 }}>
 
-          {/* ── GENERAL ─────────────────────────────────────────────────────── */}
-          <SectionCard
-            id="general"
-            title="General"
-            icon="◉"
-            color="#4A8EB8"
-            refCallback={(el) => { if (el) sectionRefs.current.general = el; }}
-          >
+          {/* ── PERFIL ──────────────────────────────────────────────────── */}
+          <SectionCard id="perfil" title="Perfil" icon="◉" color="#4A8EB8" refCallback={ref("perfil")}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              {/* App info */}
-              <div
-                style={{
-                  gridColumn: "span 2",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 16,
-                  padding: "14px 16px",
-                  borderRadius: 12,
-                  background: "rgba(74,142,184,0.04)",
-                  border: "1px solid rgba(74,142,184,0.1)",
-                }}
-              >
-                <div
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 12,
-                    background: "rgba(74,142,184,0.12)",
-                    border: "1px solid rgba(74,142,184,0.25)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 20,
-                    flexShrink: 0,
-                  }}
-                >
-                  ◎
-                </div>
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)", marginBottom: 2 }}>
-                    {localSettings.userName || "ASTRAEO"}
-                  </p>
-                  <p style={{ fontSize: 11, color: "var(--text-muted)" }}>{localSettings.userRole}</p>
-                </div>
-                <span
-                  style={{
-                    fontSize: 10,
-                    padding: "3px 8px",
-                    borderRadius: 6,
-                    background: "rgba(74,142,184,0.1)",
-                    color: "#4A8EB8",
-                    border: "1px solid rgba(74,142,184,0.2)",
-                    fontFamily: "monospace",
-                    fontWeight: 600,
-                  }}
-                >
-                  v2.0.0
-                </span>
-              </div>
-
-              {/* Name */}
               <FieldGroup label="Nombre de usuario">
-                <input
-                  style={inputStyle}
-                  placeholder="Comandante"
-                  value={localSettings.userName}
-                  onChange={(e) => patch({ userName: e.target.value })}
-                />
+                <input style={INPUT} placeholder="Comandante" value={local.userName} onChange={(e) => patch("userName", e.target.value)} />
               </FieldGroup>
-
-              {/* Role */}
               <FieldGroup label="Rol / Título">
-                <input
-                  style={inputStyle}
-                  placeholder="Admin Level 5"
-                  value={localSettings.userRole}
-                  onChange={(e) => patch({ userRole: e.target.value })}
-                />
+                <input style={INPUT} placeholder="Admin Level 5" value={local.userRole} onChange={(e) => patch("userRole", e.target.value)} />
               </FieldGroup>
-
-              {/* Language */}
-              <FieldGroup label="Idioma">
-                <div style={{ display: "flex", gap: 6 }}>
-                  {LANGUAGES.map((lang) => (
-                    <button
-                      key={lang.code}
-                      onClick={() => patch({ language: lang.code })}
-                      style={{
-                        flex: 1,
-                        padding: "8px 0",
-                        borderRadius: 8,
-                        border: `1px solid ${localSettings.language === lang.code ? "rgba(74,142,184,0.4)" : "rgba(20,18,14,0.7)"}`,
-                        background: localSettings.language === lang.code ? "rgba(74,142,184,0.1)" : "rgba(14,12,10,0.4)",
-                        color: localSettings.language === lang.code ? "#4A8EB8" : "var(--text-muted)",
-                        fontSize: 12,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        transition: "all 0.15s",
-                      }}
-                    >
-                      {lang.label}
-                    </button>
-                  ))}
-                </div>
-              </FieldGroup>
-
-              {/* Timezone */}
-              <FieldGroup label="Zona horaria">
-                <div style={{ ...inputStyle, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: 12, color: "var(--text-primary)" }}>Europe/Madrid</span>
-                  <span style={{ fontSize: 10, color: "var(--text-muted)" }}>UTC+2</span>
-                </div>
-              </FieldGroup>
-
-              {/* Realtime toggle */}
-              <div style={{ gridColumn: "span 2" }}>
-                <ToggleSetting
-                  label="Actualizaciones en tiempo real"
-                  sub="Métricas y estado se actualizan automáticamente cada 3 segundos"
-                  value={localSettings.realtimeUpdates}
-                  onChange={(v) => patch({ realtimeUpdates: v })}
-                  color="#4A8EB8"
-                />
-              </div>
             </div>
+            <FieldGroup label="Idioma de la interfaz">
+              <SegmentedControl
+                options={[{ value: "es" as const, label: "Español" }, { value: "en" as const, label: "English" }]}
+                value={local.language as "es" | "en"}
+                onChange={(v) => patch("language", v)}
+                color="#4A8EB8"
+              />
+            </FieldGroup>
+            <FieldGroup label="Zona horaria" hint="Detectada automáticamente del sistema">
+              <div style={{ ...INPUT, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontSize: 12 }}>{local.timezone || "Europe/Madrid"}</span>
+                <span style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>UTC+2</span>
+              </div>
+            </FieldGroup>
           </SectionCard>
 
-          {/* ── IA / API ─────────────────────────────────────────────────────── */}
-          <SectionCard
-            id="api"
-            title="IA / API"
-            icon="🤖"
-            color="#CC785C"
-            refCallback={(el) => { if (el) sectionRefs.current.api = el; }}
-            badge="Principal"
-          >
-            {/* API Key */}
+          {/* ── IA & API ────────────────────────────────────────────────── */}
+          <SectionCard id="ia" title="IA & API" icon="🤖" color="#CC785C" badge="Principal" refCallback={ref("ia")}>
             <FieldGroup label="Claude API Key">
               <div style={{ display: "flex", gap: 8 }}>
                 <div style={{ flex: 1, position: "relative" }}>
                   <input
-                    style={{ ...inputStyle, paddingRight: 40 }}
+                    style={{ ...INPUT, paddingRight: 40 }}
                     type={apiKeyVisible ? "text" : "password"}
                     placeholder="sk-ant-api03-..."
-                    value={localSettings.claudeApiKey}
-                    onChange={(e) => {
-                      patch({ claudeApiKey: e.target.value });
-                      setApiStatus("idle");
-                    }}
+                    value={local.claudeApiKey}
+                    onChange={(e) => { patch("claudeApiKey", e.target.value); setApiStatus("idle"); }}
                   />
-                  <button
-                    onClick={() => setApiKeyVisible((v) => !v)}
-                    type="button"
-                    style={{
-                      position: "absolute",
-                      right: 12,
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      background: "none",
-                      border: "none",
-                      color: "var(--text-muted)",
-                      cursor: "pointer",
-                      fontSize: 13,
-                      padding: 0,
-                    }}
-                  >
+                  <button onClick={() => setApiKeyVisible((v) => !v)} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 13, padding: 0 }}>
                     {apiKeyVisible ? "◑" : "◐"}
                   </button>
                 </div>
-                <motion.button
-                  onClick={verifyApiKey}
-                  disabled={!localSettings.claudeApiKey || verifying}
-                  whileTap={{ scale: 0.95 }}
-                  style={{
-                    padding: "0 16px",
-                    borderRadius: 8,
-                    border: "1px solid rgba(204,120,92,0.4)",
-                    background: "rgba(204,120,92,0.1)",
-                    color: "#CC785C",
-                    fontSize: 11,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
-                    opacity: !localSettings.claudeApiKey || verifying ? 0.4 : 1,
-                    transition: "all 0.15s",
-                  }}
-                >
-                  {verifying ? "..." : "Verificar"}
+                <motion.button onClick={verifyApiKey} disabled={!local.claudeApiKey || verifying} whileTap={{ scale: 0.95 }} style={{ padding: "0 16px", borderRadius: 8, border: "1px solid rgba(204,120,92,0.4)", background: "rgba(204,120,92,0.1)", color: "#CC785C", fontSize: 11, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", opacity: !local.claudeApiKey || verifying ? 0.4 : 1 }}>
+                  {verifying ? "···" : "Verificar"}
                 </motion.button>
               </div>
-
-              {/* Status indicator */}
               <AnimatePresence mode="wait">
-                <motion.div
-                  key={apiStatus}
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                    marginTop: 8,
-                    padding: "4px 10px",
-                    borderRadius: 6,
-                    background: currentApiMeta.bg,
-                    border: `1px solid ${currentApiMeta.color}28`,
-                  }}
-                >
-                  <span
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: "50%",
-                      background: currentApiMeta.color,
-                      display: "inline-block",
-                    }}
-                  />
-                  <span style={{ fontSize: 11, fontWeight: 600, color: currentApiMeta.color }}>
-                    {currentApiMeta.label}
-                  </span>
+                <motion.div key={apiStatus} initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 10px", borderRadius: 6, background: apiMeta.bg, border: `1px solid ${apiMeta.color}28`, width: "fit-content" }}>
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: apiMeta.color, display: "inline-block" }} />
+                  <span style={{ fontSize: 11, fontWeight: 600, color: apiMeta.color }}>{apiMeta.label}</span>
                 </motion.div>
               </AnimatePresence>
             </FieldGroup>
 
-            {/* Model selector */}
             <FieldGroup label="Modelo predeterminado">
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {MODELS.map((m) => {
-                  const selected = localSettings.claudeModel === m.id;
+                  const sel = local.claudeModel === m.id;
                   return (
-                    <motion.button
-                      key={m.id}
-                      onClick={() => patch({ claudeModel: m.id as ModelId })}
-                      whileHover={{ scale: 1.005 }}
-                      whileTap={{ scale: 0.995 }}
-                      style={{
-                        padding: "14px 16px",
-                        borderRadius: 12,
-                        border: `1px solid ${selected ? m.badge + "45" : "rgba(20,18,14,0.7)"}`,
-                        background: selected ? `${m.badge}09` : "rgba(14,12,10,0.4)",
-                        cursor: "pointer",
-                        textAlign: "left",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 14,
-                        transition: "all 0.15s",
-                      }}
-                    >
-                      {/* Icon */}
-                      <span style={{ fontSize: 22, flexShrink: 0 }}>{m.icon}</span>
-
-                      {/* Info */}
+                    <motion.button key={m.id} onClick={() => patch("claudeModel", m.id)} whileHover={{ scale: 1.005 }} whileTap={{ scale: 0.995 }} style={{ padding: "12px 14px", borderRadius: 12, border: `1px solid ${sel ? m.badge + "45" : "var(--border-subtle)"}`, background: sel ? `${m.badge}09` : "var(--bg-base)", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12, transition: "all 0.15s" }}>
+                      <span style={{ fontSize: 20, flexShrink: 0 }}>{m.icon}</span>
                       <div style={{ flex: 1 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{m.label}</span>
-                          {selected && (
-                            <motion.span
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                              style={{
-                                fontSize: 9,
-                                padding: "2px 7px",
-                                borderRadius: 4,
-                                background: `${m.badge}20`,
-                                color: m.badge,
-                                border: `1px solid ${m.badge}30`,
-                                fontWeight: 700,
-                                textTransform: "uppercase",
-                                letterSpacing: "0.06em",
-                              }}
-                            >
-                              Activo
-                            </motion.span>
-                          )}
+                          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-primary)" }}>{m.label}</span>
+                          {sel && <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} style={{ fontSize: 9, padding: "2px 6px", borderRadius: 4, background: `${m.badge}20`, color: m.badge, fontWeight: 700, letterSpacing: "0.06em" }}>ACTIVO</motion.span>}
                         </div>
-                        <p style={{ fontSize: 11, color: "var(--text-muted)" }}>{m.sub}</p>
-                        <p style={{ fontSize: 10, color: "rgba(107,122,153,0.6)", marginTop: 2 }}>{m.desc}</p>
+                        <p style={{ fontSize: 10, color: "var(--text-muted)" }}>{m.sub}</p>
                       </div>
-
-                      {/* Speed/cost indicators */}
-                      <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0, alignItems: "flex-end" }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
                         <div style={{ display: "flex", gap: 3 }}>
-                          {[1, 2, 3].map((d) => (
-                            <div
-                              key={d}
-                              style={{
-                                width: 8,
-                                height: 8,
-                                borderRadius: 2,
-                                background: d <= m.speedDots ? m.badge : "rgba(20,18,14,0.8)",
-                                transition: "background 0.2s",
-                              }}
-                            />
-                          ))}
+                          {[1, 2, 3].map((d) => <div key={d} style={{ width: 7, height: 7, borderRadius: 2, background: d <= m.speed ? m.badge : "var(--border-subtle)" }} />)}
                         </div>
                         <div style={{ display: "flex", gap: 3 }}>
-                          {[1, 2, 3].map((d) => (
-                            <div
-                              key={d}
-                              style={{
-                                width: 8,
-                                height: 8,
-                                borderRadius: 2,
-                                background: d <= m.costDots ? "rgba(255,71,87,0.6)" : "rgba(20,18,14,0.8)",
-                                transition: "background 0.2s",
-                              }}
-                            />
-                          ))}
-                        </div>
-                        <div style={{ display: "flex", gap: 8 }}>
-                          <span style={{ fontSize: 9, color: "var(--text-muted)" }}>VEL</span>
-                          <span style={{ fontSize: 9, color: "var(--text-muted)" }}>€</span>
+                          {[1, 2, 3].map((d) => <div key={d} style={{ width: 7, height: 7, borderRadius: 2, background: d <= m.cost ? "rgba(255,71,87,0.5)" : "var(--border-subtle)" }} />)}
                         </div>
                       </div>
-
-                      {/* Radio */}
-                      <div
-                        style={{
-                          width: 18,
-                          height: 18,
-                          borderRadius: "50%",
-                          border: `2px solid ${selected ? m.badge : "rgba(20,18,14,0.9)"}`,
-                          background: selected ? m.badge : "transparent",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          transition: "all 0.15s",
-                        }}
-                      >
-                        {selected && <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#fff" }} />}
+                      <div style={{ width: 16, height: 16, borderRadius: "50%", border: `2px solid ${sel ? m.badge : "var(--border-subtle)"}`, background: sel ? m.badge : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>
+                        {sel && <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#fff" }} />}
                       </div>
                     </motion.button>
                   );
@@ -665,642 +287,190 @@ export default function SettingsPage() {
               </div>
             </FieldGroup>
 
-            {/* Max tokens */}
-            <FieldGroup label={`Tokens máximos: ${(localSettings as AppSettings & { maxTokens?: number }).maxTokens ?? 4096}`}>
-              <input
-                type="range"
-                min={512}
-                max={8192}
-                step={256}
-                value={(localSettings as AppSettings & { maxTokens?: number }).maxTokens ?? 4096}
-                onChange={(e) =>
-                  setLocalSettings((s) => ({ ...s, maxTokens: Number(e.target.value) } as AppSettings & { maxTokens?: number }))
-                }
-                style={{ width: "100%", accentColor: "#CC785C", cursor: "pointer" }}
+            <FieldGroup label="Comportamiento del sistema">
+              <SegmentedControl
+                options={[{ value: "precise" as const, label: "Preciso" }, { value: "balanced" as const, label: "Equilibrado" }, { value: "creative" as const, label: "Creativo" }]}
+                value={local.systemBehavior}
+                onChange={(v) => patch("systemBehavior", v)}
+                color="#CC785C"
               />
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
-                <span style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "monospace" }}>512</span>
-                <span style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "monospace" }}>8192</span>
-              </div>
             </FieldGroup>
 
-            {/* Temperature */}
-            <FieldGroup label={`Temperatura: ${((localSettings as AppSettings & { temperature?: number }).temperature ?? 0.7).toFixed(1)}`}>
-              <input
-                type="range"
-                min={0}
-                max={10}
-                step={1}
-                value={Math.round(((localSettings as AppSettings & { temperature?: number }).temperature ?? 0.7) * 10)}
-                onChange={(e) =>
-                  setLocalSettings((s) => ({ ...s, temperature: Number(e.target.value) / 10 } as AppSettings & { temperature?: number }))
-                }
-                style={{ width: "100%", accentColor: "#CC785C", cursor: "pointer" }}
-              />
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
-                <span style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "monospace" }}>0.0 — Preciso</span>
-                <span style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "monospace" }}>1.0 — Creativo</span>
-              </div>
-            </FieldGroup>
+            <SliderField label="Temperatura" value={local.temperature} min={0} max={1} step={0.1} color="#CC785C" onChange={(v) => patch("temperature", v)} formatValue={(v) => v.toFixed(1)} />
+            <SliderField label="Tokens máximos" value={local.maxTokens} min={512} max={8192} step={256} color="#CC785C" onChange={(v) => patch("maxTokens", v)} />
+            <ToggleRow label="Streaming" sub="Respuestas en tiempo real, token a token" value={local.streamingEnabled} onChange={(v) => patch("streamingEnabled", v)} color="#CC785C" />
           </SectionCard>
 
-          {/* ── APARIENCIA ───────────────────────────────────────────────────── */}
-          <SectionCard
-            id="appearance"
-            title="Apariencia"
-            icon="◈"
-            color="#B04858"
-            refCallback={(el) => { if (el) sectionRefs.current.appearance = el; }}
-          >
-            {/* Starfield density */}
-            <FieldGroup label={`Densidad del starfield: ${localSettings.starfieldDensity}`}>
-              <input
-                type="range"
-                min={20}
-                max={200}
-                value={localSettings.starfieldDensity}
-                onChange={(e) => patch({ starfieldDensity: Number(e.target.value) })}
-                style={{ width: "100%", accentColor: "#B04858", cursor: "pointer" }}
-              />
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
-                <span style={{ fontSize: 10, color: "var(--text-muted)" }}>Mínimo</span>
-                <span style={{ fontSize: 10, color: "var(--text-muted)" }}>Máximo</span>
-              </div>
-            </FieldGroup>
-
-            {/* Animation speed */}
-            <FieldGroup label="Velocidad de animación">
-              <div style={{ display: "flex", gap: 6 }}>
-                {ANIMATION_SPEEDS.map((speed) => (
-                  <button
-                    key={speed.value}
-                    style={{
-                      flex: 1,
-                      padding: "8px 0",
-                      borderRadius: 8,
-                      border: `1px solid rgba(26,39,68,0.7)`,
-                      background: "rgba(14,12,10,0.4)",
-                      color: "var(--text-muted)",
-                      fontSize: 11,
-                      fontWeight: 500,
-                      cursor: "pointer",
-                    }}
-                  >
-                    {speed.label}
-                  </button>
-                ))}
-              </div>
-            </FieldGroup>
-
-            <ToggleSetting
-              label="Modo compacto"
-              sub="Reduce el espaciado de la interfaz para más densidad"
-              value={localSettings.compactMode}
-              onChange={(v) => patch({ compactMode: v })}
-              color="#B04858"
-            />
+          {/* ── AGENTES ─────────────────────────────────────────────────── */}
+          <SectionCard id="agentes" title="Agentes" icon="⬡" color="#6655CC" refCallback={ref("agentes")}>
+            <SliderField label="Tiempo límite por agente" value={local.agentTimeout} min={10} max={300} step={10} color="#6655CC" onChange={(v) => patch("agentTimeout", v)} formatValue={(v) => `${v}s`} />
+            <SliderField label="Reintentos por fallo" value={local.agentRetries} min={0} max={5} step={1} color="#6655CC" onChange={(v) => patch("agentRetries", v)} />
+            <SliderField label="Agentes concurrentes" value={local.maxConcurrentAgents} min={1} max={10} step={1} color="#6655CC" onChange={(v) => patch("maxConcurrentAgents", v)} />
+            <SliderField label="Retención de memoria" value={local.memoryRetentionDays} min={1} max={365} step={1} color="#6655CC" onChange={(v) => patch("memoryRetentionDays", v)} formatValue={(v) => v === 365 ? "∞ días" : `${v} días`} />
+            <ToggleRow label="Guardar memoria automáticamente" sub="Los agentes almacenan el contexto de cada conversación" value={local.autoSaveMemory} onChange={(v) => patch("autoSaveMemory", v)} color="#6655CC" />
           </SectionCard>
 
-          {/* ── SEGURIDAD ────────────────────────────────────────────────────── */}
-          <SectionCard
-            id="security"
-            title="Seguridad"
-            icon="⬡"
-            color="#6655CC"
-            refCallback={(el) => { if (el) sectionRefs.current.security = el; }}
-          >
-            <ToggleSetting
-              label="Notificaciones del sistema"
-              sub="Alertas, errores y eventos críticos de la plataforma"
-              value={localSettings.notifications}
-              onChange={(v) => patch({ notifications: v })}
-              color="#6655CC"
-            />
-            <ToggleSetting
-              label="Efectos de sonido"
-              sub="Sonidos para eventos importantes y acciones del sistema"
-              value={localSettings.soundEffects}
-              onChange={(v) => patch({ soundEffects: v })}
-              color="#6655CC"
-            />
-            <div
-              style={{
-                padding: "12px 14px",
-                borderRadius: 10,
-                background: "rgba(102,85,204,0.05)",
-                border: "1px solid rgba(102,85,204,0.12)",
-              }}
-            >
-              <p style={{ fontSize: 11, color: "var(--text-muted)", lineHeight: 1.6 }}>
-                Las API keys se almacenan localmente en tu navegador. Nunca se transmiten a servidores de terceros excepto al hacer llamadas directas a la API de Anthropic.
-              </p>
-            </div>
-          </SectionCard>
-
-          {/* ── CONTEXTO EMPRESA ─────────────────────────────────────────────── */}
-          <SectionCard
-            id="context"
-            title="Contexto Empresa"
-            icon="🏢"
-            color="#3D8A60"
-            refCallback={(el) => { if (el) sectionRefs.current.context = el; }}
-            badge="Inyectado en todos los agentes"
-          >
-            <div
-              style={{
-                display: "flex",
-                gap: 8,
-                padding: "10px 14px",
-                borderRadius: 8,
-                background: "rgba(61,138,96,0.05)",
-                border: "1px solid rgba(61,138,96,0.12)",
-                marginBottom: 4,
-              }}
-            >
-              <span style={{ fontSize: 13, flexShrink: 0, marginTop: 1 }}>💡</span>
-              <p style={{ fontSize: 11, color: "var(--text-muted)", lineHeight: 1.7 }}>
-                Este contexto se inyecta automáticamente en todos los prompts de agentes y el Comandante, permitiéndoles operar con pleno conocimiento del negocio.
-              </p>
-            </div>
-
-            {/* Company name + Industry */}
+          {/* ── EMPRESA ─────────────────────────────────────────────────── */}
+          <SectionCard id="empresa" title="Empresa" icon="🏢" color="#3D8A60" badge="Inyectado en todos los agentes" refCallback={ref("empresa")}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               <FieldGroup label="Nombre de empresa">
-                <input
-                  style={inputStyle}
-                  placeholder="CLIENDER"
-                  defaultValue="CLIENDER"
-                />
+                <input style={INPUT} placeholder="CLIENDER" value={local.companyName} onChange={(e) => patch("companyName", e.target.value)} />
               </FieldGroup>
               <FieldGroup label="Industria">
-                <select
-                  style={{ ...inputStyle, cursor: "pointer" }}
-                >
-                  <option value="consultoria">Consultoría</option>
-                  <option value="tecnologia">Tecnología</option>
-                  <option value="marketing">Marketing</option>
-                  <option value="ecommerce">E-commerce</option>
-                  <option value="saas">SaaS</option>
-                  <option value="retail">Retail</option>
-                  <option value="otro">Otro</option>
+                <select style={SELECT} value={local.companyIndustry} onChange={(e) => patch("companyIndustry", e.target.value)}>
+                  {INDUSTRIES.map((i) => <option key={i} value={i.toLowerCase()}>{i}</option>)}
                 </select>
               </FieldGroup>
             </div>
 
-            {/* Context textarea */}
             <FieldGroup label="Descripción completa de la empresa">
               <textarea
-                style={{
-                  ...inputStyle,
-                  resize: "none",
-                  lineHeight: 1.7,
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontSize: 11,
-                  minHeight: 200,
-                }}
-                rows={10}
-                placeholder="Describe la empresa, su misión, productos, metodología..."
-                value={localSettings.companyContext ?? ""}
-                onChange={(e) => {
-                  if (e.target.value.length <= 2000) patch({ companyContext: e.target.value });
-                }}
+                style={{ ...INPUT, resize: "none", lineHeight: 1.7, fontFamily: "var(--font-mono)", fontSize: 11, minHeight: 180 } as React.CSSProperties}
+                rows={9}
+                placeholder="Describe la empresa, misión, productos, metodología..."
+                value={local.companyContext ?? ""}
+                onChange={(e) => { if (e.target.value.length <= 2000) patch("companyContext", e.target.value); }}
               />
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6, alignItems: "center" }}>
-                <span
-                  style={{
-                    fontSize: 10,
-                    fontFamily: "monospace",
-                    color: companyLen > 1800 ? "#B88530" : "var(--text-muted)",
-                  }}
-                >
-                  {companyLen} / 2000
-                </span>
-                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                  <button
-                    onClick={() => patch({ companyContext: COMPANY_DEFAULT })}
-                    style={{
-                      fontSize: 10,
-                      color: "var(--text-muted)",
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      textDecoration: "underline",
-                      textUnderlineOffset: 2,
-                    }}
-                  >
-                    Restaurar default
-                  </button>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 }}>
+                <span style={{ fontSize: 10, color: ctxLen > 1800 ? "#B88530" : "var(--text-muted)", fontFamily: "var(--font-mono)" }}>{ctxLen}/2000</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <button onClick={() => patch("companyContext", COMPANY_DEFAULT)} style={{ ...GHOST, padding: "3px 10px", fontSize: 10 }}>Restaurar default</button>
                   <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                    <div
-                      style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: "50%",
-                        background: "#3D8A60",
-                        animation: "pulse 2s infinite",
-                      }}
-                    />
-                    <span style={{ fontSize: 10, color: "#3D8A60", fontWeight: 600 }}>
-                      Activo en agentes
-                    </span>
+                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#3D8A60", animation: "pulse 2s infinite" }} />
+                    <span style={{ fontSize: 10, color: "#3D8A60", fontWeight: 600 }}>Activo en agentes</span>
                   </div>
                 </div>
               </div>
             </FieldGroup>
 
-            {/* Brand values tags */}
             <FieldGroup label="Valores de marca">
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
-                {brandTags.map((tag) => (
-                  <motion.span
-                    key={tag}
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0 }}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 5,
-                      padding: "4px 10px",
-                      borderRadius: 6,
-                      background: "rgba(61,138,96,0.08)",
-                      border: "1px solid rgba(61,138,96,0.2)",
-                      color: "#3D8A60",
-                      fontSize: 11,
-                      fontWeight: 500,
-                    }}
-                  >
-                    {tag}
-                    <button
-                      onClick={() => removeBrandTag(tag)}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                        color: "rgba(61,138,96,0.5)",
-                        fontSize: 10,
-                        padding: 0,
-                        lineHeight: 1,
-                      }}
-                    >
-                      ✕
-                    </button>
-                  </motion.span>
-                ))}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 6, minHeight: 28 }}>
+                <AnimatePresence>
+                  {(local.brandValues ?? []).map((tag) => (
+                    <motion.span key={tag} initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 6, background: "rgba(61,138,96,0.08)", border: "1px solid rgba(61,138,96,0.2)", color: "#3D8A60", fontSize: 11, fontWeight: 500 }}>
+                      {tag}
+                      <button onClick={() => patch("brandValues", (local.brandValues ?? []).filter((t) => t !== tag))} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(61,138,96,0.5)", fontSize: 10, padding: 0, lineHeight: 1 }}>✕</button>
+                    </motion.span>
+                  ))}
+                </AnimatePresence>
               </div>
               <div style={{ display: "flex", gap: 8 }}>
-                <input
-                  style={{ ...inputStyle, flex: 1 }}
-                  placeholder="Añadir valor de marca..."
-                  value={brandTag}
-                  onChange={(e) => setBrandTag(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") addBrandTag(); }}
-                />
-                <button
-                  onClick={addBrandTag}
-                  style={{
-                    padding: "0 14px",
-                    borderRadius: 8,
-                    border: "1px solid rgba(61,138,96,0.3)",
-                    background: "rgba(61,138,96,0.08)",
-                    color: "#3D8A60",
-                    fontSize: 12,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
-                >
-                  +
-                </button>
+                <input style={{ ...INPUT, flex: 1 }} placeholder="Añadir valor de marca..." value={brandTag} onChange={(e) => setBrandTag(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addBrandTag(brandTag); } }} />
+                <button onClick={() => addBrandTag(brandTag)} style={{ ...GHOST, color: "#3D8A60", borderColor: "rgba(61,138,96,0.35)", background: "rgba(61,138,96,0.08)" }}>+</button>
               </div>
             </FieldGroup>
           </SectionCard>
 
-          {/* ── ZONA DE PELIGRO ──────────────────────────────────────────────── */}
-          <SectionCard
-            id="danger"
-            title="Zona de Peligro"
-            icon="⚠"
-            color="#A83C50"
-            refCallback={(el) => { if (el) sectionRefs.current.danger = el; }}
-            danger
-          >
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {/* ── INTERFAZ ────────────────────────────────────────────────── */}
+          <SectionCard id="interfaz" title="Interfaz" icon="◈" color="#B04858" refCallback={ref("interfaz")}>
+            <FieldGroup label="Tema de color">
+              <SegmentedControl
+                options={[{ value: "dark" as const, label: "Oscuro" }, { value: "light" as const, label: "Claro" }]}
+                value={local.theme}
+                onChange={(v) => patch("theme", v)}
+                color="#B04858"
+              />
+            </FieldGroup>
+            <FieldGroup label="Tamaño de fuente">
+              <SegmentedControl
+                options={[{ value: "small" as const, label: "Pequeña" }, { value: "normal" as const, label: "Normal" }, { value: "large" as const, label: "Grande" }]}
+                value={local.fontSize}
+                onChange={(v) => patch("fontSize", v)}
+                color="#B04858"
+              />
+            </FieldGroup>
+            <FieldGroup label="Velocidad de animación">
+              <SegmentedControl
+                options={[{ value: "fast" as const, label: "Rápida" }, { value: "normal" as const, label: "Normal" }, { value: "slow" as const, label: "Lenta" }]}
+                value={local.animationSpeed}
+                onChange={(v) => patch("animationSpeed", v)}
+                color="#B04858"
+              />
+            </FieldGroup>
+            <SliderField label="Densidad del starfield" value={local.starfieldDensity} min={20} max={200} step={10} color="#B04858" onChange={(v) => patch("starfieldDensity", v)} />
+            <ToggleRow label="Modo compacto" sub="Reduce el espaciado para mayor densidad de información" value={local.compactMode} onChange={(v) => patch("compactMode", v)} color="#B04858" />
+            <ToggleRow label="Sidebar colapsado" sub="Panel lateral minimizado por defecto al iniciar" value={local.sidebarCollapsed} onChange={(v) => patch("sidebarCollapsed", v)} color="#B04858" />
+          </SectionCard>
 
-              {/* Clear conversations */}
-              <DangerRow
-                title="Limpiar conversaciones"
-                desc={`Elimina permanentemente las ${chatSessions.length} conversaciones del historial. Esta acción no se puede deshacer.`}
-              >
-                <AnimatePresence mode="wait">
-                  {clearConfirm ? (
-                    <motion.div
-                      key="confirm"
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0 }}
-                      style={{ display: "flex", gap: 6 }}
-                    >
-                      <button
-                        onClick={() => setClearConfirm(false)}
-                        style={ghostBtnStyle}
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                        onClick={clearConversations}
-                        style={dangerBtnStyle}
-                      >
-                        Confirmar
-                      </button>
-                    </motion.div>
-                  ) : (
-                    <motion.button
-                      key="trigger"
-                      onClick={() => setClearConfirm(true)}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      style={dangerBtnStyle}
-                    >
-                      Limpiar
-                    </motion.button>
-                  )}
-                </AnimatePresence>
-              </DangerRow>
+          {/* ── NOTIFICACIONES ──────────────────────────────────────────── */}
+          <SectionCard id="notificaciones" title="Notificaciones" icon="◎" color="#B88530" refCallback={ref("notificaciones")}>
+            <ToggleRow label="Notificaciones del sistema" sub="Alertas, errores y eventos críticos de la plataforma" value={local.notifications} onChange={(v) => patch("notifications", v)} color="#B88530" />
+            <ToggleRow label="Efectos de sonido" sub="Sonidos para eventos importantes y acciones del sistema" value={local.soundEffects} onChange={(v) => patch("soundEffects", v)} color="#B88530" />
+            <ToggleRow label="Agente completado" sub="Notificar cuando un agente termina su tarea" value={local.notifyOnAgentComplete} onChange={(v) => patch("notifyOnAgentComplete", v)} color="#B88530" />
+            <ToggleRow label="Errores críticos" sub="Alertas inmediatas ante fallos o errores graves" value={local.notifyOnError} onChange={(v) => patch("notifyOnError", v)} color="#B88530" />
+            <ToggleRow label="Workflow finalizado" sub="Notificación al completar una ejecución de workflow" value={local.notifyOnWorkflowEnd} onChange={(v) => patch("notifyOnWorkflowEnd", v)} color="#B88530" />
+          </SectionCard>
 
-              {/* Restore demo */}
-              <DangerRow
-                title="Restaurar datos de demo"
-                desc="Recarga todos los datos semilla originales. Se perderán los cambios no guardados."
-              >
-                <AnimatePresence mode="wait">
-                  {restoreConfirm ? (
-                    <motion.div
-                      key="confirm-restore"
-                      initial={{ opacity: 0, x: 8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 8 }}
-                      style={{ display: "flex", gap: 6 }}
-                    >
-                      <button
-                        onClick={restoreDemo}
-                        style={{ ...ghostBtnStyle, borderColor: "rgba(184,133,48,0.5)", color: "#B88530", background: "rgba(184,133,48,0.1)" }}
-                      >
-                        ✓ Confirmar
-                      </button>
-                      <button
-                        onClick={() => setRestoreConfirm(false)}
-                        style={ghostBtnStyle}
-                      >
-                        Cancelar
-                      </button>
-                    </motion.div>
-                  ) : (
-                    <motion.button
-                      key="btn-restore"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      onClick={() => setRestoreConfirm(true)}
-                      style={{ ...ghostBtnStyle, borderColor: "rgba(184,133,48,0.4)", color: "#B88530", background: "rgba(184,133,48,0.06)" }}
-                    >
-                      Restaurar demo
-                    </motion.button>
-                  )}
-                </AnimatePresence>
-              </DangerRow>
-
-              {/* Export config */}
-              <DangerRow
-                title="Exportar configuración"
-                desc="Descarga todos los ajustes actuales como archivo JSON para respaldo o migración."
-              >
-                <button onClick={exportConfig} style={ghostBtnStyle}>
-                  ↑ Exportar JSON
-                </button>
-              </DangerRow>
+          {/* ── PRIVACIDAD ──────────────────────────────────────────────── */}
+          <SectionCard id="privacidad" title="Privacidad & Datos" icon="🔒" color="#6F5BFF" refCallback={ref("privacidad")}>
+            <ToggleRow label="Analytics de uso" sub="Enviar datos anónimos para mejorar la plataforma" value={local.analyticsEnabled} onChange={(v) => patch("analyticsEnabled", v)} color="#6F5BFF" />
+            <ToggleRow label="Actualizaciones en tiempo real" sub="Métricas y estado se actualizan automáticamente cada 3s" value={local.realtimeUpdates} onChange={(v) => patch("realtimeUpdates", v)} color="#6F5BFF" />
+            <FieldGroup label="URL de Webhook" hint="Endpoint para recibir eventos de la plataforma en tiempo real">
+              <input style={INPUT} placeholder="https://hooks.example.com/astraeo" value={local.webhookUrl} onChange={(e) => patch("webhookUrl", e.target.value)} />
+            </FieldGroup>
+            <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(111,91,255,0.04)", border: "1px solid rgba(111,91,255,0.12)" }}>
+              <p style={{ fontSize: 11, color: "var(--text-muted)", lineHeight: 1.65 }}>
+                Las API keys se almacenan localmente en tu navegador. Nunca se transmiten a servidores de terceros excepto al hacer llamadas directas a la API de Anthropic.
+              </p>
             </div>
           </SectionCard>
 
+          {/* ── ZONA DE PELIGRO ─────────────────────────────────────────── */}
+          <SectionCard id="peligro" title="Zona de Peligro" icon="⚠" color="#A83C50" danger refCallback={ref("peligro")}>
+            <DangerRow title="Limpiar conversaciones" desc={`Elimina permanentemente las ${chatSessions.length} conversaciones del historial. Esta acción no se puede deshacer.`}>
+              <AnimatePresence mode="wait">
+                {clearConfirm ? (
+                  <motion.div key="c" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} style={{ display: "flex", gap: 6 }}>
+                    <button onClick={() => setClearConfirm(false)} style={GHOST}>Cancelar</button>
+                    <button onClick={clearConversations} style={DANGER_BTN}>Confirmar</button>
+                  </motion.div>
+                ) : (
+                  <motion.button key="t" onClick={() => setClearConfirm(true)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={DANGER_BTN}>Limpiar</motion.button>
+                )}
+              </AnimatePresence>
+            </DangerRow>
+
+            <DangerRow title="Restaurar datos de demo" desc="Recarga todos los datos semilla originales. Se perderán los cambios no guardados.">
+              <AnimatePresence mode="wait">
+                {restoreConfirm ? (
+                  <motion.div key="rc" initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} style={{ display: "flex", gap: 6 }}>
+                    <button onClick={restoreDemo} style={{ ...GHOST, borderColor: "rgba(184,133,48,0.5)", color: "#B88530", background: "rgba(184,133,48,0.1)" }}>✓ Confirmar</button>
+                    <button onClick={() => setRestoreConfirm(false)} style={GHOST}>Cancelar</button>
+                  </motion.div>
+                ) : (
+                  <motion.button key="rb" onClick={() => setRestoreConfirm(true)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ ...GHOST, borderColor: "rgba(184,133,48,0.4)", color: "#B88530", background: "rgba(184,133,48,0.06)" }}>Restaurar demo</motion.button>
+                )}
+              </AnimatePresence>
+            </DangerRow>
+
+            <DangerRow title="Exportar configuración" desc="Descarga todos los ajustes actuales como archivo JSON para respaldo o migración (sin API key).">
+              <button onClick={exportConfig} style={GHOST}>↑ Exportar JSON</button>
+            </DangerRow>
+          </SectionCard>
+
         </div>
+
+        {/* ── Floating save bar ────────────────────────────────────────── */}
+        <AnimatePresence>
+          {isDirty && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.22, ease: EASE }}
+              style={{ position: "sticky", bottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", borderRadius: 14, background: "var(--bg-surface)", border: "1px solid var(--border-subtle)", boxShadow: "0 8px 32px rgba(0,0,0,0.35)", backdropFilter: "blur(12px)", maxWidth: 680 }}
+            >
+              <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Tienes cambios sin guardar</span>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={() => setLocal({ ...settings })} style={GHOST}>Descartar</button>
+                <motion.button onClick={handleSave} whileTap={{ scale: 0.96 }} style={{ padding: "7px 20px", borderRadius: 8, border: "1px solid rgba(74,142,184,0.4)", background: "rgba(74,142,184,0.15)", color: "#4A8EB8", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                  Guardar cambios
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
-    </div>
-  );
-}
-
-// ── Local style constants ──────────────────────────────────────────────────────
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "9px 12px",
-  borderRadius: 8,
-  border: "1px solid rgba(26,39,68,0.7)",
-  background: "rgba(14,12,10,0.5)",
-  color: "var(--text-primary)",
-  fontSize: 12,
-  fontFamily: "inherit",
-  outline: "none",
-  boxSizing: "border-box",
-};
-
-const ghostBtnStyle: React.CSSProperties = {
-  padding: "7px 14px",
-  borderRadius: 7,
-  border: "1px solid rgba(26,39,68,0.7)",
-  background: "transparent",
-  color: "var(--text-muted)",
-  fontSize: 11,
-  fontWeight: 500,
-  cursor: "pointer",
-  whiteSpace: "nowrap",
-};
-
-const dangerBtnStyle: React.CSSProperties = {
-  padding: "7px 14px",
-  borderRadius: 7,
-  border: "1px solid rgba(255,71,87,0.4)",
-  background: "rgba(255,71,87,0.1)",
-  color: "#A83C50",
-  fontSize: 11,
-  fontWeight: 600,
-  cursor: "pointer",
-  whiteSpace: "nowrap",
-};
-
-// ── Sub-components ─────────────────────────────────────────────────────────────
-
-function SectionCard({
-  id,
-  title,
-  icon,
-  color,
-  children,
-  refCallback,
-  danger,
-  badge,
-}: {
-  id: Section;
-  title: string;
-  icon: string;
-  color: string;
-  children: React.ReactNode;
-  refCallback?: (el: HTMLElement | null) => void;
-  danger?: boolean;
-  badge?: string;
-}) {
-  return (
-    <motion.div
-      ref={refCallback}
-      id={`section-${id}`}
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      style={{
-        borderRadius: 16,
-        border: `1px solid ${danger ? "rgba(255,71,87,0.2)" : "rgba(20,18,14,0.5)"}`,
-        background: danger ? "rgba(255,71,87,0.02)" : "rgba(14,12,10,0.3)",
-        overflow: "hidden",
-        scrollMarginTop: 24,
-      }}
-    >
-      {/* Header */}
-      <div
-        style={{
-          padding: "14px 20px",
-          borderBottom: `1px solid ${danger ? "rgba(255,71,87,0.12)" : "rgba(20,18,14,0.5)"}`,
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-        }}
-      >
-        <span style={{ color, fontSize: 16 }}>{icon}</span>
-        <h3 style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", letterSpacing: "0.01em", flex: 1 }}>
-          {title}
-        </h3>
-        {badge && (
-          <span
-            style={{
-              fontSize: 9,
-              padding: "3px 8px",
-              borderRadius: 5,
-              background: `${color}12`,
-              color,
-              border: `1px solid ${color}22`,
-              fontWeight: 700,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-            }}
-          >
-            {badge}
-          </span>
-        )}
-      </div>
-
-      {/* Body */}
-      <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: 16 }}>
-        {children}
-      </div>
-    </motion.div>
-  );
-}
-
-function FieldGroup({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-      <label style={{ fontSize: 11, color: "var(--text-muted)", letterSpacing: "0.04em", fontWeight: 500 }}>
-        {label}
-      </label>
-      {children}
-    </div>
-  );
-}
-
-function ToggleSetting({
-  label,
-  sub,
-  value,
-  onChange,
-  color,
-}: {
-  label: string;
-  sub: string;
-  value: boolean;
-  onChange: (v: boolean) => void;
-  color: string;
-}) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-      <div>
-        <p style={{ fontSize: 13, color: "var(--text-primary)", fontWeight: 500, marginBottom: 2 }}>{label}</p>
-        <p style={{ fontSize: 11, color: "var(--text-muted)" }}>{sub}</p>
-      </div>
-      <motion.button
-        onClick={() => onChange(!value)}
-        whileTap={{ scale: 0.9 }}
-        style={{
-          width: 42,
-          height: 24,
-          borderRadius: 12,
-          border: `1px solid ${value ? color + "50" : "rgba(20,18,14,0.8)"}`,
-          background: value ? `${color}20` : "rgba(14,12,10,0.5)",
-          position: "relative",
-          cursor: "pointer",
-          flexShrink: 0,
-          transition: "all 0.2s",
-          padding: 0,
-        }}
-      >
-        <motion.div
-          animate={{ x: value ? 18 : 2 }}
-          transition={{ type: "spring", stiffness: 400, damping: 25 }}
-          style={{
-            position: "absolute",
-            top: 3,
-            width: 16,
-            height: 16,
-            borderRadius: "50%",
-            background: value ? color : "var(--text-muted)",
-            transition: "background 0.2s",
-          }}
-        />
-      </motion.button>
-    </div>
-  );
-}
-
-function DangerRow({
-  title,
-  desc,
-  children,
-}: {
-  title: string;
-  desc: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 16,
-        padding: "12px 14px",
-        borderRadius: 10,
-        border: "1px solid rgba(26,39,68,0.4)",
-        background: "rgba(14,12,10,0.2)",
-      }}
-    >
-      <div style={{ flex: 1 }}>
-        <p style={{ fontSize: 13, color: "var(--text-primary)", fontWeight: 500, marginBottom: 3 }}>{title}</p>
-        <p style={{ fontSize: 11, color: "var(--text-muted)", lineHeight: 1.5 }}>{desc}</p>
-      </div>
-      <div style={{ flexShrink: 0 }}>{children}</div>
     </div>
   );
 }
