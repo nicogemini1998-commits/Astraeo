@@ -48,6 +48,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: development
       args:
         NODE_ENV: development
     container_name: Mision-Control
