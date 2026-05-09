@@ -68,28 +68,94 @@ const badgeVariants = {
 
 function HexLogo() {
   return (
-    <svg width="32" height="32" viewBox="0 0 36 36" fill="none" aria-label="AETHER logo">
+    <svg width="34" height="34" viewBox="0 0 40 40" fill="none" aria-label="AETHER logo">
+      <defs>
+        <linearGradient id="logo-grad-outer" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#8B7BFF" stopOpacity="0.9" />
+          <stop offset="100%" stopColor="#4A8EB8" stopOpacity="0.7" />
+        </linearGradient>
+        <linearGradient id="logo-grad-mid" x1="100%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#6F5BFF" stopOpacity="0.5" />
+          <stop offset="100%" stopColor="#3D8A60" stopOpacity="0.3" />
+        </linearGradient>
+        <radialGradient id="logo-glow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#8B7BFF" stopOpacity="0.6" />
+          <stop offset="100%" stopColor="#8B7BFF" stopOpacity="0" />
+        </radialGradient>
+        <filter id="logo-blur">
+          <feGaussianBlur stdDeviation="1.5" />
+        </filter>
+      </defs>
+
+      {/* Outer glow */}
       <polygon
-        points="18,2 32,10 32,26 18,34 4,26 4,10"
-        stroke="#6F5BFF"
+        points="20,1 35,10 35,28 20,37 5,28 5,10"
+        fill="url(#logo-glow)"
+        filter="url(#logo-blur)"
+        opacity="0.6"
+      />
+
+      {/* Outer hex */}
+      <polygon
+        points="20,2 34,10.5 34,27.5 20,36 6,27.5 6,10.5"
+        stroke="url(#logo-grad-outer)"
         strokeWidth="1.5"
+        fill="rgba(111,91,255,0.07)"
+      />
+
+      {/* Mid hex */}
+      <polygon
+        points="20,8 30,14 30,26 20,32 10,26 10,14"
+        stroke="url(#logo-grad-mid)"
+        strokeWidth="1"
+        fill="rgba(74,142,184,0.05)"
+      />
+
+      {/* Inner hex */}
+      <polygon
+        points="20,13 26,16.5 26,23.5 20,27 14,23.5 14,16.5"
+        stroke="rgba(139,123,255,0.4)"
+        strokeWidth="0.75"
         fill="rgba(111,91,255,0.08)"
       />
-      <polygon
-        points="18,7 28,13 28,23 18,29 8,23 8,13"
-        stroke="#9B8FFF"
-        strokeWidth="1"
-        strokeOpacity="0.35"
-        fill="none"
-      />
+
+      {/* Orbit ring */}
       <motion.circle
-        cx="18" cy="18" r="4"
-        fill="#6F5BFF"
-        animate={{ r: [3.5, 5, 3.5], opacity: [0.8, 1, 0.8] }}
-        transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
-        style={{ filter: "drop-shadow(0 0 5px rgba(111,91,255,0.8))" }}
+        cx="20" cy="20" r="8.5"
+        stroke="rgba(111,91,255,0.18)"
+        strokeWidth="0.75"
+        strokeDasharray="3 5"
+        fill="none"
+        animate={{ rotate: 360 }}
+        transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+        style={{ transformOrigin: "20px 20px" }}
       />
-      <circle cx="18" cy="18" r="2" fill="#F0EDE6" />
+
+      {/* Orbit dot */}
+      <motion.g
+        animate={{ rotate: 360 }}
+        transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+        style={{ transformOrigin: "20px 20px" }}
+      >
+        <circle cx="28.5" cy="20" r="1.5" fill="#4A8EB8" opacity="0.8" />
+      </motion.g>
+
+      {/* Core pulse */}
+      <motion.circle
+        cx="20" cy="20" r="4"
+        fill="rgba(111,91,255,0.15)"
+        animate={{ r: [3.5, 5.5, 3.5], opacity: [0.5, 0.15, 0.5] }}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+      />
+
+      {/* Core */}
+      <circle cx="20" cy="20" r="3" fill="url(#logo-grad-outer)" />
+      <circle cx="20" cy="20" r="1.4" fill="#F0EDE6" />
+
+      {/* Corner accents */}
+      <circle cx="20" cy="2" r="1.2" fill="#6F5BFF" opacity="0.6" />
+      <circle cx="34" cy="10.5" r="1" fill="#4A8EB8" opacity="0.5" />
+      <circle cx="6" cy="27.5" r="0.9" fill="#3D8A60" opacity="0.45" />
     </svg>
   );
 }

@@ -2,270 +2,193 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  SearchIcon, PlusIcon, ZapIcon, XIcon, CheckIcon,
-  TrendingUpIcon, ClockIcon, StarIcon, FilterIcon, ToggleLeftIcon,
+  SearchIcon, PlusIcon, XIcon, CheckIcon, ChevronDownIcon,
+  ZapIcon, TrendingUpIcon, StarIcon, FolderIcon, FolderOpenIcon,
+  GridIcon, ListIcon,
 } from "lucide-react";
 import { useAstraeo } from "@/store/astraeo";
 import type { Skill, SkillCategory } from "@/lib/types";
 
-// ─── Design tokens ────────────────────────────────────────────────────────────
+// ─── Design system ────────────────────────────────────────────────────────────
 
-const CATEGORY_CONFIG: Record<SkillCategory | "all", { label: string; color: string; bg: string; emoji: string }> = {
-  all:           { label: "Todas",          color: "var(--text-primary)",  bg: "rgba(240,237,230,0.06)", emoji: "◈" },
-  research:      { label: "Investigación",  color: "#4A8EB8",              bg: "rgba(74,142,184,0.08)",  emoji: "🔍" },
-  writing:       { label: "Escritura",      color: "#6655CC",              bg: "rgba(102,85,204,0.08)", emoji: "✍️" },
-  code:          { label: "Código",         color: "#3D8A60",              bg: "rgba(61,138,96,0.08)",  emoji: "💻" },
-  data:          { label: "Datos",          color: "#B88530",              bg: "rgba(184,133,48,0.08)", emoji: "📊" },
-  visual:        { label: "Visual",         color: "#B04858",              bg: "rgba(176,72,88,0.08)",  emoji: "🎨" },
-  communication: { label: "Comunicación",   color: "#4A8EB8",              bg: "rgba(74,142,184,0.08)", emoji: "💬" },
-  automation:    { label: "Automatización", color: "#6655CC",              bg: "rgba(102,85,204,0.08)", emoji: "⚙️" },
+const CAT: Record<SkillCategory, { label: string; color: string; emoji: string; desc: string }> = {
+  ai:            { label: "IA & Prompting",      color: "#7C6FFF", emoji: "🧠", desc: "Técnicas avanzadas de LLM" },
+  research:      { label: "Investigación",        color: "#4A8EB8", emoji: "🔍", desc: "Búsqueda y análisis" },
+  writing:       { label: "Escritura",            color: "#6655CC", emoji: "✍️", desc: "Contenido y copy" },
+  code:          { label: "Código",               color: "#3D8A60", emoji: "💻", desc: "Desarrollo y arquitectura" },
+  data:          { label: "Datos",                color: "#B88530", emoji: "📊", desc: "Analytics y reportes" },
+  visual:        { label: "Visual & Diseño",      color: "#B04858", emoji: "🎨", desc: "Creatividades e identidad" },
+  communication: { label: "Comunicación",         color: "#4A9B8A", emoji: "💬", desc: "Outreach y mensajería" },
+  automation:    { label: "Automatización",       color: "#8B5E9B", emoji: "⚙️", desc: "Workflows y CRM" },
+  sales:         { label: "Ventas & CRM",         color: "#C06A2E", emoji: "🎯", desc: "Proceso comercial" },
+  strategy:      { label: "Estrategia",           color: "#5B8A3C", emoji: "🔭", desc: "Planificación y negocio" },
 };
 
-const DIFFICULTY_CONFIG = {
-  beginner:     { label: "Básico",     color: "#3D8A60", bg: "rgba(61,138,96,0.1)"  },
-  intermediate: { label: "Intermedio", color: "#B88530", bg: "rgba(184,133,48,0.1)" },
-  advanced:     { label: "Avanzado",   color: "#A83C50", bg: "rgba(168,60,80,0.1)"  },
-};
+const DIFF = {
+  beginner:     { label: "Básico",     color: "#3D8A60" },
+  intermediate: { label: "Medio",      color: "#B88530" },
+  advanced:     { label: "Avanzado",   color: "#A83C50" },
+} as const;
 
 const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
-// ─── Utils ────────────────────────────────────────────────────────────────────
+// ─── CountUp ──────────────────────────────────────────────────────────────────
 
-function useCountUp(target: number, duration = 1000) {
-  const [val, setVal] = useState(0);
+function useCountUp(target: number, duration = 900) {
+  const [v, setV] = useState(0);
   const raf = useRef<number | null>(null);
-  const start = useRef<number | null>(null);
+  const t0 = useRef<number | null>(null);
   useEffect(() => {
-    start.current = null;
+    t0.current = null;
     const tick = (ts: number) => {
-      if (!start.current) start.current = ts;
-      const p = Math.min((ts - start.current) / duration, 1);
-      setVal(Math.round(target * (1 - Math.pow(1 - p, 3))));
+      if (!t0.current) t0.current = ts;
+      const p = Math.min((ts - t0.current) / duration, 1);
+      setV(Math.round(target * (1 - Math.pow(1 - p, 3))));
       if (p < 1) raf.current = requestAnimationFrame(tick);
     };
     raf.current = requestAnimationFrame(tick);
     return () => { if (raf.current) cancelAnimationFrame(raf.current); };
   }, [target, duration]);
-  return val;
+  return v;
 }
 
-// ─── StatBar ──────────────────────────────────────────────────────────────────
+// ─── MiniBar ─────────────────────────────────────────────────────────────────
 
-function StatBar({ value, color }: { value: number; color: string }) {
+function MiniBar({ value, color }: { value: number; color: string }) {
   return (
-    <div style={{ width: "100%", height: 2, background: "rgba(255,255,255,0.06)", borderRadius: 1, overflow: "hidden" }}>
+    <div style={{ width: "100%", height: 2, background: "var(--bg-surface-2)", borderRadius: 1 }}>
       <motion.div
         initial={{ width: 0 }}
         animate={{ width: `${value}%` }}
-        transition={{ duration: 0.9, ease: EASE, delay: 0.15 }}
-        style={{ height: "100%", background: color, borderRadius: 1 }}
+        transition={{ duration: 1, ease: EASE, delay: 0.2 }}
+        style={{ height: "100%", borderRadius: 1, background: color }}
       />
     </div>
   );
 }
 
-// ─── AgentDots ────────────────────────────────────────────────────────────────
+// ─── StatCard ─────────────────────────────────────────────────────────────────
 
-function AgentDots({ agentIds, agents }: { agentIds: string[]; agents: { id: string; color: string; name: string }[] }) {
-  const matched = agentIds.slice(0, 4).map((id) => agents.find((a) => a.id === id)).filter(Boolean);
+function StatCard({ label, value, color, suffix = "" }: { label: string; value: number; color: string; suffix?: string }) {
+  const n = useCountUp(Math.round(value));
   return (
-    <div style={{ display: "flex", alignItems: "center" }}>
-      {matched.map((agent, i) => (
-        <div key={agent!.id} title={agent!.name} style={{
-          width: 18, height: 18, borderRadius: "50%",
-          background: `${agent!.color}18`,
-          border: `1.5px solid ${agent!.color}60`,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 8, color: agent!.color, fontWeight: 700,
-          marginLeft: i > 0 ? -5 : 0,
-          zIndex: matched.length - i, position: "relative",
-        }}>
-          {agent!.name[0]}
-        </div>
-      ))}
-      {agentIds.length > 4 && (
-        <div style={{
-          width: 18, height: 18, borderRadius: "50%",
-          background: "var(--bg-surface-2)", border: "1.5px solid var(--border-subtle)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 8, color: "var(--text-muted)", fontWeight: 700,
-          marginLeft: -5, zIndex: 0, position: "relative",
-        }}>
-          +{agentIds.length - 4}
-        </div>
-      )}
+    <div style={{
+      padding: "10px 14px", borderRadius: 10,
+      background: `${color}07`,
+      border: `1px solid ${color}18`,
+      flex: 1,
+    }}>
+      <p style={{ fontSize: 8, color: "var(--text-muted)", letterSpacing: "0.08em", marginBottom: 4 }}>{label}</p>
+      <p style={{ fontSize: 20, fontWeight: 700, color, fontFamily: "var(--font-display)", lineHeight: 1 }}>
+        {n.toLocaleString()}{suffix}
+      </p>
     </div>
   );
 }
 
 // ─── SkillCard ────────────────────────────────────────────────────────────────
 
-interface SkillCardProps {
-  skill: Skill;
-  agents: { id: string; color: string; name: string }[];
-  onSelect: () => void;
-  onToggle: () => void;
-  index: number;
-}
-
-function SkillCard({ skill, agents, onSelect, onToggle, index }: SkillCardProps) {
-  const cat = CATEGORY_CONFIG[skill.category];
-  const diff = DIFFICULTY_CONFIG[skill.difficulty];
-  const usage = useCountUp(skill.usageCount, 900 + index * 80);
-  const [hovered, setHovered] = useState(false);
+function SkillCard({ skill, selected, onClick }: { skill: Skill; selected: boolean; onClick: () => void }) {
+  const [hov, setHov] = useState(false);
+  const cat = CAT[skill.category];
+  const diff = DIFF[skill.difficulty];
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      onClick={onClick}
+      onHoverStart={() => setHov(true)}
+      onHoverEnd={() => setHov(false)}
+      layout
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.035, duration: 0.3, ease: EASE }}
-      onClick={onSelect}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      transition={{ duration: 0.22, ease: EASE }}
       style={{
-        borderRadius: 16,
-        border: `1px solid ${hovered ? `${cat.color}35` : skill.active ? `${cat.color}22` : "var(--border-subtle)"}`,
-        background: hovered
-          ? `${cat.color}06`
-          : skill.active
-          ? `${cat.color}03`
-          : "var(--bg-surface)",
+        borderRadius: 14,
+        border: `1px solid ${selected ? `${cat.color}45` : hov ? `${cat.color}28` : "var(--border-subtle)"}`,
+        background: selected ? `${cat.color}09` : hov ? `${cat.color}05` : "var(--bg-surface)",
+        transform: hov || selected ? "translateY(-2px)" : "translateY(0)",
+        boxShadow: hov || selected ? `0 8px 24px rgba(0,0,0,0.22), 0 0 0 1px ${cat.color}12` : "none",
+        transition: "all 0.18s ease",
         cursor: "pointer",
         overflow: "hidden",
-        transition: "border-color 0.2s, background 0.2s, transform 0.15s",
-        transform: hovered ? "translateY(-2px)" : "translateY(0)",
-        boxShadow: hovered ? `0 8px 24px rgba(0,0,0,0.25), 0 0 0 1px ${cat.color}15` : "none",
+        position: "relative",
       }}
     >
-      {/* Accent top line */}
+      {/* Accent line */}
       <div style={{
         height: 2,
         background: skill.active
-          ? `linear-gradient(90deg, transparent, ${cat.color}80, ${cat.color}cc, ${cat.color}80, transparent)`
+          ? `linear-gradient(90deg, transparent, ${cat.color}70, ${cat.color}cc, ${cat.color}70, transparent)`
           : "var(--border-subtle)",
-        opacity: skill.active ? 1 : 0.4,
       }} />
 
-      <div style={{ padding: "16px 16px 14px" }}>
-        {/* Icon + badges */}
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 12 }}>
+      <div style={{ padding: "12px 14px" }}>
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 8 }}>
           <div style={{
-            width: 46, height: 46, borderRadius: 13, flexShrink: 0,
-            background: cat.bg,
-            border: `1px solid ${cat.color}20`,
+            width: 34, height: 34, borderRadius: 9, flexShrink: 0,
+            background: `${cat.color}12`,
+            border: `1px solid ${cat.color}22`,
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 24,
-            filter: skill.active ? "none" : "grayscale(0.5) opacity(0.7)",
+            fontSize: 16,
           }}>
             {skill.icon}
           </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-end" }}>
-            <span style={{
-              fontSize: 8, padding: "2px 7px", borderRadius: 4,
-              background: cat.bg, color: cat.color,
-              border: `1px solid ${cat.color}25`,
-              fontWeight: 700, letterSpacing: "0.08em",
-              fontFamily: "var(--font-mono)",
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{
+              fontSize: 12, fontWeight: 700,
+              color: "var(--text-primary)",
+              lineHeight: 1.25, marginBottom: 2,
             }}>
-              {cat.label.toUpperCase()}
-            </span>
-            <span style={{
-              fontSize: 8, padding: "2px 7px", borderRadius: 4,
-              background: diff.bg, color: diff.color,
-              fontWeight: 600, letterSpacing: "0.04em",
-              fontFamily: "var(--font-mono)",
-            }}>
-              {diff.label.toUpperCase()}
-            </span>
+              {skill.name}
+            </p>
+            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              <span style={{
+                fontSize: 9, fontWeight: 700, color: diff.color,
+                padding: "1px 5px", borderRadius: 3,
+                background: `${diff.color}12`,
+                border: `1px solid ${diff.color}20`,
+              }}>
+                {diff.label}
+              </span>
+              {!skill.active && (
+                <span style={{
+                  fontSize: 9, color: "var(--text-muted)",
+                  padding: "1px 5px", borderRadius: 3,
+                  background: "var(--bg-surface-2)",
+                  border: "1px solid var(--border-subtle)",
+                }}>
+                  Inactiva
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Name */}
-        <h3 style={{
-          fontSize: 13, fontWeight: 700,
-          color: skill.active ? "var(--text-primary)" : "var(--text-secondary)",
-          marginBottom: 5, letterSpacing: "0.01em",
-          fontFamily: "var(--font-sans)",
-        }}>
-          {skill.name}
-        </h3>
-
         {/* Description */}
         <p style={{
-          fontSize: 11, color: "var(--text-muted)", lineHeight: 1.55, marginBottom: 14,
-          display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
-          overflow: "hidden",
+          fontSize: 11, color: "var(--text-secondary)",
+          lineHeight: 1.45, marginBottom: 10,
+          display: "-webkit-box", WebkitLineClamp: 2,
+          WebkitBoxOrient: "vertical", overflow: "hidden",
         }}>
           {skill.description}
         </p>
 
         {/* Stats row */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-          <div style={{ display: "flex", gap: 14 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <TrendingUpIcon size={9} color={cat.color} />
-              <span style={{
-                fontSize: 10, color: cat.color,
-                fontFamily: "var(--font-mono)", fontWeight: 700,
-              }}>
-                {usage.toLocaleString()}
-              </span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <StarIcon size={9} color="#B88530" />
-              <span style={{
-                fontSize: 10, color: "#B88530",
-                fontFamily: "var(--font-mono)", fontWeight: 700,
-              }}>
-                {skill.successRate.toFixed(0)}%
-              </span>
-            </div>
-          </div>
-          <AgentDots agentIds={skill.agentIds} agents={agents} />
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+          <span style={{ fontSize: 10, color: cat.color, fontFamily: "var(--font-display)", fontWeight: 700 }}>
+            {skill.usageCount.toLocaleString()}
+          </span>
+          <span style={{ fontSize: 9, color: "var(--text-muted)" }}>usos</span>
+          <div style={{ width: 1, height: 10, background: "var(--border-subtle)" }} />
+          <span style={{ fontSize: 10, color: skill.successRate >= 95 ? "#3D8A60" : skill.successRate >= 85 ? "#B88530" : "#A83C50", fontFamily: "var(--font-display)", fontWeight: 700 }}>
+            {skill.successRate.toFixed(0)}%
+          </span>
+          <span style={{ fontSize: 9, color: "var(--text-muted)" }}>éxito</span>
         </div>
 
-        {/* Success bar */}
-        <StatBar value={skill.successRate} color={cat.color} />
-
-        {/* Footer: tags + toggle */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12 }}>
-          <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-            {skill.tags.slice(0, 2).map((tag) => (
-              <span key={tag} style={{
-                fontSize: 9, padding: "2px 6px", borderRadius: 3,
-                background: "rgba(255,255,255,0.04)",
-                color: "var(--text-muted)",
-                border: "1px solid var(--border-subtle)",
-              }}>
-                {tag}
-              </span>
-            ))}
-          </div>
-
-          <motion.button
-            onClick={(e) => { e.stopPropagation(); onToggle(); }}
-            whileTap={{ scale: 0.88 }}
-            title={skill.active ? "Desactivar" : "Activar"}
-            style={{
-              width: 34, height: 19, borderRadius: 9.5,
-              background: skill.active ? `${cat.color}22` : "var(--bg-surface-2)",
-              border: `1px solid ${skill.active ? `${cat.color}45` : "var(--border-subtle)"}`,
-              position: "relative", cursor: "pointer", padding: 0, flexShrink: 0,
-              transition: "all 0.2s",
-            }}
-          >
-            <motion.div
-              animate={{ x: skill.active ? 15 : 2 }}
-              transition={{ type: "spring", stiffness: 500, damping: 30 }}
-              style={{
-                position: "absolute", top: 2.5,
-                width: 12, height: 12, borderRadius: "50%",
-                background: skill.active ? cat.color : "var(--text-muted)",
-              }}
-            />
-          </motion.button>
-        </div>
+        <MiniBar value={skill.successRate} color={cat.color} />
       </div>
     </motion.div>
   );
@@ -273,22 +196,14 @@ function SkillCard({ skill, agents, onSelect, onToggle, index }: SkillCardProps)
 
 // ─── SkillDetail ──────────────────────────────────────────────────────────────
 
-function SkillDetail({ skill, agents, onClose, onToggle }: {
-  skill: Skill;
-  agents: { id: string; color: string; name: string; role: string }[];
-  onClose: () => void;
-  onToggle: () => void;
-}) {
-  const cat = CATEGORY_CONFIG[skill.category];
-  const diff = DIFFICULTY_CONFIG[skill.difficulty];
-  const usageVal = useCountUp(skill.usageCount, 900);
-  const successVal = useCountUp(Math.round(skill.successRate * 10), 700);
-  const assignedAgents = skill.agentIds.map((id) => agents.find((a) => a.id === id)).filter(Boolean);
+function SkillDetail({ skill, onClose, onToggle }: { skill: Skill; onClose: () => void; onToggle: () => void }) {
+  const cat = CAT[skill.category];
+  const diff = DIFF[skill.difficulty];
 
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
   }, [onClose]);
 
   return (
@@ -299,210 +214,170 @@ function SkillDetail({ skill, agents, onClose, onToggle }: {
       onClick={onClose}
       style={{
         position: "fixed", inset: 0, zIndex: 60,
-        background: "rgba(10,9,8,0.85)", backdropFilter: "blur(16px)",
+        background: "rgba(10,9,8,0.82)", backdropFilter: "blur(18px)",
         display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
       }}
     >
       <motion.div
-        initial={{ opacity: 0, scale: 0.96, y: 12 }}
+        initial={{ opacity: 0, scale: 0.93, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 8 }}
-        transition={{ duration: 0.2, ease: EASE }}
+        exit={{ opacity: 0, scale: 0.93, y: 12 }}
+        transition={{ duration: 0.22, ease: EASE }}
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: "100%", maxWidth: 520, maxHeight: "82vh",
+          width: "100%", maxWidth: 520,
           borderRadius: 20,
-          border: `1px solid ${cat.color}28`,
+          border: `1px solid ${cat.color}25`,
           background: "var(--bg-surface)",
-          boxShadow: `0 32px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(240,237,230,0.04)`,
-          overflow: "hidden", display: "flex", flexDirection: "column",
+          overflow: "hidden",
+          boxShadow: `0 40px 90px rgba(0,0,0,0.55), 0 0 0 1px ${cat.color}12`,
         }}
       >
+        {/* Color stripe */}
+        <div style={{
+          height: 3,
+          background: `linear-gradient(90deg, transparent, ${cat.color}80, ${cat.color}, ${cat.color}80, transparent)`,
+        }} />
+
         {/* Header */}
         <div style={{
-          padding: "22px 24px 18px",
-          background: `linear-gradient(135deg, ${cat.color}0A 0%, transparent 70%)`,
+          padding: "18px 22px 14px",
           borderBottom: "1px solid var(--border-subtle)",
+          background: `linear-gradient(135deg, ${cat.color}07 0%, transparent 55%)`,
         }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
             <div style={{
-              width: 58, height: 58, borderRadius: 15, flexShrink: 0,
-              background: cat.bg, border: `1px solid ${cat.color}28`,
-              display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30,
+              width: 48, height: 48, borderRadius: 13, flexShrink: 0,
+              background: `${cat.color}14`,
+              border: `1px solid ${cat.color}28`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 24,
             }}>
               {skill.icon}
             </div>
-
             <div style={{ flex: 1 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                <h2 style={{
-                  fontSize: 18, fontWeight: 700, color: "var(--text-primary)",
-                  fontFamily: "var(--font-display)",
-                }}>
-                  {skill.name}
-                </h2>
-                {skill.builtIn && (
-                  <span style={{
-                    fontSize: 8, padding: "2px 7px", borderRadius: 4,
-                    background: "rgba(74,142,184,0.1)", color: "#4A8EB8",
-                    border: "1px solid rgba(74,142,184,0.2)", fontWeight: 700,
-                    letterSpacing: "0.08em", fontFamily: "var(--font-mono)",
-                  }}>
-                    SISTEMA
-                  </span>
-                )}
-              </div>
-              <div style={{ display: "flex", gap: 6 }}>
+              <h2 style={{
+                fontSize: 17, fontWeight: 700, color: "var(--text-primary)",
+                fontFamily: "var(--font-display)", letterSpacing: "0.01em", marginBottom: 5,
+              }}>
+                {skill.name}
+              </h2>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 <span style={{
-                  fontSize: 10, padding: "3px 8px", borderRadius: 5,
-                  background: cat.bg, color: cat.color,
-                  border: `1px solid ${cat.color}25`, fontWeight: 600,
+                  fontSize: 10, fontWeight: 700, color: cat.color,
+                  padding: "2px 8px", borderRadius: 5,
+                  background: `${cat.color}10`, border: `1px solid ${cat.color}22`,
                 }}>
                   {cat.emoji} {cat.label}
                 </span>
                 <span style={{
-                  fontSize: 10, padding: "3px 8px", borderRadius: 5,
-                  background: diff.bg, color: diff.color, fontWeight: 600,
+                  fontSize: 10, fontWeight: 600, color: diff.color,
+                  padding: "2px 8px", borderRadius: 5,
+                  background: `${diff.color}10`, border: `1px solid ${diff.color}22`,
                 }}>
                   {diff.label}
                 </span>
               </div>
             </div>
-
-            <button onClick={onClose} style={{
-              width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-              background: "var(--bg-surface-2)", border: "1px solid var(--border-subtle)",
-              cursor: "pointer", color: "var(--text-muted)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              <XIcon size={14} />
+            <button
+              onClick={onClose}
+              style={{
+                width: 30, height: 30, borderRadius: 8, flexShrink: 0,
+                background: "var(--bg-surface-2)", border: "1px solid var(--border-subtle)",
+                cursor: "pointer", color: "var(--text-muted)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}
+            >
+              <XIcon size={13} />
             </button>
           </div>
         </div>
 
-        {/* Content */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px" }}>
-          <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.65, marginBottom: 20 }}>
+        {/* Body */}
+        <div style={{ padding: "18px 22px" }}>
+          <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 18 }}>
             {skill.description}
           </p>
 
           {/* Metrics */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 20 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 18 }}>
             {[
-              { icon: TrendingUpIcon, label: "Usos totales",  value: usageVal.toLocaleString(),           color: cat.color },
-              { icon: StarIcon,       label: "Tasa de éxito", value: `${(successVal / 10).toFixed(1)}%`,  color: "#B88530" },
-              { icon: ClockIcon,      label: "Duración media",value: `${(skill.avgDurationMs / 1000).toFixed(1)}s`, color: "#6655CC" },
+              { label: "USOS TOTALES", value: skill.usageCount.toLocaleString(), color: cat.color },
+              { label: "TASA ÉXITO",   value: `${skill.successRate.toFixed(1)}%`, color: "#3D8A60" },
+              { label: "DURACIÓN AVG", value: `${(skill.avgDurationMs / 1000).toFixed(1)}s`, color: "#B88530" },
             ].map((m) => (
               <div key={m.label} style={{
-                padding: "12px 14px", borderRadius: 10,
-                background: `${m.color}08`, border: `1px solid ${m.color}18`,
-                display: "flex", flexDirection: "column", gap: 6,
+                padding: "10px 12px", borderRadius: 10,
+                background: `${m.color}07`, border: `1px solid ${m.color}15`,
               }}>
-                <m.icon size={12} color={m.color} />
-                <div style={{
-                  fontSize: 18, fontWeight: 700, color: m.color,
-                  fontFamily: "var(--font-display)",
-                }}>
-                  {m.value}
-                </div>
-                <div style={{ fontSize: 9, color: "var(--text-muted)", letterSpacing: "0.07em", fontFamily: "var(--font-mono)" }}>
-                  {m.label.toUpperCase()}
-                </div>
+                <p style={{ fontSize: 8, color: "var(--text-muted)", letterSpacing: "0.07em", marginBottom: 4 }}>{m.label}</p>
+                <p style={{ fontSize: 18, fontWeight: 700, color: m.color, fontFamily: "var(--font-display)" }}>{m.value}</p>
               </div>
             ))}
           </div>
 
-          {/* Success rate */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-              <span style={{ fontSize: 9, color: "var(--text-muted)", letterSpacing: "0.07em", fontFamily: "var(--font-mono)" }}>TASA DE ÉXITO</span>
-              <span style={{ fontSize: 10, color: cat.color, fontFamily: "var(--font-mono)", fontWeight: 700 }}>
-                {skill.successRate.toFixed(1)}%
-              </span>
-            </div>
-            <StatBar value={skill.successRate} color={cat.color} />
-          </div>
-
-          {/* Assigned agents */}
-          {assignedAgents.length > 0 && (
-            <div style={{ marginBottom: 20 }}>
-              <p style={{ fontSize: 9, color: "var(--text-muted)", letterSpacing: "0.07em", marginBottom: 10, fontFamily: "var(--font-mono)" }}>
-                AGENTES ASIGNADOS ({assignedAgents.length})
-              </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                {assignedAgents.map((agent) => (
-                  <div key={agent!.id} style={{
-                    display: "flex", alignItems: "center", gap: 10,
-                    padding: "9px 12px", borderRadius: 9,
-                    background: `${agent!.color}06`, border: `1px solid ${agent!.color}18`,
-                  }}>
-                    <div style={{
-                      width: 28, height: 28, borderRadius: "50%",
-                      background: `${agent!.color}18`, border: `1.5px solid ${agent!.color}50`,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 12, color: agent!.color, fontWeight: 700,
-                    }}>
-                      {agent!.name[0]}
-                    </div>
-                    <div>
-                      <p style={{ fontSize: 12, fontWeight: 600, color: "var(--text-primary)" }}>{agent!.name}</p>
-                      <p style={{ fontSize: 10, color: "var(--text-muted)" }}>{agent!.role}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Tags */}
           {skill.tags.length > 0 && (
-            <div>
-              <p style={{ fontSize: 9, color: "var(--text-muted)", letterSpacing: "0.07em", marginBottom: 8, fontFamily: "var(--font-mono)" }}>
-                ETIQUETAS
-              </p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-                {skill.tags.map((tag) => (
-                  <span key={tag} style={{
-                    fontSize: 11, padding: "4px 10px", borderRadius: 6,
-                    background: cat.bg, color: cat.color,
-                    border: `1px solid ${cat.color}20`, fontWeight: 500,
-                  }}>
-                    {tag}
-                  </span>
-                ))}
-              </div>
+            <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 16 }}>
+              {skill.tags.map((tag) => (
+                <span key={tag} style={{
+                  fontSize: 10, color: "var(--text-secondary)",
+                  padding: "3px 8px", borderRadius: 5,
+                  background: "var(--bg-surface-2)", border: "1px solid var(--border-subtle)",
+                }}>
+                  #{tag}
+                </span>
+              ))}
             </div>
           )}
+
+          {/* Reliability bar */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+              <span style={{ fontSize: 10, color: "var(--text-muted)", letterSpacing: "0.06em" }}>FIABILIDAD</span>
+              <span style={{ fontSize: 10, color: "#3D8A60", fontFamily: "var(--font-display)", fontWeight: 700 }}>{skill.successRate.toFixed(1)}%</span>
+            </div>
+            <div style={{ height: 4, background: "var(--bg-surface-2)", borderRadius: 2 }}>
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${skill.successRate}%` }}
+                transition={{ duration: 1, ease: EASE }}
+                style={{
+                  height: "100%", borderRadius: 2,
+                  background: `linear-gradient(90deg, ${cat.color}80, ${cat.color})`,
+                }}
+              />
+            </div>
+          </div>
         </div>
 
-        {/* Footer actions */}
+        {/* Footer */}
         <div style={{
-          padding: "14px 24px", borderTop: "1px solid var(--border-subtle)",
-          display: "flex", gap: 10,
+          padding: "12px 22px",
+          borderTop: "1px solid var(--border-subtle)",
+          display: "flex", gap: 8,
         }}>
           <motion.button
             onClick={onToggle}
-            whileTap={{ scale: 0.97 }}
+            whileTap={{ scale: 0.96 }}
             style={{
-              flex: 1, padding: "10px 0", borderRadius: 10,
-              border: `1px solid ${skill.active ? "rgba(168,60,80,0.3)" : `${cat.color}32`}`,
-              background: skill.active ? "rgba(168,60,80,0.07)" : `${cat.color}0C`,
+              flex: 2, padding: "9px 0", borderRadius: 9,
+              border: `1px solid ${skill.active ? "rgba(168,60,80,0.3)" : `${cat.color}35`}`,
+              background: skill.active ? "rgba(168,60,80,0.07)" : `${cat.color}10`,
               color: skill.active ? "#A83C50" : cat.color,
               fontSize: 12, fontWeight: 700, cursor: "pointer",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
             }}
           >
-            <ToggleLeftIcon size={14} />
-            {skill.active ? "Desactivar" : "Activar"}
+            {skill.active ? "⏸ Desactivar" : "▶ Activar"}
           </motion.button>
           <motion.button
             onClick={onClose}
-            whileTap={{ scale: 0.97 }}
+            whileTap={{ scale: 0.96 }}
             style={{
-              padding: "10px 22px", borderRadius: 10,
+              flex: 1, padding: "9px 0", borderRadius: 9,
               border: "1px solid var(--border-subtle)",
-              background: "transparent", color: "var(--text-muted)",
-              fontSize: 12, fontWeight: 500, cursor: "pointer",
+              background: "transparent",
+              color: "var(--text-muted)", fontSize: 12, cursor: "pointer",
             }}
           >
             Cerrar
@@ -517,39 +392,32 @@ function SkillDetail({ skill, agents, onClose, onToggle }: {
 
 function NewSkillForm({ onClose, onSave }: {
   onClose: () => void;
-  onSave: (data: Omit<Skill, "id" | "createdAt" | "usageCount" | "successRate" | "avgDurationMs">) => void;
+  onSave: (s: Omit<Skill, "id" | "createdAt" | "usageCount" | "successRate" | "avgDurationMs">) => void;
 }) {
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
-  const [category, setCategory] = useState<SkillCategory>("research");
-  const [difficulty, setDifficulty] = useState<Skill["difficulty"]>("beginner");
+  const [cat, setCat] = useState<SkillCategory>("ai");
+  const [diff, setDiff] = useState<"beginner" | "intermediate" | "advanced">("beginner");
   const [icon, setIcon] = useState("⚡");
-  const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
 
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
   }, [onClose]);
 
-  const addTag = () => {
-    const t = tagInput.trim().slice(0, 32);
-    if (t && !tags.includes(t) && tags.length < 10) {
-      setTags((p) => [...p, t]);
-      setTagInput("");
-    }
+  const FIELD: React.CSSProperties = {
+    width: "100%", padding: "9px 12px", borderRadius: 8,
+    background: "var(--bg-base)", border: "1px solid var(--border-subtle)",
+    color: "var(--text-primary)", fontSize: 13, boxSizing: "border-box", outline: "none",
   };
 
-  const catColor = CATEGORY_CONFIG[category].color;
-
-  const FIELD: React.CSSProperties = {
-    width: "100%", padding: "10px 12px", borderRadius: 9,
-    background: "var(--bg-base)",
-    border: "1px solid var(--border-subtle)",
-    color: "var(--text-primary)", fontSize: 13,
-    boxSizing: "border-box", outline: "none",
-    fontFamily: "var(--font-sans)",
+  const addTag = () => {
+    const t = tagInput.trim().toLowerCase();
+    if (t && !tags.includes(t)) setTags((p) => [...p, t]);
+    setTagInput("");
   };
 
   return (
@@ -560,203 +428,102 @@ function NewSkillForm({ onClose, onSave }: {
       onClick={onClose}
       style={{
         position: "fixed", inset: 0, zIndex: 60,
-        background: "rgba(10,9,8,0.88)", backdropFilter: "blur(18px)",
+        background: "rgba(10,9,8,0.85)", backdropFilter: "blur(18px)",
         display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
       }}
     >
       <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 12 }}
+        initial={{ opacity: 0, scale: 0.94, y: 16 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.2, ease: EASE }}
+        transition={{ duration: 0.22, ease: EASE }}
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: "100%", maxWidth: 480, borderRadius: 20,
-          border: `1px solid ${catColor}22`,
+          width: "100%", maxWidth: 500,
+          borderRadius: 20,
+          border: "1px solid var(--border-subtle)",
           background: "var(--bg-surface)",
-          boxShadow: "0 32px 80px rgba(0,0,0,0.5)",
           overflow: "hidden",
+          boxShadow: "0 36px 80px rgba(0,0,0,0.5)",
         }}
       >
-        {/* Header */}
-        <div style={{
-          padding: "20px 24px 16px", borderBottom: "1px solid var(--border-subtle)",
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{
-              width: 32, height: 32, borderRadius: 8,
-              background: `${catColor}12`, border: `1px solid ${catColor}22`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              <PlusIcon size={14} color={catColor} />
-            </div>
-            <h3 style={{
-              fontSize: 15, fontWeight: 700, color: "var(--text-primary)",
-              fontFamily: "var(--font-display)",
-            }}>
-              Nueva Habilidad
-            </h3>
-          </div>
-          <button onClick={onClose} style={{
-            width: 30, height: 30, borderRadius: 7,
-            background: "var(--bg-surface-2)", border: "1px solid var(--border-subtle)",
-            cursor: "pointer", color: "var(--text-muted)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
-            <XIcon size={13} />
+        <div style={{ height: 2, background: "linear-gradient(90deg, transparent, #7C6FFF80, #7C6FFF, #7C6FFF80, transparent)" }} />
+        <div style={{ padding: "18px 22px 14px", borderBottom: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between" }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)", fontFamily: "var(--font-display)" }}>Nueva Skill</h3>
+          <button onClick={onClose} style={{ width: 28, height: 28, borderRadius: 7, background: "var(--bg-surface-2)", border: "1px solid var(--border-subtle)", cursor: "pointer", color: "var(--text-muted)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <XIcon size={12} />
           </button>
         </div>
-
-        <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16, maxHeight: "60vh", overflowY: "auto" }}>
-          {/* Icon + Name */}
-          <div style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
+        <div style={{ padding: "18px 22px", display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 3fr", gap: 8 }}>
             <div>
-              <label style={{ fontSize: 9, color: "var(--text-muted)", letterSpacing: "0.08em", display: "block", marginBottom: 5, fontFamily: "var(--font-mono)" }}>ICONO</label>
-              <input
-                value={icon}
-                onChange={(e) => setIcon(e.target.value.slice(0, 2))}
-                style={{ ...FIELD, width: 52, height: 44, textAlign: "center", fontSize: 22 }}
-              />
+              <label style={{ fontSize: 9, color: "var(--text-muted)", letterSpacing: "0.07em", display: "block", marginBottom: 5 }}>ICONO</label>
+              <input value={icon} onChange={(e) => setIcon(e.target.value)} maxLength={4} style={{ ...FIELD, textAlign: "center", fontSize: 20 }} />
             </div>
-            <div style={{ flex: 1 }}>
-              <label style={{ fontSize: 9, color: "var(--text-muted)", letterSpacing: "0.08em", display: "block", marginBottom: 5, fontFamily: "var(--font-mono)" }}>NOMBRE *</label>
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value.slice(0, 80))}
-                placeholder="Nombre de la habilidad…"
-                autoFocus
-                style={FIELD}
-              />
+            <div>
+              <label style={{ fontSize: 9, color: "var(--text-muted)", letterSpacing: "0.07em", display: "block", marginBottom: 5 }}>NOMBRE *</label>
+              <input value={name} onChange={(e) => setName(e.target.value.slice(0, 60))} placeholder="Nombre de la skill..." style={FIELD} autoFocus />
             </div>
           </div>
-
-          {/* Description */}
           <div>
-            <label style={{ fontSize: 9, color: "var(--text-muted)", letterSpacing: "0.08em", display: "block", marginBottom: 5, fontFamily: "var(--font-mono)" }}>DESCRIPCIÓN</label>
-            <textarea
-              value={desc}
-              onChange={(e) => setDesc(e.target.value.slice(0, 400))}
-              placeholder="Qué hace esta habilidad…"
-              rows={3}
-              style={{ ...FIELD, lineHeight: 1.55, resize: "none" }}
-            />
+            <label style={{ fontSize: 9, color: "var(--text-muted)", letterSpacing: "0.07em", display: "block", marginBottom: 5 }}>DESCRIPCIÓN</label>
+            <textarea value={desc} onChange={(e) => setDesc(e.target.value.slice(0, 300))} placeholder="¿Qué hace esta skill?" rows={3} style={{ ...FIELD, resize: "none", lineHeight: 1.5 } as React.CSSProperties} />
           </div>
-
-          {/* Category */}
-          <div>
-            <label style={{ fontSize: 9, color: "var(--text-muted)", letterSpacing: "0.08em", display: "block", marginBottom: 8, fontFamily: "var(--font-mono)" }}>CATEGORÍA</label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-              {(Object.keys(CATEGORY_CONFIG) as (SkillCategory | "all")[]).filter((k) => k !== "all").map((cat) => {
-                const cfg = CATEGORY_CONFIG[cat];
-                const sel = category === cat;
-                return (
-                  <button key={cat} onClick={() => setCategory(cat as SkillCategory)} style={{
-                    padding: "5px 11px", borderRadius: 7,
-                    background: sel ? cfg.bg : "var(--bg-base)",
-                    border: `1px solid ${sel ? `${cfg.color}38` : "var(--border-subtle)"}`,
-                    color: sel ? cfg.color : "var(--text-muted)",
-                    fontSize: 11, fontWeight: sel ? 700 : 500, cursor: "pointer",
-                    transition: "all 0.12s",
-                  }}>
-                    {cfg.emoji} {cfg.label}
-                  </button>
-                );
-              })}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            <div>
+              <label style={{ fontSize: 9, color: "var(--text-muted)", letterSpacing: "0.07em", display: "block", marginBottom: 5 }}>CATEGORÍA</label>
+              <select value={cat} onChange={(e) => setCat(e.target.value as SkillCategory)} style={{ ...FIELD, cursor: "pointer" } as React.CSSProperties}>
+                {(Object.entries(CAT) as [SkillCategory, typeof CAT[SkillCategory]][]).map(([k, v]) => (
+                  <option key={k} value={k} style={{ background: "var(--bg-surface)" }}>{v.emoji} {v.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize: 9, color: "var(--text-muted)", letterSpacing: "0.07em", display: "block", marginBottom: 5 }}>DIFICULTAD</label>
+              <select value={diff} onChange={(e) => setDiff(e.target.value as typeof diff)} style={{ ...FIELD, cursor: "pointer" } as React.CSSProperties}>
+                <option value="beginner" style={{ background: "var(--bg-surface)" }}>Básico</option>
+                <option value="intermediate" style={{ background: "var(--bg-surface)" }}>Intermedio</option>
+                <option value="advanced" style={{ background: "var(--bg-surface)" }}>Avanzado</option>
+              </select>
             </div>
           </div>
-
-          {/* Difficulty */}
           <div>
-            <label style={{ fontSize: 9, color: "var(--text-muted)", letterSpacing: "0.08em", display: "block", marginBottom: 8, fontFamily: "var(--font-mono)" }}>DIFICULTAD</label>
+            <label style={{ fontSize: 9, color: "var(--text-muted)", letterSpacing: "0.07em", display: "block", marginBottom: 5 }}>ETIQUETAS</label>
             <div style={{ display: "flex", gap: 6 }}>
-              {(["beginner", "intermediate", "advanced"] as const).map((d) => {
-                const cfg = DIFFICULTY_CONFIG[d];
-                const sel = difficulty === d;
-                return (
-                  <button key={d} onClick={() => setDifficulty(d)} style={{
-                    flex: 1, padding: "8px 0", borderRadius: 8,
-                    background: sel ? cfg.bg : "var(--bg-base)",
-                    border: `1px solid ${sel ? `${cfg.color}38` : "var(--border-subtle)"}`,
-                    color: sel ? cfg.color : "var(--text-muted)",
-                    fontSize: 11, fontWeight: sel ? 700 : 500, cursor: "pointer",
-                    transition: "all 0.12s",
-                  }}>
-                    {cfg.label}
-                  </button>
-                );
-              })}
+              <input value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addTag()} placeholder="Tag y Enter..." style={{ ...FIELD, flex: 1 }} />
             </div>
-          </div>
-
-          {/* Tags */}
-          <div>
-            <label style={{ fontSize: 9, color: "var(--text-muted)", letterSpacing: "0.08em", display: "block", marginBottom: 8, fontFamily: "var(--font-mono)" }}>ETIQUETAS</label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 8 }}>
-              {tags.map((t) => (
-                <span key={t} style={{
-                  display: "flex", alignItems: "center", gap: 4,
-                  padding: "3px 8px", borderRadius: 5,
-                  background: `${catColor}0C`, color: catColor,
-                  border: `1px solid ${catColor}22`, fontSize: 11,
-                }}>
-                  {t}
-                  <button
-                    onClick={() => setTags((p) => p.filter((x) => x !== t))}
-                    style={{ background: "none", border: "none", cursor: "pointer", color: `${catColor}80`, fontSize: 12, padding: 0, lineHeight: 1 }}
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
-            <div style={{ display: "flex", gap: 6 }}>
-              <input
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTag(); } }}
-                placeholder="Añadir etiqueta…"
-                style={{ ...FIELD, flex: 1 }}
-              />
-              <button onClick={addTag} style={{
-                padding: "0 14px", borderRadius: 8,
-                background: `${catColor}0C`, border: `1px solid ${catColor}22`,
-                color: catColor, fontSize: 13, fontWeight: 700, cursor: "pointer",
-              }}>
-                +
-              </button>
-            </div>
+            {tags.length > 0 && (
+              <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 6 }}>
+                {tags.map((t) => (
+                  <span key={t} onClick={() => setTags((p) => p.filter((x) => x !== t))} style={{
+                    fontSize: 11, color: "#7C6FFF", padding: "2px 8px", borderRadius: 5,
+                    background: "rgba(124,111,255,0.1)", border: "1px solid rgba(124,111,255,0.25)",
+                    cursor: "pointer",
+                  }}>#{t} ×</span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Footer */}
-        <div style={{
-          padding: "14px 24px", borderTop: "1px solid var(--border-subtle)",
-          display: "flex", gap: 10,
-        }}>
-          <button onClick={onClose} style={{
-            flex: 1, padding: "10px 0", borderRadius: 10,
-            border: "1px solid var(--border-subtle)", background: "transparent",
-            color: "var(--text-muted)", fontSize: 12, fontWeight: 500, cursor: "pointer",
-          }}>
-            Cancelar
-          </button>
+        <div style={{ padding: "12px 22px", borderTop: "1px solid var(--border-subtle)", display: "flex", gap: 8 }}>
+          <button onClick={onClose} style={{ flex: 1, padding: "9px 0", borderRadius: 9, border: "1px solid var(--border-subtle)", background: "transparent", color: "var(--text-muted)", fontSize: 12, cursor: "pointer" }}>Cancelar</button>
           <motion.button
             onClick={() => {
               if (!name.trim()) return;
-              onSave({ name: name.trim(), description: desc.trim(), category, difficulty, icon, tags, agentIds: [], active: true, builtIn: false });
+              onSave({ name, description: desc, category: cat, difficulty: diff, icon, tags, agentIds: [], active: true, builtIn: false });
+              onClose();
             }}
+            disabled={!name.trim()}
             whileTap={{ scale: 0.97 }}
             style={{
-              flex: 2, padding: "10px 0", borderRadius: 10,
-              border: `1px solid ${catColor}32`,
-              background: `${catColor}10`,
-              color: catColor, fontSize: 12, fontWeight: 700, cursor: "pointer",
+              flex: 2, padding: "9px 0", borderRadius: 9,
+              border: "1px solid rgba(124,111,255,0.35)", background: "rgba(124,111,255,0.1)",
+              color: "#7C6FFF", fontSize: 12, fontWeight: 700, cursor: "pointer",
               opacity: name.trim() ? 1 : 0.4,
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
             }}
           >
             <CheckIcon size={13} />
-            Crear Habilidad
+            Crear Skill
           </motion.button>
         </div>
       </motion.div>
@@ -764,97 +531,187 @@ function NewSkillForm({ onClose, onSave }: {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// ─── FolderTree ───────────────────────────────────────────────────────────────
 
-export default function SkillsPage() {
-  const { skills, agents, toggleSkill, addSkill } = useAstraeo();
-  const [activeCategory, setActiveCategory] = useState<SkillCategory | "all">("all");
-  const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState<Skill | null>(null);
-  const [showForm, setShowForm] = useState(false);
+function FolderTree({ skills, selected, onSelect }: {
+  skills: Skill[];
+  selected: SkillCategory | "all";
+  onSelect: (cat: SkillCategory | "all") => void;
+}) {
+  const [expanded, setExpanded] = useState(true);
 
-  const filtered = skills.filter((s) => {
-    const matchCat = activeCategory === "all" || s.category === activeCategory;
-    const q = search.toLowerCase();
-    const matchSearch = !q || s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q) || s.tags.some((t) => t.toLowerCase().includes(q));
-    return matchCat && matchSearch;
-  });
-
-  const activeCount = skills.filter((s) => s.active).length;
-  const totalUsage = skills.reduce((sum, s) => sum + s.usageCount, 0);
-  const avgSuccess = skills.length > 0 ? skills.reduce((sum, s) => sum + s.successRate, 0) / skills.length : 0;
-
-  const categoryCounts = (Object.keys(CATEGORY_CONFIG) as (SkillCategory | "all")[]).reduce<Record<string, number>>((acc, cat) => {
-    acc[cat] = cat === "all" ? skills.length : skills.filter((s) => s.category === cat).length;
+  const counts = (Object.keys(CAT) as SkillCategory[]).reduce<Record<string, { total: number; active: number }>>((acc, k) => {
+    const group = skills.filter((s) => s.category === k);
+    acc[k] = { total: group.length, active: group.filter((s) => s.active).length };
     return acc;
   }, {});
 
-  const agentsMeta = agents.map((a) => ({ id: a.id, color: a.color, name: a.name, role: a.role }));
+  const total = skills.length;
+  const totalActive = skills.filter((s) => s.active).length;
+
+  return (
+    <div style={{ width: 210, flexShrink: 0, borderRight: "1px solid var(--border-subtle)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      {/* All skills */}
+      <button
+        onClick={() => onSelect("all")}
+        style={{
+          margin: "10px 8px 4px",
+          padding: "8px 10px",
+          borderRadius: 9,
+          border: `1px solid ${selected === "all" ? "rgba(240,237,230,0.12)" : "transparent"}`,
+          background: selected === "all" ? "var(--bg-surface-2)" : "transparent",
+          cursor: "pointer",
+          display: "flex", alignItems: "center", gap: 8,
+          textAlign: "left",
+          transition: "all 0.12s",
+        }}
+      >
+        <GridIcon size={13} color={selected === "all" ? "var(--text-primary)" : "var(--text-muted)"} />
+        <span style={{ fontSize: 12, fontWeight: 600, color: selected === "all" ? "var(--text-primary)" : "var(--text-secondary)", flex: 1 }}>
+          Todas
+        </span>
+        <span style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>{total}</span>
+      </button>
+
+      {/* Folder header */}
+      <button
+        onClick={() => setExpanded((e) => !e)}
+        style={{
+          margin: "8px 8px 4px",
+          padding: "4px 10px",
+          border: "none", background: "transparent", cursor: "pointer",
+          display: "flex", alignItems: "center", gap: 6,
+        }}
+      >
+        <motion.div animate={{ rotate: expanded ? 0 : -90 }} transition={{ duration: 0.18 }}>
+          <ChevronDownIcon size={11} color="var(--text-muted)" />
+        </motion.div>
+        <span style={{ fontSize: 9, color: "var(--text-muted)", letterSpacing: "0.09em", fontWeight: 700 }}>CARPETAS</span>
+        <span style={{ fontSize: 9, color: "var(--text-muted)", marginLeft: "auto", fontFamily: "var(--font-mono)" }}>{totalActive}/{total}</span>
+      </button>
+
+      {/* Category folders */}
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.22 }}
+            style={{ overflowY: "auto", flex: 1, padding: "0 8px 10px" }}
+          >
+            {(Object.entries(CAT) as [SkillCategory, typeof CAT[SkillCategory]][]).map(([k, v]) => {
+              const count = counts[k];
+              const isActive = selected === k;
+              const FolderIco = isActive ? FolderOpenIcon : FolderIcon;
+              return (
+                <motion.button
+                  key={k}
+                  onClick={() => onSelect(k)}
+                  whileTap={{ scale: 0.97 }}
+                  style={{
+                    width: "100%",
+                    padding: "7px 10px",
+                    borderRadius: 8,
+                    border: `1px solid ${isActive ? `${v.color}30` : "transparent"}`,
+                    background: isActive ? `${v.color}0A` : "transparent",
+                    cursor: "pointer",
+                    display: "flex", alignItems: "center", gap: 8,
+                    marginBottom: 2,
+                    transition: "all 0.12s",
+                  }}
+                >
+                  <FolderIco size={12} color={isActive ? v.color : "var(--text-muted)"} />
+                  <span style={{ fontSize: 11, color: isActive ? "var(--text-primary)" : "var(--text-secondary)", flex: 1, textAlign: "left", fontWeight: isActive ? 600 : 400 }}>
+                    {v.label}
+                  </span>
+                  <span style={{
+                    fontSize: 9, fontFamily: "var(--font-mono)",
+                    color: isActive ? v.color : "var(--text-muted)",
+                    minWidth: 16, textAlign: "right",
+                  }}>
+                    {count?.total ?? 0}
+                  </span>
+                </motion.button>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+
+export default function SkillsPage() {
+  const { skills, toggleSkill, addSkill } = useAstraeo();
+  const [catFilter, setCatFilter] = useState<SkillCategory | "all">("all");
+  const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<Skill | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [viewMode] = useState<"grid" | "list">("grid");
+
+  const filtered = skills.filter((s) => {
+    const matchCat = catFilter === "all" || s.category === catFilter;
+    const q = search.toLowerCase();
+    const matchSearch = !q || s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q) || s.tags.some((t) => t.includes(q));
+    return matchCat && matchSearch;
+  });
+
+  const totalUsage = skills.reduce((s, sk) => s + sk.usageCount, 0);
+  const avgSuccess = skills.length > 0 ? skills.reduce((s, sk) => s + sk.successRate, 0) / skills.length : 0;
+  const activeCount = skills.filter((s) => s.active).length;
+
+  const catLabel = catFilter === "all" ? "Todas las Skills" : CAT[catFilter].label;
 
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
-      {/* Header */}
+      {/* ── Header ─────────────────────────────────────────── */}
       <div style={{
-        padding: "18px 24px 14px",
+        padding: "16px 22px 12px",
         borderBottom: "1px solid var(--border-subtle)",
-        background: "var(--bg-base)",
+        background: "var(--bg-surface)",
         flexShrink: 0,
       }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 12 }}>
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-              <div style={{
-                width: 30, height: 30, borderRadius: 8,
-                background: "rgba(74,142,184,0.1)", border: "1px solid rgba(74,142,184,0.2)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
-                <ZapIcon size={14} color="#4A8EB8" />
-              </div>
-              <h1 style={{
-                fontSize: 22, fontWeight: 600,
-                color: "var(--text-primary)",
-                fontFamily: "var(--font-display)",
-                letterSpacing: "0.01em",
-              }}>
-                Habilidades
-              </h1>
-            </div>
-            <p style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
-              Centro de capacidades · {activeCount} activas de {skills.length}
+            <h1 style={{
+              fontSize: 20, fontWeight: 700, color: "var(--text-primary)",
+              fontFamily: "var(--font-display)", letterSpacing: "0.01em", marginBottom: 2,
+            }}>
+              Habilidades
+            </h1>
+            <p style={{ fontSize: 11, color: "var(--text-secondary)" }}>
+              {skills.length} skills · {activeCount} activas · organizadas por categoría
             </p>
           </div>
-
-          {/* Stats + CTA */}
-          <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
-            <div style={{
-              padding: "5px 11px", borderRadius: 8,
-              background: "rgba(74,142,184,0.08)", border: "1px solid rgba(74,142,184,0.16)",
-              display: "flex", alignItems: "center", gap: 6,
-            }}>
-              <TrendingUpIcon size={10} color="#4A8EB8" />
-              <span style={{ fontSize: 11, color: "#4A8EB8", fontFamily: "var(--font-mono)", fontWeight: 700 }}>
-                {totalUsage.toLocaleString()} usos
-              </span>
-            </div>
-            <div style={{
-              padding: "5px 11px", borderRadius: 8,
-              background: "rgba(184,133,48,0.08)", border: "1px solid rgba(184,133,48,0.16)",
-              display: "flex", alignItems: "center", gap: 6,
-            }}>
-              <StarIcon size={10} color="#B88530" />
-              <span style={{ fontSize: 11, color: "#B88530", fontFamily: "var(--font-mono)", fontWeight: 700 }}>
-                {avgSuccess.toFixed(1)}%
-              </span>
+          <div style={{ display: "flex", gap: 8 }}>
+            <div style={{ position: "relative" }}>
+              <SearchIcon size={12} color="var(--text-muted)" style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)" }} />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar skills..."
+                style={{
+                  padding: "7px 10px 7px 26px",
+                  borderRadius: 8, width: 180,
+                  background: "var(--bg-base)",
+                  border: "1px solid var(--border-subtle)",
+                  color: "var(--text-primary)", fontSize: 12, outline: "none",
+                }}
+              />
             </div>
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => setShowForm(true)}
               style={{
-                padding: "7px 14px", borderRadius: 9,
-                background: "rgba(74,142,184,0.1)", border: "1px solid rgba(74,142,184,0.28)",
-                color: "#4A8EB8", fontSize: 12, fontWeight: 700, cursor: "pointer",
+                padding: "7px 14px", borderRadius: 8,
+                background: "rgba(124,111,255,0.1)",
+                border: "1px solid rgba(124,111,255,0.28)",
+                color: "#7C6FFF", fontSize: 12, fontWeight: 700, cursor: "pointer",
                 display: "flex", alignItems: "center", gap: 6,
               }}
             >
@@ -864,123 +721,104 @@ export default function SkillsPage() {
           </div>
         </div>
 
-        {/* Search + category filters */}
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <div style={{ position: "relative", flex: 1, maxWidth: 280 }}>
-            <SearchIcon size={12} color="var(--text-muted)" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)" }} />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar habilidades…"
-              style={{
-                width: "100%", padding: "8px 12px 8px 30px",
-                borderRadius: 8, background: "var(--bg-surface)",
-                border: "1px solid var(--border-subtle)",
-                color: "var(--text-primary)", fontSize: 12, boxSizing: "border-box", outline: "none",
-              }}
-            />
+        {/* Stats */}
+        <div style={{ display: "flex", gap: 8 }}>
+          <StatCard label="SKILLS TOTALES" value={skills.length} color="#7C6FFF" />
+          <StatCard label="USOS TOTALES" value={totalUsage} color="#4A8EB8" />
+          <StatCard label="ÉXITO PROMEDIO" value={Math.round(avgSuccess)} color="#3D8A60" suffix="%" />
+          <StatCard label="ACTIVAS" value={activeCount} color="#B88530" />
+        </div>
+      </div>
+
+      {/* ── Body ──────────────────────────────────────────── */}
+      <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+        <FolderTree skills={skills} selected={catFilter} onSelect={setCatFilter} />
+
+        {/* Main content */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          {/* Breadcrumb */}
+          <div style={{
+            padding: "8px 16px",
+            borderBottom: "1px solid var(--border-subtle)",
+            display: "flex", alignItems: "center", gap: 6,
+            flexShrink: 0,
+          }}>
+            <FolderOpenIcon size={12} color="var(--text-muted)" />
+            <span style={{ fontSize: 11, color: "var(--text-muted)" }}>Skills</span>
+            {catFilter !== "all" && (
+              <>
+                <span style={{ fontSize: 11, color: "var(--text-muted)" }}>/</span>
+                <span style={{ fontSize: 11, color: "var(--text-primary)", fontWeight: 600 }}>
+                  {CAT[catFilter].emoji} {CAT[catFilter].label}
+                </span>
+              </>
+            )}
+            <span style={{ marginLeft: "auto", fontSize: 10, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
+              {filtered.length} resultado{filtered.length !== 1 ? "s" : ""}
+            </span>
           </div>
 
-          <div style={{ display: "flex", gap: 4, overflowX: "auto", flexShrink: 0 }}>
-            {(Object.keys(CATEGORY_CONFIG) as (SkillCategory | "all")[]).map((cat) => {
-              const cfg = CATEGORY_CONFIG[cat];
-              const isActive = activeCategory === cat;
-              const count = categoryCounts[cat] ?? 0;
-              if (cat !== "all" && count === 0) return null;
-              return (
-                <motion.button
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  whileTap={{ scale: 0.96 }}
-                  style={{
-                    padding: "5px 10px", borderRadius: 7, flexShrink: 0,
-                    background: isActive ? cfg.bg : "transparent",
-                    border: `1px solid ${isActive ? `${cfg.color}30` : "var(--border-subtle)"}`,
-                    color: isActive ? cfg.color : "var(--text-muted)",
-                    fontSize: 11, fontWeight: isActive ? 700 : 500, cursor: "pointer",
-                    display: "flex", alignItems: "center", gap: 4, transition: "all 0.12s",
-                  }}
-                >
-                  <span>{cfg.emoji}</span>
-                  <span>{cat === "all" ? "Todas" : cfg.label}</span>
-                  <span style={{
-                    fontSize: 9, padding: "1px 4px", borderRadius: 3,
-                    background: isActive ? `${cfg.color}18` : "rgba(255,255,255,0.04)",
-                    color: isActive ? cfg.color : "var(--text-muted)",
-                    fontFamily: "var(--font-mono)",
-                  }}>
-                    {count}
-                  </span>
-                </motion.button>
-              );
-            })}
+          {/* Cards grid */}
+          <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
+            {filtered.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                style={{ padding: "60px 20px", textAlign: "center" }}
+              >
+                <ZapIcon size={28} color="var(--text-muted)" style={{ margin: "0 auto 12px" }} />
+                <p style={{ color: "var(--text-secondary)", fontSize: 14, fontWeight: 600, marginBottom: 5 }}>Sin resultados</p>
+                <p style={{ color: "var(--text-muted)", fontSize: 12 }}>
+                  {search ? `No hay skills que coincidan con "${search}"` : `Carpeta "${catLabel}" vacía`}
+                </p>
+              </motion.div>
+            ) : (
+              <motion.div
+                layout
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+                  gap: 12,
+                }}
+              >
+                <AnimatePresence>
+                  {filtered.map((skill) => (
+                    <SkillCard
+                      key={skill.id}
+                      skill={skill}
+                      selected={selected?.id === skill.id}
+                      onClick={() => setSelected(skill)}
+                    />
+                  ))}
+                </AnimatePresence>
+              </motion.div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Skills Grid */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
-        {filtered.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            style={{
-              display: "flex", flexDirection: "column", alignItems: "center",
-              justifyContent: "center", height: 260, gap: 14,
-            }}
-          >
-            <div style={{
-              width: 56, height: 56, borderRadius: 14,
-              background: "var(--bg-surface)", border: "1px solid var(--border-subtle)",
-              display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26,
-            }}>
-              {search ? <FilterIcon size={22} color="var(--text-muted)" /> : "⚡"}
-            </div>
-            <p style={{ color: "var(--text-muted)", fontSize: 13, textAlign: "center" }}>
-              {search ? `Sin resultados para "${search}"` : "No hay habilidades en esta categoría"}
-            </p>
-          </motion.div>
-        ) : (
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-            gap: 12,
-          }}>
-            <AnimatePresence mode="popLayout">
-              {filtered.map((skill, i) => (
-                <SkillCard
-                  key={skill.id}
-                  skill={skill}
-                  agents={agentsMeta}
-                  index={i}
-                  onSelect={() => setSelected(skill)}
-                  onToggle={() => toggleSkill(skill.id)}
-                />
-              ))}
-            </AnimatePresence>
-          </div>
-        )}
-      </div>
-
-      {/* Modals */}
+      {/* ── Detail Modal ──────────────────────────────────── */}
       <AnimatePresence>
         {selected && (
           <SkillDetail
             key={selected.id}
             skill={selected}
-            agents={agentsMeta}
             onClose={() => setSelected(null)}
             onToggle={() => {
               toggleSkill(selected.id);
-              setSelected((prev) => prev ? { ...prev, active: !prev.active } : null);
+              setSelected((p) => p ? { ...p, active: !p.active } : null);
             }}
           />
         )}
+      </AnimatePresence>
+
+      {/* ── New Skill Form ────────────────────────────────── */}
+      <AnimatePresence>
         {showForm && (
           <NewSkillForm
             key="new-skill"
             onClose={() => setShowForm(false)}
-            onSave={(data) => { addSkill(data); setShowForm(false); }}
+            onSave={(data) => addSkill(data)}
           />
         )}
       </AnimatePresence>

@@ -151,7 +151,7 @@ export interface AppSettings {
 }
 
 // ─── Skills ───────────────────────────────────────────────────────────────────
-export type SkillCategory = "research" | "writing" | "code" | "data" | "visual" | "communication" | "automation";
+export type SkillCategory = "ai" | "research" | "writing" | "code" | "data" | "visual" | "communication" | "automation" | "sales" | "strategy";
 export type SkillDifficulty = "beginner" | "intermediate" | "advanced";
 
 export interface Skill {
