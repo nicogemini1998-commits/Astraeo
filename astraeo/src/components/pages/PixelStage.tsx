@@ -487,19 +487,152 @@ function drawWalls(ctx: CanvasRenderingContext2D, t: number): void {
     ctx.fill();
   }
 
-  // Wall base trim — warm amber accent line where wall meets floor
+  // ── Baseboards — proper architectural trim ───────────────────────────
+  // Back wall baseboard (taller, with subtle gradient + thin gold cap)
+  const baseH = 6;
   for (let c = 0; c < 10; c++) {
     const x0 = isoX(c, 0);
     const y0 = isoY(c, 0);
     const x1 = isoX(c + 1, 0);
     const y1 = isoY(c + 1, 0);
-    ctx.strokeStyle = "rgba(200, 140, 60, 0.15)";
-    ctx.lineWidth = 1.5;
+    // Baseboard panel
+    const baseG = ctx.createLinearGradient(x0, y0 - baseH, x0, y0);
+    baseG.addColorStop(0, "#1A140C");
+    baseG.addColorStop(1, "#0E0A06");
+    ctx.fillStyle = baseG;
+    ctx.beginPath();
+    ctx.moveTo(x0, y0 - baseH);
+    ctx.lineTo(x1, y1 - baseH);
+    ctx.lineTo(x1, y1);
+    ctx.lineTo(x0, y0);
+    ctx.closePath();
+    ctx.fill();
+    // Top cap — thin gold accent line
+    ctx.strokeStyle = "rgba(184,160,106,0.35)";
+    ctx.lineWidth = 0.7;
+    ctx.beginPath();
+    ctx.moveTo(x0, y0 - baseH);
+    ctx.lineTo(x1, y1 - baseH);
+    ctx.stroke();
+    // Floor join — softer shadow line
+    ctx.strokeStyle = "rgba(0,0,0,0.45)";
+    ctx.lineWidth = 0.8;
     ctx.beginPath();
     ctx.moveTo(x0, y0);
     ctx.lineTo(x1, y1);
     ctx.stroke();
   }
+
+  // Left wall baseboard
+  for (let r = 0; r < 13; r++) {
+    const x0 = isoX(0, r);
+    const y0 = isoY(0, r);
+    const x1 = isoX(0, r + 1);
+    const y1 = isoY(0, r + 1);
+    const baseG = ctx.createLinearGradient(x0, y0 - baseH, x0, y0);
+    baseG.addColorStop(0, "#16110A");
+    baseG.addColorStop(1, "#0A0805");
+    ctx.fillStyle = baseG;
+    ctx.beginPath();
+    ctx.moveTo(x0, y0 - baseH);
+    ctx.lineTo(x1, y1 - baseH);
+    ctx.lineTo(x1, y1);
+    ctx.lineTo(x0, y0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = "rgba(184,160,106,0.28)";
+    ctx.lineWidth = 0.7;
+    ctx.beginPath();
+    ctx.moveTo(x0, y0 - baseH);
+    ctx.lineTo(x1, y1 - baseH);
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(0,0,0,0.45)";
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.stroke();
+  }
+
+  // CLIENDER logo on back wall (centered between windows)
+  drawCenterLogo(ctx, t);
+}
+
+// ─── CLIENDER center wall logo (geometric mark + wordmark) ────────────────────
+function drawCenterLogo(ctx: CanvasRenderingContext2D, t: number): void {
+  // Position: centered on the back wall between the windows
+  const cx = isoX(5, 0);
+  const cy = isoY(5, 0) - 80 + 38;
+
+  // Soft backplate — subtle frame so the logo "sits" on the wall
+  const plateG = ctx.createRadialGradient(cx, cy, 4, cx, cy, 80);
+  plateG.addColorStop(0, "rgba(184,160,106,0.05)");
+  plateG.addColorStop(1, "rgba(184,160,106,0)");
+  ctx.fillStyle = plateG;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, 80, 32, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  // ── Mark: two interlocking folded-ribbon lozenges ────────────────────
+  const markX = -50;
+  const breath = 0.5 + Math.sin(t * 0.9) * 0.05;
+
+  // Soft glow halo behind mark
+  const glowG = ctx.createRadialGradient(markX, 0, 0, markX, 0, 18);
+  glowG.addColorStop(0, `rgba(168, 144, 220, ${0.18 + breath * 0.05})`);
+  glowG.addColorStop(1, "rgba(168,144,220,0)");
+  ctx.fillStyle = glowG;
+  ctx.beginPath();
+  ctx.arc(markX, 0, 18, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Top diamond shape (lighter lavender)
+  const topG = ctx.createLinearGradient(markX, -10, markX + 6, 2);
+  topG.addColorStop(0, "#B4A0E8");
+  topG.addColorStop(1, "#7A66C8");
+  ctx.fillStyle = topG;
+  ctx.beginPath();
+  ctx.moveTo(markX, -10);
+  ctx.lineTo(markX + 6, -2);
+  ctx.lineTo(markX, 4);
+  ctx.lineTo(markX - 6, -2);
+  ctx.closePath();
+  ctx.fill();
+
+  // Bottom diamond (deeper purple, offset)
+  const botG = ctx.createLinearGradient(markX - 1, -2, markX - 1, 10);
+  botG.addColorStop(0, "#8870D8");
+  botG.addColorStop(1, "#5A48A8");
+  ctx.fillStyle = botG;
+  ctx.beginPath();
+  ctx.moveTo(markX - 2, -2);
+  ctx.lineTo(markX + 4, 6);
+  ctx.lineTo(markX - 2, 12);
+  ctx.lineTo(markX - 8, 6);
+  ctx.closePath();
+  ctx.fill();
+
+  // Shared center dot — connection point
+  ctx.fillStyle = "rgba(255,255,255,0.55)";
+  ctx.beginPath();
+  ctx.arc(markX - 1, 2, 0.9, 0, Math.PI * 2);
+  ctx.fill();
+
+  // ── Wordmark "CLIENDER" ─────────────────────────────────────────────
+  ctx.fillStyle = "rgba(240,237,230,0.92)";
+  ctx.font = "700 13px var(--font-display, 'Fraunces', serif), 'Inter', sans-serif";
+  ctx.textBaseline = "middle";
+  ctx.textAlign = "left";
+  ctx.fillText("CLIENDER", markX + 16, 0);
+
+  // Subtle tracking underline (thin gold accent)
+  ctx.fillStyle = "rgba(184,160,106,0.45)";
+  ctx.fillRect(markX + 16, 9, 64, 0.6);
+
+  ctx.restore();
 }
 
 function drawWindow(
@@ -701,54 +834,118 @@ function drawMonitor(
   glowColor: string,
   t: number
 ): void {
-  // Stand base
-  ctx.fillStyle = "#080C18";
+  // ── Stand: wide oval base + slim neck ─────────────────────────────────
+  ctx.fillStyle = "#0E0E10";
   ctx.beginPath();
-  ctx.roundRect(cx - 7, cy + 2, 14, 6, 2);
+  ctx.ellipse(cx, cy + 5, 9, 2.4, 0, 0, Math.PI * 2);
   ctx.fill();
-
-  // Stand neck
-  ctx.fillStyle = "#0A0E1C";
-  ctx.fillRect(cx - 2, cy - 8, 4, 12);
-
-  // Monitor body
-  ctx.fillStyle = "#080C18";
+  // Stand base body
+  const baseG = ctx.createLinearGradient(cx, cy + 2, cx, cy + 7);
+  baseG.addColorStop(0, "#1A1A1E");
+  baseG.addColorStop(1, "#0A0A0C");
+  ctx.fillStyle = baseG;
   ctx.beginPath();
-  ctx.roundRect(cx - 22, cy - 40, 44, 34, 4);
+  ctx.roundRect(cx - 8, cy + 1, 16, 5, 2);
   ctx.fill();
+  // Stand neck — slimmer, angled
+  const neckG = ctx.createLinearGradient(cx - 2, cy, cx + 2, cy);
+  neckG.addColorStop(0, "#0A0A0C");
+  neckG.addColorStop(0.5, "#1E1E22");
+  neckG.addColorStop(1, "#0A0A0C");
+  ctx.fillStyle = neckG;
+  ctx.fillRect(cx - 1.6, cy - 9, 3.2, 11);
 
-  // Bezel highlight
-  ctx.strokeStyle = "#1A2030";
-  ctx.lineWidth = 0.5;
+  // ── Monitor body — premium graphite with bezel gradient ───────────────
+  const bodyW = 46, bodyH = 32;
+  const bodyG = ctx.createLinearGradient(cx, cy - 40, cx, cy - 8);
+  bodyG.addColorStop(0, "#1A1A1E");
+  bodyG.addColorStop(0.5, "#101012");
+  bodyG.addColorStop(1, "#06060A");
+  ctx.fillStyle = bodyG;
   ctx.beginPath();
-  ctx.roundRect(cx - 22, cy - 40, 44, 34, 4);
+  ctx.roundRect(cx - bodyW / 2, cy - 40, bodyW, bodyH, 4);
+  ctx.fill();
+  // Bezel inner edge — fine specular
+  ctx.strokeStyle = "rgba(255,255,255,0.08)";
+  ctx.lineWidth = 0.6;
+  ctx.beginPath();
+  ctx.roundRect(cx - bodyW / 2 + 0.5, cy - 39.5, bodyW - 1, bodyH - 1, 3.5);
   ctx.stroke();
 
-  // Screen glow
-  const pulse = (Math.sin(t * 1.8 + cx * 0.01) + 1) * 0.5;
-  const screenGrad = ctx.createLinearGradient(cx - 18, cy - 38, cx + 18, cy - 8);
-  screenGrad.addColorStop(0, glowColor + Math.round(40 + pulse * 20).toString(16).padStart(2, "0"));
-  screenGrad.addColorStop(0.5, glowColor + "18");
-  screenGrad.addColorStop(1, glowColor + "08");
-  ctx.fillStyle = screenGrad;
+  // ── Screen — recessed inner area ──────────────────────────────────────
+  const screenX = cx - bodyW / 2 + 3;
+  const screenY = cy - 37;
+  const screenW = bodyW - 6;
+  const screenH = bodyH - 6;
+  // Deep matte black screen base
+  ctx.fillStyle = "#020204";
   ctx.beginPath();
-  ctx.roundRect(cx - 18, cy - 37, 36, 28, 2);
+  ctx.roundRect(screenX, screenY, screenW, screenH, 1.5);
   ctx.fill();
 
-  // Screen content lines — muted, no glow
+  // Screen content — clean dashboard-style mock
+  // Header bar (top strip)
+  const headerH = 4;
+  ctx.fillStyle = glowColor + "35";
+  ctx.beginPath();
+  ctx.roundRect(screenX + 0.5, screenY + 0.5, screenW - 1, headerH, [1.5, 1.5, 0, 0]);
+  ctx.fill();
+  // Header dot (cursor / brand)
+  ctx.fillStyle = glowColor + "C0";
+  ctx.beginPath();
+  ctx.arc(screenX + 3, screenY + 0.5 + headerH / 2, 0.9, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Content area: left sidebar + main panel
+  const contentY = screenY + headerH + 2;
+  const contentH = screenH - headerH - 3;
+  const sidebarW = 8;
+
+  // Sidebar
+  ctx.fillStyle = "rgba(255,255,255,0.025)";
+  ctx.beginPath();
+  ctx.roundRect(screenX + 1.5, contentY, sidebarW, contentH, 1);
+  ctx.fill();
+  // Sidebar item bullets
   ctx.fillStyle = glowColor + "70";
-  const lines = [cy - 32, cy - 26, cy - 20, cy - 14];
-  const widths = [28, 20, 24, 16];
-  lines.forEach((ly, i) => {
+  for (let i = 0; i < 3; i++) {
     ctx.beginPath();
-    ctx.roundRect(cx - 14, ly, widths[i], 2, 1);
+    ctx.arc(screenX + 4, contentY + 3 + i * 4.5, 0.7, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Main panel — three info rows + chart bars
+  const mainX = screenX + sidebarW + 3;
+  const mainW = screenW - sidebarW - 5;
+
+  // Three subtle info rows
+  ctx.fillStyle = "rgba(255,255,255,0.045)";
+  for (let i = 0; i < 3; i++) {
+    ctx.beginPath();
+    ctx.roundRect(mainX, contentY + 1 + i * 4, mainW * (0.55 + i * 0.12), 2, 1);
+    ctx.fill();
+  }
+
+  // Chart bars — subtle pulse
+  const pulse = (Math.sin(t * 1.6 + cx * 0.01) + 1) * 0.5;
+  const barBaseY = contentY + contentH - 1;
+  const heights = [3, 5, 4, 6, 5, 7, 4];
+  heights.forEach((h, i) => {
+    const animH = h * (0.85 + 0.15 * pulse * ((i + 1) / heights.length));
+    ctx.fillStyle = glowColor + (i === heights.length - 1 ? "F0" : "80");
+    ctx.beginPath();
+    ctx.roundRect(mainX + i * 2.5, barBaseY - animH, 1.6, animH, [0.6, 0.6, 0, 0]);
     ctx.fill();
   });
 
-  // Tiny chart-like block
-  ctx.fillStyle = glowColor + "50";
+  // ── Subtle screen reflection — diagonal sheen ─────────────────────────
+  const sheenG = ctx.createLinearGradient(screenX, screenY, screenX + screenW, screenY + screenH);
+  sheenG.addColorStop(0, "rgba(255,255,255,0.06)");
+  sheenG.addColorStop(0.4, "rgba(255,255,255,0)");
+  sheenG.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = sheenG;
   ctx.beginPath();
-  ctx.roundRect(cx + 4, cy - 30, 10, 16, 1);
+  ctx.roundRect(screenX, screenY, screenW, screenH, 1.5);
   ctx.fill();
 }
 
@@ -2743,12 +2940,48 @@ interface AgentPanelProps {
   onClose: () => void;
   onChat: () => void;
   onStatusChange: (s: AgentStatus) => void;
+  onUpdate: (patch: Partial<Agent>) => void;
 }
 
-function AgentPanel({ agent, onClose, onChat, onStatusChange }: AgentPanelProps) {
+function AgentPanel({ agent, onClose, onChat, onStatusChange, onUpdate }: AgentPanelProps) {
   const cfg = AGENT_CONFIG[agent.id];
   const statusColors: Record<string, string> = {
     online: "#7A8569", busy: "#B8A06A", offline: "var(--text-muted)", error: "#7A3040",
+  };
+
+  const [editingName, setEditingName] = useState(false);
+  const [editingRole, setEditingRole] = useState(false);
+  const [draftName, setDraftName] = useState(agent.name);
+  const [draftRole, setDraftRole] = useState(agent.role);
+  const [skillInput, setSkillInput] = useState("");
+
+  // Reset drafts when agent changes
+  useEffect(() => {
+    setDraftName(agent.name);
+    setDraftRole(agent.role);
+  }, [agent.id, agent.name, agent.role]);
+
+  const commitName = () => {
+    const v = draftName.trim();
+    if (v && v !== agent.name) onUpdate({ name: v });
+    else setDraftName(agent.name);
+    setEditingName(false);
+  };
+  const commitRole = () => {
+    const v = draftRole.trim();
+    if (v && v !== agent.role) onUpdate({ role: v });
+    else setDraftRole(agent.role);
+    setEditingRole(false);
+  };
+  const addSkill = () => {
+    const v = skillInput.trim();
+    if (v && !agent.skills.includes(v)) {
+      onUpdate({ skills: [...agent.skills, v] });
+    }
+    setSkillInput("");
+  };
+  const removeSkill = (s: string) => {
+    onUpdate({ skills: agent.skills.filter((x) => x !== s) });
   };
 
   return (
@@ -2811,13 +3044,53 @@ function AgentPanel({ agent, onClose, onChat, onStatusChange }: AgentPanelProps)
         >
           {agent.icon}
         </div>
-        <div>
-          <div style={{ color: "#F0EDE6", fontSize: 14, fontWeight: 700, marginBottom: 2 }}>
-            {agent.name}
-          </div>
-          <div style={{ color: "var(--text-muted)", fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>
-            {agent.role}
-          </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {editingName ? (
+            <input
+              autoFocus
+              value={draftName}
+              onChange={(e) => setDraftName(e.target.value)}
+              onBlur={commitName}
+              onKeyDown={(e) => { if (e.key === "Enter") commitName(); if (e.key === "Escape") { setDraftName(agent.name); setEditingName(false); } }}
+              style={{
+                width: "100%", color: "#F0EDE6", fontSize: 14, fontWeight: 700,
+                background: "rgba(184,160,106,0.08)", border: "1px solid rgba(184,160,106,0.4)",
+                borderRadius: 4, padding: "2px 6px", outline: "none", marginBottom: 2,
+                fontFamily: "inherit",
+              }}
+            />
+          ) : (
+            <div
+              onClick={() => setEditingName(true)}
+              style={{ color: "#F0EDE6", fontSize: 14, fontWeight: 700, marginBottom: 2, cursor: "pointer" }}
+              title="Clic para editar"
+            >
+              {agent.name} <span style={{ fontSize: 10, color: "var(--text-muted)", marginLeft: 4 }}>✎</span>
+            </div>
+          )}
+          {editingRole ? (
+            <input
+              autoFocus
+              value={draftRole}
+              onChange={(e) => setDraftRole(e.target.value)}
+              onBlur={commitRole}
+              onKeyDown={(e) => { if (e.key === "Enter") commitRole(); if (e.key === "Escape") { setDraftRole(agent.role); setEditingRole(false); } }}
+              style={{
+                width: "100%", color: "var(--text-muted)", fontSize: 10,
+                fontFamily: "'JetBrains Mono', monospace",
+                background: "rgba(184,160,106,0.06)", border: "1px solid rgba(184,160,106,0.3)",
+                borderRadius: 4, padding: "2px 6px", outline: "none",
+              }}
+            />
+          ) : (
+            <div
+              onClick={() => setEditingRole(true)}
+              style={{ color: "var(--text-muted)", fontSize: 10, fontFamily: "'JetBrains Mono', monospace", cursor: "pointer" }}
+              title="Clic para editar"
+            >
+              {agent.role}
+            </div>
+          )}
           <div
             style={{
               display: "inline-flex",
@@ -2908,28 +3181,68 @@ function AgentPanel({ agent, onClose, onChat, onStatusChange }: AgentPanelProps)
         ))}
       </div>
 
-      {/* Skills */}
+      {/* Skills — editable */}
       <div style={{ marginBottom: 14 }}>
         <div style={{ color: "#4A4A5A", fontSize: 9, fontFamily: "'JetBrains Mono', monospace", marginBottom: 6, letterSpacing: "0.1em" }}>
-          SKILLS
+          SKILLS · {agent.skills.length}
         </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-          {agent.skills.slice(0, 6).map((skill) => (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 6 }}>
+          {agent.skills.map((skill) => (
             <span
               key={skill}
               style={{
-                padding: "2px 8px",
-                background: "rgba(255,255,255,0.05)",
+                display: "inline-flex", alignItems: "center", gap: 4,
+                padding: "2px 4px 2px 8px",
+                background: "rgba(184,160,106,0.06)",
                 borderRadius: 4,
-                color: "#5A6A90",
+                color: "var(--text-secondary)",
                 fontSize: 9,
                 fontFamily: "'JetBrains Mono', monospace",
-                border: "1px solid rgba(255,255,255,0.06)",
+                border: "1px solid rgba(184,160,106,0.18)",
               }}
             >
               {skill}
+              <button
+                onClick={() => removeSkill(skill)}
+                style={{
+                  background: "none", border: "none", color: "rgba(168,80,96,0.7)",
+                  cursor: "pointer", fontSize: 10, padding: 0, lineHeight: 1,
+                  width: 12, height: 12, display: "flex", alignItems: "center", justifyContent: "center",
+                }}
+                title={`Eliminar ${skill}`}
+              >
+                ×
+              </button>
             </span>
           ))}
+        </div>
+        <div style={{ display: "flex", gap: 4 }}>
+          <input
+            value={skillInput}
+            onChange={(e) => setSkillInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addSkill(); } }}
+            placeholder="+ skill"
+            style={{
+              flex: 1, padding: "3px 8px", fontSize: 9,
+              background: "rgba(255,255,255,0.03)",
+              border: "1px solid rgba(184,160,106,0.18)",
+              borderRadius: 4, color: "var(--text-primary)",
+              fontFamily: "'JetBrains Mono', monospace", outline: "none",
+            }}
+          />
+          <button
+            onClick={addSkill}
+            disabled={!skillInput.trim()}
+            style={{
+              padding: "3px 8px", fontSize: 9, fontWeight: 700,
+              background: "rgba(184,160,106,0.1)",
+              border: "1px solid rgba(184,160,106,0.3)",
+              borderRadius: 4, color: "#B8A06A", cursor: "pointer",
+              opacity: skillInput.trim() ? 1 : 0.4,
+            }}
+          >
+            +
+          </button>
         </div>
       </div>
 
@@ -3021,7 +3334,7 @@ export default function NexusPage() {
   const rafRef = useRef<number>(0);
   const timeRef = useRef<number>(0);
 
-  const { agents, setPage, createChatSession, setActiveChat, setAgentStatus } = useAstraeo();
+  const { agents, setPage, createChatSession, setActiveChat, setAgentStatus, updateAgent } = useAstraeo();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
@@ -3152,6 +3465,7 @@ export default function NexusPage() {
               onClose={() => setSelectedId(null)}
               onChat={() => handleStartChat(selectedAgent.id)}
               onStatusChange={(s: AgentStatus) => setAgentStatus(selectedAgent.id, s)}
+              onUpdate={(patch) => updateAgent(selectedAgent.id, patch)}
             />
           )}
         </AnimatePresence>
