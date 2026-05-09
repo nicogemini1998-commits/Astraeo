@@ -28,9 +28,9 @@ export const GHOST: CSSProperties = {
 
 export const DANGER_BTN: CSSProperties = {
   padding: "7px 14px", borderRadius: 7,
-  border: "1px solid rgba(168,60,80,0.4)",
-  background: "rgba(168,60,80,0.08)",
-  color: "#A83C50", fontSize: 11, fontWeight: 600,
+  border: "1px solid rgba(122,48,64,0.4)",
+  background: "rgba(122,48,64,0.08)",
+  color: "#7A3040", fontSize: 11, fontWeight: 600,
   cursor: "pointer", whiteSpace: "nowrap",
 };
 
@@ -54,7 +54,7 @@ export function FieldGroup({ label, hint, children }: {
 
 // ─── AnimatedToggle ───────────────────────────────────────────────────────────
 
-export function AnimatedToggle({ value, onChange, color = "#4A8EB8" }: {
+export function AnimatedToggle({ value, onChange, color = "#7C8A98" }: {
   value: boolean;
   onChange: (v: boolean) => void;
   color?: string;
@@ -87,7 +87,7 @@ export function AnimatedToggle({ value, onChange, color = "#4A8EB8" }: {
 
 // ─── ToggleRow ────────────────────────────────────────────────────────────────
 
-export function ToggleRow({ label, sub, value, onChange, color = "#4A8EB8" }: {
+export function ToggleRow({ label, sub, value, onChange, color = "#7C8A98" }: {
   label: string;
   sub?: string;
   value: boolean;
@@ -133,8 +133,8 @@ export function SectionCard({ id, title, icon, color, badge, danger, refCallback
       transition={{ duration: 0.28, ease: EASE }}
       style={{
         borderRadius: 16, overflow: "hidden",
-        border: `1px solid ${danger ? "rgba(168,60,80,0.2)" : "var(--border-subtle)"}`,
-        background: danger ? "rgba(168,60,80,0.02)" : "var(--bg-surface)",
+        border: `1px solid ${danger ? "rgba(122,48,64,0.2)" : "var(--border-subtle)"}`,
+        background: danger ? "rgba(122,48,64,0.02)" : "var(--bg-surface)",
         scrollMarginTop: 20,
       }}
     >
@@ -146,7 +146,7 @@ export function SectionCard({ id, title, icon, color, badge, danger, refCallback
       {/* Header */}
       <div style={{
         padding: "13px 20px 11px",
-        borderBottom: `1px solid ${danger ? "rgba(168,60,80,0.1)" : "var(--border-subtle)"}`,
+        borderBottom: `1px solid ${danger ? "rgba(122,48,64,0.1)" : "var(--border-subtle)"}`,
         background: `linear-gradient(135deg, ${color}06 0%, transparent 60%)`,
         display: "flex", alignItems: "center", gap: 10,
       }}>
@@ -186,8 +186,8 @@ export function DangerRow({ title, desc, children }: {
     <div style={{
       display: "flex", alignItems: "center", gap: 16,
       padding: "12px 14px", borderRadius: 10,
-      background: "rgba(168,60,80,0.03)",
-      border: "1px solid rgba(168,60,80,0.1)",
+      background: "rgba(122,48,64,0.03)",
+      border: "1px solid rgba(122,48,64,0.1)",
     }}>
       <div style={{ flex: 1 }}>
         <p style={{ fontSize: 12, fontWeight: 600, color: "var(--text-primary)", marginBottom: 3 }}>{title}</p>

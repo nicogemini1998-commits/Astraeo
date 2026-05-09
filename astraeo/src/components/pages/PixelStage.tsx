@@ -56,14 +56,14 @@ interface AgentConfig {
 }
 
 const AGENT_CONFIG: Record<string, AgentConfig> = {
-  "agent-1": { dept: "COMMAND",    color: "#4A8EB8", skin: "#F5C5A3", shirt: "#004A60", pants: "#1C1A16", hair: "#1A0800", hairStyle: "short",  irisColor: "#4A8EB8" },
-  "agent-2": { dept: "PAID MEDIA", color: "#A83C50", skin: "#E8A882", shirt: "#6B1219", pants: "#1A0A0A", hair: "#0A0A0A", hairStyle: "curly",  irisColor: "#A83C50" },
-  "agent-3": { dept: "CRM",        color: "#B04858", skin: "#FDDBB4", shirt: "#5A1535", pants: "#1A0A12", hair: "#3A1020", hairStyle: "long",   irisColor: "#B04858" },
-  "agent-4": { dept: "CONTENT",    color: "#B88530", skin: "#F0D090", shirt: "#5A4000", pants: "#1A1200", hair: "#2A1800", hairStyle: "bun",    irisColor: "#B88530" },
-  "agent-5": { dept: "ANALYTICS",  color: "#6655CC", skin: "#D4A574", shirt: "#2A1A60", pants: "#0A0A1A", hair: "#0A0020", hairStyle: "short",  irisColor: "#6655CC" },
-  "agent-6": { dept: "AI TECH",    color: "#3D8A60", skin: "#C68642", shirt: "#003830", pants: "#0A1A12", hair: "#001510", hairStyle: "spiky",  irisColor: "#3D8A60" },
-  "agent-7": { dept: "SALES",      color: "#CC785C", skin: "#F0C090", shirt: "#4A2010", pants: "#1A0800", hair: "#200800", hairStyle: "curly",  irisColor: "#CC785C" },
-  "agent-8": { dept: "SEO",        color: "#64B5F6", skin: "#FDDBB4", shirt: "#14305A", pants: "#0A0A1A", hair: "#001020", hairStyle: "long",   irisColor: "#64B5F6" },
+  "agent-1": { dept: "COMMAND",    color: "#7C8A98", skin: "#C9B580", shirt: "#004A60", pants: "#1C1A16", hair: "#100F0D", hairStyle: "short",  irisColor: "#7C8A98" },
+  "agent-2": { dept: "PAID MEDIA", color: "#7A3040", skin: "#E8A882", shirt: "#6B1219", pants: "#1A0A0A", hair: "#0A0A0A", hairStyle: "curly",  irisColor: "#7A3040" },
+  "agent-3": { dept: "CRM",        color: "#8A5A60", skin: "#C9B580", shirt: "#5A1535", pants: "#1A0A12", hair: "#3A1020", hairStyle: "long",   irisColor: "#8A5A60" },
+  "agent-4": { dept: "CONTENT",    color: "#B8A06A", skin: "#C9B580", shirt: "#5A4000", pants: "#1A1200", hair: "#2A1800", hairStyle: "bun",    irisColor: "#B8A06A" },
+  "agent-5": { dept: "ANALYTICS",  color: "#7A7088", skin: "#D4A574", shirt: "#2A1A60", pants: "#0A0908", hair: "#0A0020", hairStyle: "short",  irisColor: "#7A7088" },
+  "agent-6": { dept: "AI TECH",    color: "#7A8569", skin: "#C68642", shirt: "#003830", pants: "#0A1A12", hair: "#001510", hairStyle: "spiky",  irisColor: "#7A8569" },
+  "agent-7": { dept: "SALES",      color: "#8A6A55", skin: "#C9B580", shirt: "#4A2010", pants: "#100F0D", hair: "#200800", hairStyle: "curly",  irisColor: "#8A6A55" },
+  "agent-8": { dept: "SEO",        color: "#7C8A98", skin: "#C9B580", shirt: "#14305A", pants: "#0A0908", hair: "#001020", hairStyle: "long",   irisColor: "#7C8A98" },
 };
 
 // ─── Activity phrases per dept ────────────────────────────────────────────────
@@ -1221,8 +1221,8 @@ function drawWallDecor(ctx: CanvasRenderingContext2D): void {
   // Tech-tool posters on the back wall (above desks)
   const posterData = [
     { col: 2,   row: 0, label: "notion", color: "#FFFFFF" },
-    { col: 4.5, row: 0, label: "miro",   color: "#FFD02F" },
-    { col: 7,   row: 0, label: "asana",  color: "#F06A6A" },
+    { col: 4.5, row: 0, label: "miro",   color: "#B8A06A" },
+    { col: 7,   row: 0, label: "asana",  color: "#7A3040" },
   ];
 
   // LED strip accent light along top of back wall
@@ -1332,9 +1332,9 @@ function drawWallDecor(ctx: CanvasRenderingContext2D): void {
     ctx.fill();
     // Colorful diagram lines on whiteboard
     const wbLines = [
-      { color: "#A83C50", x1: wbx + 5, y1: wby + 10, x2: wbx + 32, y2: wby + 10 },
-      { color: "#4A8EB8", x1: wbx + 5, y1: wby + 18, x2: wbx + 50, y2: wby + 18 },
-      { color: "#3D8A60", x1: wbx + 5, y1: wby + 26, x2: wbx + 40, y2: wby + 26 },
+      { color: "#7A3040", x1: wbx + 5, y1: wby + 10, x2: wbx + 32, y2: wby + 10 },
+      { color: "#7C8A98", x1: wbx + 5, y1: wby + 18, x2: wbx + 50, y2: wby + 18 },
+      { color: "#7A8569", x1: wbx + 5, y1: wby + 26, x2: wbx + 40, y2: wby + 26 },
     ];
     wbLines.forEach(({ color, x1, y1, x2, y2 }) => {
       ctx.strokeStyle = color;
@@ -1346,7 +1346,7 @@ function drawWallDecor(ctx: CanvasRenderingContext2D): void {
       ctx.stroke();
     });
     // Circle node
-    ctx.fillStyle = "#6655CC";
+    ctx.fillStyle = "#7A7088";
     ctx.beginPath();
     ctx.arc(wbx + 55, wby + 14, 6, 0, Math.PI * 2);
     ctx.fill();
@@ -1727,7 +1727,7 @@ function drawSimsAvatar(
     ctx.moveTo(2, headY + 1.5);
     ctx.quadraticCurveTo(4.5, headY - 1.5, 7, headY + 1.5);
     ctx.stroke();
-    ctx.fillStyle = "rgba(111,91,255,0.5)";
+    ctx.fillStyle = "rgba(122,112,136,0.5)";
     ctx.font       = "bold 8px sans-serif";
     ctx.textAlign  = "left";
     ctx.fillText("z", headR + 1, headY - 14);
@@ -2210,7 +2210,7 @@ function drawChibiAvatar(
     ctx.stroke();
 
     // Zzz
-    ctx.fillStyle = "#4A5570";
+    ctx.fillStyle = "var(--text-muted)";
     ctx.font = "bold 9px sans-serif";
     ctx.textAlign = "left";
     ctx.fillText("z", headR + 2, headY - 22);
@@ -2222,12 +2222,12 @@ function drawChibiAvatar(
 
   // ── STATUS INDICATOR ──
   const statusColors: Record<string, string> = {
-    online: "#3D8A60",
-    busy:   "#B88530",
-    offline:"#4A5570",
-    error:  "#A83C50",
+    online: "#7A8569",
+    busy:   "#B8A06A",
+    offline:"var(--text-muted)",
+    error:  "#7A3040",
   };
-  const sColor = statusColors[agent.status] ?? "#4A5570";
+  const sColor = statusColors[agent.status] ?? "var(--text-muted)";
   const dotY = -56 - 22 - 12;
 
   if (agent.status === "online") {
@@ -2491,13 +2491,13 @@ function drawScene(
     ctx.fill();
     // Book spines — colorful
     const books = [
-      { x: bx, y: by - 38, w: 5, h: 18, c: "#A83C50" },
-      { x: bx + 6, y: by - 36, w: 4, h: 16, c: "#4A8EB8" },
-      { x: bx + 11, y: by - 40, w: 6, h: 20, c: "#B88530" },
-      { x: bx + 18, y: by - 37, w: 5, h: 17, c: "#6655CC" },
-      { x: bx, y: by - 16, w: 5, h: 14, c: "#3D8A60" },
-      { x: bx + 6, y: by - 18, w: 7, h: 16, c: "#B04858" },
-      { x: bx + 14, y: by - 15, w: 8, h: 13, c: "#64B5F6" },
+      { x: bx, y: by - 38, w: 5, h: 18, c: "#7A3040" },
+      { x: bx + 6, y: by - 36, w: 4, h: 16, c: "#7C8A98" },
+      { x: bx + 11, y: by - 40, w: 6, h: 20, c: "#B8A06A" },
+      { x: bx + 18, y: by - 37, w: 5, h: 17, c: "#7A7088" },
+      { x: bx, y: by - 16, w: 5, h: 14, c: "#7A8569" },
+      { x: bx + 6, y: by - 18, w: 7, h: 16, c: "#8A5A60" },
+      { x: bx + 14, y: by - 15, w: 8, h: 13, c: "#7C8A98" },
     ];
     books.forEach(({ x, y, w, h, c }) => {
       ctx.fillStyle = c;
@@ -2642,7 +2642,7 @@ function NexusHeader({ stats }: NexusHeaderProps) {
       <div style={{ display: "flex", gap: 28 }}>
         {[
           { label: "AGENTS ONLINE", value: `${stats.online}/${stats.total}`, color: "var(--accent-emerald, #34D399)" },
-          { label: "TOKENS HOY",   value: stats.tokens.toLocaleString(),     color: "var(--accent-violet, #A78BFA)" },
+          { label: "TOKENS HOY",   value: stats.tokens.toLocaleString(),     color: "var(--accent-violet, #B8A06A)" },
           { label: "TAREAS",       value: stats.tasks.toString(),            color: "var(--accent-amber, #F59E0B)" },
         ].map(({ label, value, color }) => (
           <div key={label} style={{ textAlign: "center" }}>
@@ -2669,7 +2669,7 @@ interface AgentPanelProps {
 function AgentPanel({ agent, onClose, onChat, onStatusChange }: AgentPanelProps) {
   const cfg = AGENT_CONFIG[agent.id];
   const statusColors: Record<string, string> = {
-    online: "#3D8A60", busy: "#B88530", offline: "#4A5570", error: "#A83C50",
+    online: "#7A8569", busy: "#B8A06A", offline: "var(--text-muted)", error: "#7A3040",
   };
 
   return (
@@ -2736,7 +2736,7 @@ function AgentPanel({ agent, onClose, onChat, onStatusChange }: AgentPanelProps)
           <div style={{ color: "#F0EDE6", fontSize: 14, fontWeight: 700, marginBottom: 2 }}>
             {agent.name}
           </div>
-          <div style={{ color: "#4A5570", fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>
+          <div style={{ color: "var(--text-muted)", fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>
             {agent.role}
           </div>
           <div
@@ -2756,13 +2756,13 @@ function AgentPanel({ agent, onClose, onChat, onStatusChange }: AgentPanelProps)
                 width: 5,
                 height: 5,
                 borderRadius: "50%",
-                background: statusColors[agent.status] ?? "#4A5570",
-                boxShadow: `0 0 5px ${statusColors[agent.status] ?? "#4A5570"}`,
+                background: statusColors[agent.status] ?? "var(--text-muted)",
+                boxShadow: `0 0 5px ${statusColors[agent.status] ?? "var(--text-muted)"}`,
               }}
             />
             <span
               style={{
-                color: statusColors[agent.status] ?? "#4A5570",
+                color: statusColors[agent.status] ?? "var(--text-muted)",
                 fontSize: 9,
                 fontFamily: "'JetBrains Mono', monospace",
                 textTransform: "uppercase",
@@ -2890,10 +2890,10 @@ function AgentPanel({ agent, onClose, onChat, onStatusChange }: AgentPanelProps)
         style={{
           width: "100%",
           padding: "10px 0",
-          background: `linear-gradient(135deg, ${cfg?.color ?? "#4A8EB8"}25, ${cfg?.color ?? "#4A8EB8"}10)`,
-          border: `1px solid ${cfg?.color ?? "#4A8EB8"}60`,
+          background: `linear-gradient(135deg, ${cfg?.color ?? "#7C8A98"}25, ${cfg?.color ?? "#7C8A98"}10)`,
+          border: `1px solid ${cfg?.color ?? "#7C8A98"}60`,
           borderRadius: 8,
-          color: cfg?.color ?? "#4A8EB8",
+          color: cfg?.color ?? "#7C8A98",
           fontSize: 11,
           fontFamily: "'JetBrains Mono', monospace",
           fontWeight: 700,
@@ -2924,7 +2924,7 @@ function AgentPanel({ agent, onClose, onChat, onStatusChange }: AgentPanelProps)
             style={{
               flex: 1,
               height: `${20 + Math.sin(i * 0.8) * 10 + (i % 3) * 4}px`,
-              background: `${cfg?.color ?? "#4A8EB8"}${i === 15 ? "FF" : i > 10 ? "AA" : "50"}`,
+              background: `${cfg?.color ?? "#7C8A98"}${i === 15 ? "FF" : i > 10 ? "AA" : "50"}`,
               borderRadius: "1px 1px 0 0",
               transition: "height 0.3s ease",
             }}

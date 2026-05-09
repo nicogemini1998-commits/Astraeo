@@ -33,28 +33,30 @@
      Indigo shifted to violet-blue (#6F5BFF) for premium identity.
      Gold (#C99647) replaces yellow-amber — more muted, timeless.
      ──────────────────────────────────────────────────────────────────── */
-  /* Jewel tones — rich not bright. Low saturation, high depth.
-     Think Bloomberg Terminal, Arc browser, Linear in dark mode.
-     No neon. No electric. Restrained, intentional, premium.      */
-  --accent-indigo:   #6655CC;   /* primary — deep violet, not electric purple */
-  --accent-indigo-2: #8878E0;   /* softer hover variant */
-  --accent-sky:      #4A8EB8;   /* steel blue — not cyan, not electric */
-  --accent-sky-2:    #7AAFD4;
-  --accent-emerald:  #3D8A60;   /* forest/sage — not neon green */
-  --accent-emerald-2:#5EAA80;
-  --accent-amber:    #B88530;   /* aged gold — not yellow */
-  --accent-amber-2:  #D4A855;
-  --accent-rose:     #B04858;   /* deep wine rose — not hot pink */
-  --accent-rose-2:   #CC6878;
-  --accent-violet:   #7B68C8;   /* muted mauve */
+  /* Monochromatic warm palette v4 — gold-anchored, sober.
+     Single accent family for premium consistency. No rainbow.
+     All accents collapse toward warm neutral tones.            */
+  --accent-gold:     #B8A06A;   /* primary — warm muted gold */
+  --accent-gold-2:   #C9B580;   /* lighter gold variant */
+  --accent-indigo:   #7A7088;   /* warm violet-gray (was electric indigo) */
+  --accent-indigo-2: #928AA0;
+  --accent-sky:      #7C8A98;   /* warm slate (was steel blue) */
+  --accent-sky-2:    #94A0AC;
+  --accent-emerald:  #7A8569;   /* sage (was forest green) */
+  --accent-emerald-2:#8A9A7C;
+  --accent-amber:    #B8A06A;   /* gold (was amber) — same as primary */
+  --accent-amber-2:  #C9B580;
+  --accent-rose:     #8A5A60;   /* dusty rose (was wine) */
+  --accent-rose-2:   #A07478;
+  --accent-violet:   #7A7088;   /* warm muted gray-violet */
 
   /* ── Semantic Tokens ───────────────────────────────────────────────── */
-  --ink-primary: var(--accent-indigo);
+  --ink-primary: var(--accent-gold);
   --ok:          var(--accent-emerald);
-  --warn:        var(--accent-amber);
-  --danger:      #A83C50;
+  --warn:        var(--accent-gold);
+  --danger:      #7A3040;
 
-  --primary:   var(--accent-indigo);
+  --primary:   var(--accent-gold);
   --secondary: var(--accent-sky);
   --success:   var(--ok);
   --warning:   var(--warn);

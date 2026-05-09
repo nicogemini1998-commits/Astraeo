@@ -12,12 +12,12 @@ import type { Skill, SkillCategory } from "@/lib/types";
 // ─── Design system ────────────────────────────────────────────────────────────
 
 const CAT: Record<SkillCategory, { label: string; color: string; emoji: string; desc: string }> = {
-  ai:            { label: "IA & Prompting",      color: "#7C6FFF", emoji: "🧠", desc: "Técnicas avanzadas de LLM" },
-  research:      { label: "Investigación",        color: "#4A8EB8", emoji: "🔍", desc: "Búsqueda y análisis" },
-  writing:       { label: "Escritura",            color: "#6655CC", emoji: "✍️", desc: "Contenido y copy" },
-  code:          { label: "Código",               color: "#3D8A60", emoji: "💻", desc: "Desarrollo y arquitectura" },
-  data:          { label: "Datos",                color: "#B88530", emoji: "📊", desc: "Analytics y reportes" },
-  visual:        { label: "Visual & Diseño",      color: "#B04858", emoji: "🎨", desc: "Creatividades e identidad" },
+  ai:            { label: "IA & Prompting",      color: "#7A7088", emoji: "🧠", desc: "Técnicas avanzadas de LLM" },
+  research:      { label: "Investigación",        color: "#7C8A98", emoji: "🔍", desc: "Búsqueda y análisis" },
+  writing:       { label: "Escritura",            color: "#7A7088", emoji: "✍️", desc: "Contenido y copy" },
+  code:          { label: "Código",               color: "#7A8569", emoji: "💻", desc: "Desarrollo y arquitectura" },
+  data:          { label: "Datos",                color: "#B8A06A", emoji: "📊", desc: "Analytics y reportes" },
+  visual:        { label: "Visual & Diseño",      color: "#8A5A60", emoji: "🎨", desc: "Creatividades e identidad" },
   communication: { label: "Comunicación",         color: "#4A9B8A", emoji: "💬", desc: "Outreach y mensajería" },
   automation:    { label: "Automatización",       color: "#8B5E9B", emoji: "⚙️", desc: "Workflows y CRM" },
   sales:         { label: "Ventas & CRM",         color: "#C06A2E", emoji: "🎯", desc: "Proceso comercial" },
@@ -25,9 +25,9 @@ const CAT: Record<SkillCategory, { label: string; color: string; emoji: string; 
 };
 
 const DIFF = {
-  beginner:     { label: "Básico",     color: "#3D8A60" },
-  intermediate: { label: "Medio",      color: "#B88530" },
-  advanced:     { label: "Avanzado",   color: "#A83C50" },
+  beginner:     { label: "Básico",     color: "#7A8569" },
+  intermediate: { label: "Medio",      color: "#B8A06A" },
+  advanced:     { label: "Avanzado",   color: "#7A3040" },
 } as const;
 
 const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
@@ -182,7 +182,7 @@ function SkillCard({ skill, selected, onClick }: { skill: Skill; selected: boole
           </span>
           <span style={{ fontSize: 9, color: "var(--text-muted)" }}>usos</span>
           <div style={{ width: 1, height: 10, background: "var(--border-subtle)" }} />
-          <span style={{ fontSize: 10, color: skill.successRate >= 95 ? "#3D8A60" : skill.successRate >= 85 ? "#B88530" : "#A83C50", fontFamily: "var(--font-display)", fontWeight: 700 }}>
+          <span style={{ fontSize: 10, color: skill.successRate >= 95 ? "#7A8569" : skill.successRate >= 85 ? "#B8A06A" : "#7A3040", fontFamily: "var(--font-display)", fontWeight: 700 }}>
             {skill.successRate.toFixed(0)}%
           </span>
           <span style={{ fontSize: 9, color: "var(--text-muted)" }}>éxito</span>
@@ -196,9 +196,10 @@ function SkillCard({ skill, selected, onClick }: { skill: Skill; selected: boole
 
 // ─── SkillDetail ──────────────────────────────────────────────────────────────
 
-function SkillDetail({ skill, onClose, onToggle }: { skill: Skill; onClose: () => void; onToggle: () => void }) {
+function SkillDetail({ skill, onClose, onToggle, onDelete }: { skill: Skill; onClose: () => void; onToggle: () => void; onDelete: () => void }) {
   const cat = CAT[skill.category];
   const diff = DIFF[skill.difficulty];
+  const [confirmDel, setConfirmDel] = useState(false);
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -303,8 +304,8 @@ function SkillDetail({ skill, onClose, onToggle }: { skill: Skill; onClose: () =
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 18 }}>
             {[
               { label: "USOS TOTALES", value: skill.usageCount.toLocaleString(), color: cat.color },
-              { label: "TASA ÉXITO",   value: `${skill.successRate.toFixed(1)}%`, color: "#3D8A60" },
-              { label: "DURACIÓN AVG", value: `${(skill.avgDurationMs / 1000).toFixed(1)}s`, color: "#B88530" },
+              { label: "TASA ÉXITO",   value: `${skill.successRate.toFixed(1)}%`, color: "#7A8569" },
+              { label: "DURACIÓN AVG", value: `${(skill.avgDurationMs / 1000).toFixed(1)}s`, color: "#B8A06A" },
             ].map((m) => (
               <div key={m.label} style={{
                 padding: "10px 12px", borderRadius: 10,
@@ -335,7 +336,7 @@ function SkillDetail({ skill, onClose, onToggle }: { skill: Skill; onClose: () =
           <div style={{ marginBottom: 16 }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
               <span style={{ fontSize: 10, color: "var(--text-muted)", letterSpacing: "0.06em" }}>FIABILIDAD</span>
-              <span style={{ fontSize: 10, color: "#3D8A60", fontFamily: "var(--font-display)", fontWeight: 700 }}>{skill.successRate.toFixed(1)}%</span>
+              <span style={{ fontSize: 10, color: "#7A8569", fontFamily: "var(--font-display)", fontWeight: 700 }}>{skill.successRate.toFixed(1)}%</span>
             </div>
             <div style={{ height: 4, background: "var(--bg-surface-2)", borderRadius: 2 }}>
               <motion.div
@@ -362,13 +363,29 @@ function SkillDetail({ skill, onClose, onToggle }: { skill: Skill; onClose: () =
             whileTap={{ scale: 0.96 }}
             style={{
               flex: 2, padding: "9px 0", borderRadius: 9,
-              border: `1px solid ${skill.active ? "rgba(168,60,80,0.3)" : `${cat.color}35`}`,
-              background: skill.active ? "rgba(168,60,80,0.07)" : `${cat.color}10`,
-              color: skill.active ? "#A83C50" : cat.color,
+              border: `1px solid ${skill.active ? "rgba(122,48,64,0.3)" : `${cat.color}35`}`,
+              background: skill.active ? "rgba(122,48,64,0.07)" : `${cat.color}10`,
+              color: skill.active ? "#7A3040" : cat.color,
               fontSize: 12, fontWeight: 700, cursor: "pointer",
             }}
           >
             {skill.active ? "⏸ Desactivar" : "▶ Activar"}
+          </motion.button>
+          <motion.button
+            onClick={() => { if (confirmDel) onDelete(); else setConfirmDel(true); }}
+            whileTap={{ scale: 0.96 }}
+            disabled={skill.builtIn}
+            style={{
+              flex: 1, padding: "9px 0", borderRadius: 9,
+              border: "1px solid rgba(122,48,64,0.3)",
+              background: confirmDel ? "rgba(122,48,64,0.18)" : "rgba(122,48,64,0.06)",
+              color: "#7A3040", fontSize: 12, fontWeight: 600,
+              cursor: skill.builtIn ? "not-allowed" : "pointer",
+              opacity: skill.builtIn ? 0.4 : 1,
+            }}
+            title={skill.builtIn ? "Skills built-in no se pueden eliminar" : "Eliminar"}
+          >
+            {confirmDel ? "✓ Confirmar" : "Eliminar"}
           </motion.button>
           <motion.button
             onClick={onClose}
@@ -446,7 +463,7 @@ function NewSkillForm({ onClose, onSave }: {
           boxShadow: "0 36px 80px rgba(0,0,0,0.5)",
         }}
       >
-        <div style={{ height: 2, background: "linear-gradient(90deg, transparent, #7C6FFF80, #7C6FFF, #7C6FFF80, transparent)" }} />
+        <div style={{ height: 2, background: "linear-gradient(90deg, transparent, #7A708880, #7A7088, #7A708880, transparent)" }} />
         <div style={{ padding: "18px 22px 14px", borderBottom: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between" }}>
           <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)", fontFamily: "var(--font-display)" }}>Nueva Skill</h3>
           <button onClick={onClose} style={{ width: 28, height: 28, borderRadius: 7, background: "var(--bg-surface-2)", border: "1px solid var(--border-subtle)", cursor: "pointer", color: "var(--text-muted)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -495,7 +512,7 @@ function NewSkillForm({ onClose, onSave }: {
               <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 6 }}>
                 {tags.map((t) => (
                   <span key={t} onClick={() => setTags((p) => p.filter((x) => x !== t))} style={{
-                    fontSize: 11, color: "#7C6FFF", padding: "2px 8px", borderRadius: 5,
+                    fontSize: 11, color: "#7A7088", padding: "2px 8px", borderRadius: 5,
                     background: "rgba(124,111,255,0.1)", border: "1px solid rgba(124,111,255,0.25)",
                     cursor: "pointer",
                   }}>#{t} ×</span>
@@ -517,7 +534,7 @@ function NewSkillForm({ onClose, onSave }: {
             style={{
               flex: 2, padding: "9px 0", borderRadius: 9,
               border: "1px solid rgba(124,111,255,0.35)", background: "rgba(124,111,255,0.1)",
-              color: "#7C6FFF", fontSize: 12, fontWeight: 700, cursor: "pointer",
+              color: "#7A7088", fontSize: 12, fontWeight: 700, cursor: "pointer",
               opacity: name.trim() ? 1 : 0.4,
               display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
             }}
@@ -645,7 +662,7 @@ function FolderTree({ skills, selected, onSelect }: {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function SkillsPage() {
-  const { skills, toggleSkill, addSkill } = useAstraeo();
+  const { skills, toggleSkill, addSkill, deleteSkill, showToast } = useAstraeo();
   const [catFilter, setCatFilter] = useState<SkillCategory | "all">("all");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Skill | null>(null);
@@ -711,7 +728,7 @@ export default function SkillsPage() {
                 padding: "7px 14px", borderRadius: 8,
                 background: "rgba(124,111,255,0.1)",
                 border: "1px solid rgba(124,111,255,0.28)",
-                color: "#7C6FFF", fontSize: 12, fontWeight: 700, cursor: "pointer",
+                color: "#7A7088", fontSize: 12, fontWeight: 700, cursor: "pointer",
                 display: "flex", alignItems: "center", gap: 6,
               }}
             >
@@ -723,10 +740,10 @@ export default function SkillsPage() {
 
         {/* Stats */}
         <div style={{ display: "flex", gap: 8 }}>
-          <StatCard label="SKILLS TOTALES" value={skills.length} color="#7C6FFF" />
-          <StatCard label="USOS TOTALES" value={totalUsage} color="#4A8EB8" />
-          <StatCard label="ÉXITO PROMEDIO" value={Math.round(avgSuccess)} color="#3D8A60" suffix="%" />
-          <StatCard label="ACTIVAS" value={activeCount} color="#B88530" />
+          <StatCard label="SKILLS TOTALES" value={skills.length} color="#7A7088" />
+          <StatCard label="USOS TOTALES" value={totalUsage} color="#7C8A98" />
+          <StatCard label="ÉXITO PROMEDIO" value={Math.round(avgSuccess)} color="#7A8569" suffix="%" />
+          <StatCard label="ACTIVAS" value={activeCount} color="#B8A06A" />
         </div>
       </div>
 
@@ -807,6 +824,11 @@ export default function SkillsPage() {
             onToggle={() => {
               toggleSkill(selected.id);
               setSelected((p) => p ? { ...p, active: !p.active } : null);
+            }}
+            onDelete={() => {
+              deleteSkill(selected.id);
+              showToast(`Skill "${selected.name}" eliminada`, "info");
+              setSelected(null);
             }}
           />
         )}

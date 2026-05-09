@@ -25,7 +25,7 @@ const CATALOG: IntegrationMeta[] = [
     name: "Anthropic Claude",
     icon: "🤖",
     category: "IA",
-    color: "#CC785C",
+    color: "#8A6A55",
     description: "Motor de IA principal para todos los agentes y el Comandante.",
   },
   {
@@ -33,7 +33,7 @@ const CATALOG: IntegrationMeta[] = [
     name: "Go High Level",
     icon: "⚡",
     category: "CRM",
-    color: "#FF7A59",
+    color: "#B8A06A",
     description: "CRM central para gestión de leads, pipelines y automatizaciones comerciales.",
   },
   {
@@ -75,7 +75,7 @@ const CATALOG: IntegrationMeta[] = [
     name: "Slack",
     icon: "💼",
     category: "Comunicación",
-    color: "#4A154B",
+    color: "#7A7088",
     description: "Notificaciones en tiempo real, alertas de agentes y reportes automáticos.",
     webhookField: true,
   },
@@ -84,7 +84,7 @@ const CATALOG: IntegrationMeta[] = [
     name: "Zapier",
     icon: "🔗",
     category: "Automatización",
-    color: "#FF4A00",
+    color: "#7A3040",
     description: "Conecta ASTRAEO con miles de aplicaciones mediante flujos automatizados.",
     webhookField: true,
   },
@@ -93,7 +93,7 @@ const CATALOG: IntegrationMeta[] = [
     name: "HubSpot",
     icon: "🧲",
     category: "CRM",
-    color: "#FF7A59",
+    color: "#B8A06A",
     description: "Sincronización de contactos, deals y actividad comercial.",
   },
   {
@@ -253,7 +253,7 @@ export default function IntegrationsPage() {
       <header
         style={{
           padding: "20px 24px 0",
-          borderBottom: "1px solid rgba(26,39,68,0.6)",
+          borderBottom: "1px solid rgba(255,252,245,0.6)",
           flexShrink: 0,
         }}
       >
@@ -270,14 +270,14 @@ export default function IntegrationsPage() {
 
           {/* Status bar */}
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <StatusPill color="#3D8A60" pulse>
+            <StatusPill color="#7A8569" pulse>
               {connectedCount} conectadas
             </StatusPill>
             <StatusPill color="var(--text-muted)">
               {merged.length - connectedCount} disponibles
             </StatusPill>
             {betaCount > 0 && (
-              <StatusPill color="#6655CC">
+              <StatusPill color="#7A7088">
                 {betaCount} en beta
               </StatusPill>
             )}
@@ -302,10 +302,10 @@ export default function IntegrationsPage() {
                 style={{
                   padding: "7px 13px",
                   borderRadius: "8px 8px 0 0",
-                  border: `1px solid ${active ? "rgba(74,142,184,0.3)" : "rgba(20,18,14,0.5)"}`,
-                  borderBottom: active ? "1px solid transparent" : "1px solid rgba(26,39,68,0.5)",
-                  background: active ? "rgba(74,142,184,0.08)" : "transparent",
-                  color: active ? "#4A8EB8" : "var(--text-muted)",
+                  border: `1px solid ${active ? "rgba(124,138,152,0.3)" : "rgba(255,252,245,0.5)"}`,
+                  borderBottom: active ? "1px solid transparent" : "1px solid rgba(255,252,245,0.5)",
+                  background: active ? "rgba(124,138,152,0.08)" : "transparent",
+                  color: active ? "#7C8A98" : "var(--text-muted)",
                   fontSize: 11,
                   fontWeight: active ? 600 : 400,
                   cursor: "pointer",
@@ -326,8 +326,8 @@ export default function IntegrationsPage() {
                       fontSize: 9,
                       padding: "1px 5px",
                       borderRadius: 4,
-                      background: active ? "rgba(74,142,184,0.15)" : "rgba(107,122,153,0.12)",
-                      color: active ? "#4A8EB8" : "var(--text-muted)",
+                      background: active ? "rgba(124,138,152,0.15)" : "rgba(107,122,153,0.12)",
+                      color: active ? "#7C8A98" : "var(--text-muted)",
                       fontWeight: 600,
                     }}
                   >
@@ -422,7 +422,7 @@ export default function IntegrationsPage() {
                 width: "100%",
                 maxWidth: 460,
                 borderRadius: 18,
-                border: "1px solid rgba(26,39,68,0.8)",
+                border: "1px solid rgba(255,252,245,0.8)",
                 background: "rgba(8,12,26,0.95)",
                 backdropFilter: "blur(32px)",
                 padding: 24,
@@ -461,9 +461,9 @@ export default function IntegrationsPage() {
                             fontSize: 9,
                             padding: "2px 7px",
                             borderRadius: 4,
-                            background: "rgba(102,85,204,0.12)",
-                            color: "#6655CC",
-                            border: "1px solid rgba(102,85,204,0.25)",
+                            background: "rgba(122,112,136,0.12)",
+                            color: "#7A7088",
+                            border: "1px solid rgba(122,112,136,0.25)",
                             fontWeight: 700,
                             textTransform: "uppercase",
                           }}
@@ -481,7 +481,7 @@ export default function IntegrationsPage() {
                     width: 28,
                     height: 28,
                     borderRadius: 7,
-                    border: "1px solid rgba(26,39,68,0.7)",
+                    border: "1px solid rgba(255,252,245,0.7)",
                     background: "rgba(14,12,10,0.5)",
                     color: "var(--text-muted)",
                     cursor: "pointer",
@@ -503,7 +503,7 @@ export default function IntegrationsPage() {
               {/* API Key field */}
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <label style={{ fontSize: 11, color: "var(--text-muted)", letterSpacing: "0.04em" }}>
-                  API Key <span style={{ color: "#A83C50" }}>*</span>
+                  API Key <span style={{ color: "#7A3040" }}>*</span>
                 </label>
                 <div style={{ position: "relative" }}>
                   <input
@@ -511,7 +511,7 @@ export default function IntegrationsPage() {
                       width: "100%",
                       padding: "10px 40px 10px 12px",
                       borderRadius: 8,
-                      border: "1px solid rgba(26,39,68,0.7)",
+                      border: "1px solid rgba(255,252,245,0.7)",
                       background: "rgba(14,12,10,0.5)",
                       color: "var(--text-primary)",
                       fontSize: 12,
@@ -563,7 +563,7 @@ export default function IntegrationsPage() {
                       width: "100%",
                       padding: "10px 12px",
                       borderRadius: 8,
-                      border: "1px solid rgba(26,39,68,0.7)",
+                      border: "1px solid rgba(255,252,245,0.7)",
                       background: "rgba(14,12,10,0.5)",
                       color: "var(--text-primary)",
                       fontSize: 12,
@@ -588,7 +588,7 @@ export default function IntegrationsPage() {
                   style={{
                     padding: "8px 14px",
                     borderRadius: 7,
-                    border: "1px solid rgba(26,39,68,0.7)",
+                    border: "1px solid rgba(255,252,245,0.7)",
                     background: "transparent",
                     color: "var(--text-muted)",
                     fontSize: 11,
@@ -607,7 +607,7 @@ export default function IntegrationsPage() {
                       initial={{ opacity: 0, x: -8 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0 }}
-                      style={{ fontSize: 12, color: "#3D8A60", fontWeight: 600 }}
+                      style={{ fontSize: 12, color: "#7A8569", fontWeight: 600 }}
                     >
                       ✓ Conexión exitosa
                     </motion.span>
@@ -618,7 +618,7 @@ export default function IntegrationsPage() {
                       initial={{ opacity: 0, x: -8 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0 }}
-                      style={{ fontSize: 12, color: "#A83C50", fontWeight: 600 }}
+                      style={{ fontSize: 12, color: "#7A3040", fontWeight: 600 }}
                     >
                       ✗ Verificar credenciales
                     </motion.span>
@@ -634,7 +634,7 @@ export default function IntegrationsPage() {
                     flex: 1,
                     padding: "10px 0",
                     borderRadius: 9,
-                    border: "1px solid rgba(26,39,68,0.7)",
+                    border: "1px solid rgba(255,252,245,0.7)",
                     background: "transparent",
                     color: "var(--text-muted)",
                     fontSize: 12,
@@ -687,15 +687,15 @@ function IntegrationCard({
   onConfigure: () => void;
 }) {
   const statusStyle = item.connected
-    ? { bg: "rgba(61,138,96,0.08)", border: "rgba(61,138,96,0.25)", color: "#3D8A60", label: "Conectado" }
-    : { bg: "rgba(107,122,153,0.06)", border: "rgba(20,18,14,0.6)", color: "var(--text-muted)", label: "Disponible" };
+    ? { bg: "rgba(122,133,105,0.08)", border: "rgba(122,133,105,0.25)", color: "#7A8569", label: "Conectado" }
+    : { bg: "rgba(107,122,153,0.06)", border: "rgba(255,252,245,0.6)", color: "var(--text-muted)", label: "Disponible" };
 
   return (
     <motion.div
       whileHover={{ y: -2, boxShadow: `0 8px 32px ${item.color}14` }}
       style={{
         borderRadius: 14,
-        border: `1px solid ${item.connected ? item.color + "30" : "rgba(20,18,14,0.55)"}`,
+        border: `1px solid ${item.connected ? item.color + "30" : "rgba(255,252,245,0.55)"}`,
         background: item.connected
           ? `${item.color}04`
           : "rgba(14,12,10,0.35)",
@@ -739,9 +739,9 @@ function IntegrationCard({
                     fontSize: 8,
                     padding: "2px 6px",
                     borderRadius: 4,
-                    background: "rgba(102,85,204,0.12)",
-                    color: "#6655CC",
-                    border: "1px solid rgba(102,85,204,0.22)",
+                    background: "rgba(122,112,136,0.12)",
+                    color: "#7A7088",
+                    border: "1px solid rgba(122,112,136,0.22)",
                     fontWeight: 700,
                     textTransform: "uppercase",
                     letterSpacing: "0.05em",
@@ -798,7 +798,7 @@ function IntegrationCard({
                 flex: 1,
                 padding: "7px 0",
                 borderRadius: 8,
-                border: "1px solid rgba(26,39,68,0.6)",
+                border: "1px solid rgba(255,252,245,0.6)",
                 background: "transparent",
                 color: "var(--text-muted)",
                 fontSize: 11,
@@ -814,9 +814,9 @@ function IntegrationCard({
               style={{
                 padding: "7px 12px",
                 borderRadius: 8,
-                border: "1px solid rgba(255,71,87,0.3)",
-                background: "rgba(255,71,87,0.07)",
-                color: "#A83C50",
+                border: "1px solid rgba(122,48,64,0.3)",
+                background: "rgba(122,48,64,0.07)",
+                color: "#7A3040",
                 fontSize: 11,
                 fontWeight: 600,
                 cursor: "pointer",

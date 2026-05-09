@@ -280,7 +280,7 @@ export default function SettingsPage() {
                           {[1, 2, 3].map((d) => <div key={d} style={{ width: 7, height: 7, borderRadius: 2, background: d <= m.speed ? m.badge : "var(--border-subtle)" }} />)}
                         </div>
                         <div style={{ display: "flex", gap: 3 }}>
-                          {[1, 2, 3].map((d) => <div key={d} style={{ width: 7, height: 7, borderRadius: 2, background: d <= m.cost ? "rgba(255,71,87,0.5)" : "var(--border-subtle)" }} />)}
+                          {[1, 2, 3].map((d) => <div key={d} style={{ width: 7, height: 7, borderRadius: 2, background: d <= m.cost ? "rgba(122,48,64,0.5)" : "var(--border-subtle)" }} />)}
                         </div>
                       </div>
                       <div style={{ width: 16, height: 16, borderRadius: "50%", border: `2px solid ${sel ? m.badge : "var(--border-subtle)"}`, background: sel ? m.badge : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>
@@ -337,7 +337,7 @@ export default function SettingsPage() {
                 onChange={(e) => { if (e.target.value.length <= 2000) patch("companyContext", e.target.value); }}
               />
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 }}>
-                <span style={{ fontSize: 10, color: ctxLen > 1800 ? "#B88530" : "var(--text-muted)", fontFamily: "var(--font-mono)" }}>{ctxLen}/2000</span>
+                <span style={{ fontSize: 10, color: ctxLen > 1800 ? "#B8A06A" : "var(--text-muted)", fontFamily: "var(--font-mono)" }}>{ctxLen}/2000</span>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <button onClick={() => patch("companyContext", COMPANY_DEFAULT)} style={{ ...GHOST, padding: "3px 10px", fontSize: 10 }}>Restaurar default</button>
                   <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
@@ -354,7 +354,7 @@ export default function SettingsPage() {
                   {(local.brandValues ?? []).map((tag) => (
                     <motion.span key={tag} initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 6, background: `${GOLD}0C`, border: `1px solid ${GOLD}25`, color: GOLD, fontSize: 11, fontWeight: 500 }}>
                       {tag}
-                      <button onClick={() => patch("brandValues", (local.brandValues ?? []).filter((t) => t !== tag))} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(61,138,96,0.5)", fontSize: 10, padding: 0, lineHeight: 1 }}>✕</button>
+                      <button onClick={() => patch("brandValues", (local.brandValues ?? []).filter((t) => t !== tag))} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(122,133,105,0.5)", fontSize: 10, padding: 0, lineHeight: 1 }}>✕</button>
                     </motion.span>
                   ))}
                 </AnimatePresence>
@@ -439,11 +439,11 @@ export default function SettingsPage() {
               <AnimatePresence mode="wait">
                 {restoreConfirm ? (
                   <motion.div key="rc" initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} style={{ display: "flex", gap: 6 }}>
-                    <button onClick={restoreDemo} style={{ ...GHOST, borderColor: "rgba(184,133,48,0.5)", color: "#B88530", background: "rgba(184,133,48,0.1)" }}>✓ Confirmar</button>
+                    <button onClick={restoreDemo} style={{ ...GHOST, borderColor: "rgba(184,160,106,0.5)", color: "#B8A06A", background: "rgba(184,160,106,0.1)" }}>✓ Confirmar</button>
                     <button onClick={() => setRestoreConfirm(false)} style={GHOST}>Cancelar</button>
                   </motion.div>
                 ) : (
-                  <motion.button key="rb" onClick={() => setRestoreConfirm(true)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ ...GHOST, borderColor: "rgba(184,133,48,0.4)", color: "#B88530", background: "rgba(184,133,48,0.06)" }}>Restaurar demo</motion.button>
+                  <motion.button key="rb" onClick={() => setRestoreConfirm(true)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ ...GHOST, borderColor: "rgba(184,160,106,0.4)", color: "#B8A06A", background: "rgba(184,160,106,0.06)" }}>Restaurar demo</motion.button>
                 )}
               </AnimatePresence>
             </DangerRow>

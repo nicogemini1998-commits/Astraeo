@@ -34,7 +34,7 @@ const COMMANDER_TOOLS = [
         systemPrompt: { type: "string", description: "System prompt completo para el agente" },
         skills: { type: "array", items: { type: "string" }, description: "Lista de skills del agente" },
         icon: { type: "string", description: "Emoji o símbolo para el agente" },
-        color: { type: "string", description: "Color hex del agente, ej. #4A8EB8" },
+        color: { type: "string", description: "Color hex del agente, ej. #7C8A98" },
       },
       required: ["name", "role", "model", "systemPrompt", "skills"],
     },
@@ -321,7 +321,7 @@ ${companyBlock}`.trim();
 function renderMarkdown(text: string): string {
   return text
     .replace(/\*\*(.+?)\*\*/g, `<strong style="color:${C.text}">$1</strong>`)
-    .replace(/\*(.+?)\*/g, `<em style="color:#A78BFA">$1</em>`)
+    .replace(/\*(.+?)\*/g, `<em style="color:#B8A06A">$1</em>`)
     .replace(/`(.+?)`/g, `<code style="background:rgba(0,212,255,0.1);padding:1px 5px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:11px;color:${C.cyan};border:1px solid rgba(0,212,255,0.15)">$1</code>`)
     .replace(/^### (.+)$/gm, `<strong style="display:block;color:${C.text};font-size:12px;margin:8px 0 3px;letter-spacing:0.05em">$1</strong>`)
     .replace(/^## (.+)$/gm, `<strong style="display:block;color:${C.cyan};font-size:12px;margin:10px 0 4px;padding-bottom:3px;border-bottom:1px solid rgba(0,212,255,0.15)">$1</strong>`)
@@ -350,8 +350,8 @@ function ToolCallBadge({ name, result }: { name: string; result: ToolResult }) {
       animate={{ opacity: 1, x: 0 }}
       className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
       style={{
-        background: result.success ? `${meta.color}10` : "rgba(255,71,87,0.08)",
-        border: `1px solid ${result.success ? meta.color + "28" : "rgba(255,71,87,0.25)"}`,
+        background: result.success ? `${meta.color}10` : "rgba(122,48,64,0.08)",
+        border: `1px solid ${result.success ? meta.color + "28" : "rgba(122,48,64,0.25)"}`,
         color: result.success ? meta.color : C.red,
       }}
     >
@@ -440,7 +440,7 @@ function MessageRow({ msg }: { msg: CmdMessage }) {
           style={{
             background: C.surface,
             border: `1px solid rgba(255,255,255,0.06)`,
-            color: "#C8D0E0",
+            color: "var(--text-primary)",
           }}
           dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }}
         />
@@ -800,8 +800,8 @@ export default function Commander() {
           <div
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-semibold"
             style={{
-              background: settings.claudeApiKey ? "rgba(0,229,160,0.08)" : "rgba(255,71,87,0.08)",
-              border: `1px solid ${settings.claudeApiKey ? "rgba(0,229,160,0.25)" : "rgba(255,71,87,0.25)"}`,
+              background: settings.claudeApiKey ? "rgba(0,229,160,0.08)" : "rgba(122,48,64,0.08)",
+              border: `1px solid ${settings.claudeApiKey ? "rgba(0,229,160,0.25)" : "rgba(122,48,64,0.25)"}`,
               color: settings.claudeApiKey ? C.emerald : C.red,
             }}
           >

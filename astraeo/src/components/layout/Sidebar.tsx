@@ -72,11 +72,11 @@ function HexLogo() {
       <defs>
         <linearGradient id="logo-grad-outer" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#8B7BFF" stopOpacity="0.9" />
-          <stop offset="100%" stopColor="#4A8EB8" stopOpacity="0.7" />
+          <stop offset="100%" stopColor="#7C8A98" stopOpacity="0.7" />
         </linearGradient>
         <linearGradient id="logo-grad-mid" x1="100%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#6F5BFF" stopOpacity="0.5" />
-          <stop offset="100%" stopColor="#3D8A60" stopOpacity="0.3" />
+          <stop offset="0%" stopColor="#7A7088" stopOpacity="0.5" />
+          <stop offset="100%" stopColor="#7A8569" stopOpacity="0.3" />
         </linearGradient>
         <radialGradient id="logo-glow" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#8B7BFF" stopOpacity="0.6" />
@@ -100,7 +100,7 @@ function HexLogo() {
         points="20,2 34,10.5 34,27.5 20,36 6,27.5 6,10.5"
         stroke="url(#logo-grad-outer)"
         strokeWidth="1.5"
-        fill="rgba(111,91,255,0.07)"
+        fill="rgba(122,112,136,0.07)"
       />
 
       {/* Mid hex */}
@@ -108,7 +108,7 @@ function HexLogo() {
         points="20,8 30,14 30,26 20,32 10,26 10,14"
         stroke="url(#logo-grad-mid)"
         strokeWidth="1"
-        fill="rgba(74,142,184,0.05)"
+        fill="rgba(124,138,152,0.05)"
       />
 
       {/* Inner hex */}
@@ -116,13 +116,13 @@ function HexLogo() {
         points="20,13 26,16.5 26,23.5 20,27 14,23.5 14,16.5"
         stroke="rgba(139,123,255,0.4)"
         strokeWidth="0.75"
-        fill="rgba(111,91,255,0.08)"
+        fill="rgba(122,112,136,0.08)"
       />
 
       {/* Orbit ring */}
       <motion.circle
         cx="20" cy="20" r="8.5"
-        stroke="rgba(111,91,255,0.18)"
+        stroke="rgba(122,112,136,0.18)"
         strokeWidth="0.75"
         strokeDasharray="3 5"
         fill="none"
@@ -137,13 +137,13 @@ function HexLogo() {
         transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
         style={{ transformOrigin: "20px 20px" }}
       >
-        <circle cx="28.5" cy="20" r="1.5" fill="#4A8EB8" opacity="0.8" />
+        <circle cx="28.5" cy="20" r="1.5" fill="#7C8A98" opacity="0.8" />
       </motion.g>
 
       {/* Core pulse */}
       <motion.circle
         cx="20" cy="20" r="4"
-        fill="rgba(111,91,255,0.15)"
+        fill="rgba(122,112,136,0.15)"
         animate={{ r: [3.5, 5.5, 3.5], opacity: [0.5, 0.15, 0.5] }}
         transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
       />
@@ -153,9 +153,9 @@ function HexLogo() {
       <circle cx="20" cy="20" r="1.4" fill="#F0EDE6" />
 
       {/* Corner accents */}
-      <circle cx="20" cy="2" r="1.2" fill="#6F5BFF" opacity="0.6" />
-      <circle cx="34" cy="10.5" r="1" fill="#4A8EB8" opacity="0.5" />
-      <circle cx="6" cy="27.5" r="0.9" fill="#3D8A60" opacity="0.45" />
+      <circle cx="20" cy="2" r="1.2" fill="#7A7088" opacity="0.6" />
+      <circle cx="34" cy="10.5" r="1" fill="#7C8A98" opacity="0.5" />
+      <circle cx="6" cy="27.5" r="0.9" fill="#7A8569" opacity="0.45" />
     </svg>
   );
 }
@@ -197,7 +197,7 @@ function NavButton({ item, active, collapsed, onClick }: NavButtonProps) {
               ? "text-[var(--accent-indigo)]"
               : "group-hover:text-[var(--text-primary)]",
           ].join(" ")}
-          style={active ? { filter: "drop-shadow(0 0 5px rgba(111,91,255,0.5))" } : undefined}
+          style={active ? { filter: "drop-shadow(0 0 5px rgba(122,112,136,0.5))" } : undefined}
         />
       </span>
 
@@ -227,9 +227,9 @@ function NavButton({ item, active, collapsed, onClick }: NavButtonProps) {
             exit="closed"
             className="ml-auto text-[9px] px-1.5 py-0.5 rounded font-bold tracking-wider flex-shrink-0 font-mono"
             style={{
-              background: item.badgeColor ? `${item.badgeColor}15` : "rgba(111,91,255,0.1)",
+              background: item.badgeColor ? `${item.badgeColor}15` : "rgba(122,112,136,0.1)",
               color: item.badgeColor ?? "var(--accent-indigo)",
-              border: `1px solid ${item.badgeColor ? `${item.badgeColor}30` : "rgba(111,91,255,0.2)"}`,
+              border: `1px solid ${item.badgeColor ? `${item.badgeColor}30` : "rgba(122,112,136,0.2)"}`,
             }}
           >
             {item.badge}
@@ -271,7 +271,7 @@ function ConnectionOrb({ online }: { online: boolean }) {
       {online && (
         <motion.span
           className="absolute w-3 h-3 rounded-full"
-          style={{ background: "rgba(61,138,96,0.15)" }}
+          style={{ background: "rgba(122,133,105,0.15)" }}
           animate={{ scale: [1, 1.8, 1], opacity: [0.4, 0, 0.4] }}
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
         />
@@ -312,8 +312,8 @@ export default function Sidebar() {
           <motion.div
             animate={
               claudeConnected
-                ? { filter: ["drop-shadow(0 0 4px rgba(111,91,255,0.4))", "drop-shadow(0 0 10px rgba(111,91,255,0.7))", "drop-shadow(0 0 4px rgba(111,91,255,0.4))"] }
-                : { filter: "drop-shadow(0 0 3px rgba(111,91,255,0.2))" }
+                ? { filter: ["drop-shadow(0 0 4px rgba(122,112,136,0.4))", "drop-shadow(0 0 10px rgba(122,112,136,0.7))", "drop-shadow(0 0 4px rgba(122,112,136,0.4))"] }
+                : { filter: "drop-shadow(0 0 3px rgba(122,112,136,0.2))" }
             }
             transition={claudeConnected ? { duration: 3, repeat: Infinity, ease: "easeInOut" } : undefined}
             className="flex-shrink-0"
@@ -455,7 +455,7 @@ export default function Sidebar() {
                     transition={{ duration: 1.2, ease: EASE }}
                     style={{
                       background: "linear-gradient(90deg, var(--accent-indigo), var(--accent-sky))",
-                      boxShadow: "0 0 6px rgba(111,91,255,0.5)",
+                      boxShadow: "0 0 6px rgba(122,112,136,0.5)",
                     }}
                   />
                 </div>

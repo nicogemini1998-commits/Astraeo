@@ -37,7 +37,7 @@ const STATUS_LABELS: Record<AgentStatus, string> = {
 const MODELS = [
   { id: "claude-haiku-4-5-20251001", label: "Haiku 4.5",  sub: "Rápido y económico",   badge: C.emerald },
   { id: "claude-sonnet-4-6",         label: "Sonnet 4.6", sub: "Equilibrado",           badge: C.cyan    },
-  { id: "claude-opus-4-7",           label: "Opus 4.7",   sub: "Máxima inteligencia",   badge: "#CC785C" },
+  { id: "claude-opus-4-7",           label: "Opus 4.7",   sub: "Máxima inteligencia",   badge: "#8A6A55" },
 ];
 
 const AGENT_COLORS = [C.cyan, C.purple, C.coral, C.emerald, C.amber, C.red];
@@ -332,7 +332,7 @@ function AgentListCard({ agent, isSelected, index, onSelect, onStatusChange }: A
                   top: "100%",
                   marginTop: 4,
                   zIndex: 50,
-                  background: "#0D1426",
+                  background: "var(--bg-elevated)",
                   border: `1px solid ${C.border}`,
                   borderRadius: 12,
                   overflow: "hidden",

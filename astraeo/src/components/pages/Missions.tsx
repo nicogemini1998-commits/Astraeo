@@ -5,13 +5,13 @@ import type { Mission, MissionStatus, MissionPriority } from "@/lib/types";
 
 const columns: { id: MissionStatus; label: string; color: string }[] = [
   { id: "backlog", label: "Backlog", color: "#8A8A97" },
-  { id: "active", label: "En Progreso", color: "#4A8EB8" },
-  { id: "review", label: "En Revisión", color: "#B88530" },
-  { id: "done", label: "Completado", color: "#3D8A60" },
+  { id: "active", label: "En Progreso", color: "#7C8A98" },
+  { id: "review", label: "En Revisión", color: "#B8A06A" },
+  { id: "done", label: "Completado", color: "#7A8569" },
 ];
 
 const priorityColors: Record<MissionPriority, string> = {
-  critical: "#A83C50", high: "#B88530", medium: "#6655CC", low: "#8A8A97",
+  critical: "#7A3040", high: "#B8A06A", medium: "#7A7088", low: "#8A8A97",
 };
 
 const emptyMission = (): Omit<Mission, "id" | "createdAt" | "updatedAt"> => ({
@@ -63,10 +63,10 @@ export default function Missions() {
   return (
     <div className="flex flex-col h-full animate-fade-in">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-[#1A2744]/60 flex items-center justify-between flex-shrink-0">
+      <div className="px-6 py-4 border-b border-[var(--border-subtle)]/60 flex items-center justify-between flex-shrink-0">
         <div>
-          <h2 className="text-[15px] font-bold tracking-wide text-[#E8ECF4]">Misiones</h2>
-          <p className="text-[11px] text-[#6B7A99] font-mono">{missions.length} total · {missions.filter((m) => m.status === "active").length} activas</p>
+          <h2 className="text-[15px] font-bold tracking-wide text-[var(--text-primary)]">Misiones</h2>
+          <p className="text-[11px] text-[var(--text-secondary)] font-mono">{missions.length} total · {missions.filter((m) => m.status === "active").length} activas</p>
         </div>
         <div className="flex items-center gap-3">
           {/* Filter */}
@@ -81,7 +81,7 @@ export default function Missions() {
                     ? p === "all" ? "rgba(0,212,255,0.12)" : `${priorityColors[p as MissionPriority]}12`
                     : "transparent",
                   color: filter === p
-                    ? p === "all" ? "#4A8EB8" : priorityColors[p as MissionPriority]
+                    ? p === "all" ? "#7C8A98" : priorityColors[p as MissionPriority]
                     : "#8A8A97",
                   border: `1px solid ${filter === p
                     ? p === "all" ? "rgba(0,212,255,0.25)" : `${priorityColors[p as MissionPriority]}30`
@@ -107,17 +107,17 @@ export default function Missions() {
               <div
                 key={col.id}
                 className={`w-72 flex flex-col rounded-2xl border transition-all duration-200 ${
-                  dragOver === col.id ? "kanban-drag-over" : "border-[#1A2744]/50 glass-card"
+                  dragOver === col.id ? "kanban-drag-over" : "border-[var(--border-subtle)]/50 glass-card"
                 }`}
                 onDragOver={(e) => { e.preventDefault(); setDragOver(col.id); }}
                 onDragLeave={() => setDragOver(null)}
                 onDrop={() => handleDrop(col.id)}
               >
                 {/* Column header */}
-                <div className="px-4 py-3 border-b border-[#1A2744]/50 flex items-center justify-between flex-shrink-0">
+                <div className="px-4 py-3 border-b border-[var(--border-subtle)]/50 flex items-center justify-between flex-shrink-0">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full" style={{ background: col.color, boxShadow: `0 0 6px ${col.color}` }} />
-                    <span className="text-[12px] font-semibold text-[#E8ECF4] tracking-wide">{col.label}</span>
+                    <span className="text-[12px] font-semibold text-[var(--text-primary)] tracking-wide">{col.label}</span>
                   </div>
                   <span
                     className="text-[10px] px-2 py-0.5 rounded-full font-bold"
@@ -141,7 +141,7 @@ export default function Missions() {
                     />
                   ))}
                   {colMissions.length === 0 && (
-                    <div className="text-center py-8 text-[11px] text-[#6B7A99] opacity-50">
+                    <div className="text-center py-8 text-[11px] text-[var(--text-secondary)] opacity-50">
                       Arrastra aquí
                     </div>
                   )}
@@ -155,10 +155,10 @@ export default function Missions() {
       {/* Edit/Create modal */}
       {(editing || creating) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(5,8,16,0.85)", backdropFilter: "blur(16px)" }}>
-          <div className="glass-strong rounded-2xl w-full max-w-lg border border-[#1A2744] animate-scale-in p-6 space-y-4">
+          <div className="glass-strong rounded-2xl w-full max-w-lg border border-[var(--border-subtle)] animate-scale-in p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-[16px] tracking-wide">{editing ? "Editar Misión" : "Nueva Misión"}</h3>
-              <button onClick={() => { setEditing(null); setCreating(false); }} className="text-[#6B7A99] hover:text-[#E8ECF4]">✕</button>
+              <button onClick={() => { setEditing(null); setCreating(false); }} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]">✕</button>
             </div>
             <input className="astraeo-input" placeholder="Título de la misión" value={form.title}
               onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} />
@@ -166,7 +166,7 @@ export default function Missions() {
               value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[11px] text-[#6B7A99] mb-1 block tracking-wide">Prioridad</label>
+                <label className="text-[11px] text-[var(--text-secondary)] mb-1 block tracking-wide">Prioridad</label>
                 <select className="astraeo-input" value={form.priority}
                   onChange={(e) => setForm((f) => ({ ...f, priority: e.target.value as MissionPriority }))}
                   style={{ background: "#100F0D" }}>
@@ -176,7 +176,7 @@ export default function Missions() {
                 </select>
               </div>
               <div>
-                <label className="text-[11px] text-[#6B7A99] mb-1 block tracking-wide">Estado</label>
+                <label className="text-[11px] text-[var(--text-secondary)] mb-1 block tracking-wide">Estado</label>
                 <select className="astraeo-input" value={form.status}
                   onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as MissionStatus }))}
                   style={{ background: "#100F0D" }}>
@@ -185,13 +185,13 @@ export default function Missions() {
               </div>
             </div>
             <div>
-              <label className="text-[11px] text-[#6B7A99] mb-1 block tracking-wide">Progreso: {form.progress}%</label>
+              <label className="text-[11px] text-[var(--text-secondary)] mb-1 block tracking-wide">Progreso: {form.progress}%</label>
               <input type="range" min={0} max={100} value={form.progress}
                 onChange={(e) => setForm((f) => ({ ...f, progress: Number(e.target.value) }))}
-                className="w-full accent-[#4A8EB8]" />
+                className="w-full accent-[#7C8A98]" />
             </div>
             <div>
-              <label className="text-[11px] text-[#6B7A99] mb-1 block tracking-wide">Asignar agentes</label>
+              <label className="text-[11px] text-[var(--text-secondary)] mb-1 block tracking-wide">Asignar agentes</label>
               <div className="flex flex-wrap gap-2">
                 {agents.map((a) => (
                   <button
@@ -245,7 +245,7 @@ function MissionCard({
       draggable
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
-      className="glass-card rounded-xl p-3 border border-[#1A2744]/60 cursor-grab active:cursor-grabbing group transition-all hover:border-[#4A8EB8]/20 hover:bg-white/[0.02]"
+      className="glass-card rounded-xl p-3 border border-[var(--border-subtle)]/60 cursor-grab active:cursor-grabbing group transition-all hover:border-[#7C8A98]/20 hover:bg-white/[0.02]"
     >
       <div className="flex items-start justify-between gap-2 mb-2">
         <span
@@ -255,28 +255,28 @@ function MissionCard({
           {mission.priority}
         </span>
         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
-          <button onClick={onEdit} className="text-[11px] text-[#6B7A99] hover:text-[#4A8EB8] transition-all">✎</button>
-          <button onClick={onDelete} className="text-[11px] text-[#6B7A99] hover:text-[#A83C50] transition-all">✕</button>
+          <button onClick={onEdit} className="text-[11px] text-[var(--text-secondary)] hover:text-[#7C8A98] transition-all">✎</button>
+          <button onClick={onDelete} className="text-[11px] text-[var(--text-secondary)] hover:text-[#7A3040] transition-all">✕</button>
         </div>
       </div>
-      <p className="text-[12px] font-semibold text-[#E8ECF4] mb-1 leading-snug">{mission.title}</p>
+      <p className="text-[12px] font-semibold text-[var(--text-primary)] mb-1 leading-snug">{mission.title}</p>
       {mission.description && (
-        <p className="text-[11px] text-[#6B7A99] line-clamp-2 mb-2">{mission.description}</p>
+        <p className="text-[11px] text-[var(--text-secondary)] line-clamp-2 mb-2">{mission.description}</p>
       )}
       {mission.progress > 0 && (
         <div className="mb-2">
-          <div className="w-full h-1 bg-[#1A2744]/60 rounded-full overflow-hidden">
+          <div className="w-full h-1 bg-[var(--border-subtle)]/60 rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{
                 width: `${mission.progress}%`,
                 background: mission.progress === 100
-                  ? "linear-gradient(90deg, #3D8A60, #4A8EB8)"
-                  : "linear-gradient(90deg, #6655CC, #4A8EB8)",
+                  ? "linear-gradient(90deg, #7A8569, #7C8A98)"
+                  : "linear-gradient(90deg, #7A7088, #7C8A98)",
               }}
             />
           </div>
-          <p className="text-[9px] text-[#6B7A99] text-right mt-0.5 font-mono">{mission.progress}%</p>
+          <p className="text-[9px] text-[var(--text-secondary)] text-right mt-0.5 font-mono">{mission.progress}%</p>
         </div>
       )}
       <div className="flex items-center justify-between">
@@ -297,7 +297,7 @@ function MissionCard({
           ))}
         </div>
         {mission.dueDate && (
-          <span className="text-[9px] text-[#6B7A99] font-mono">
+          <span className="text-[9px] text-[var(--text-secondary)] font-mono">
             {new Date(mission.dueDate).toLocaleDateString("es", { day: "2-digit", month: "short" })}
           </span>
         )}

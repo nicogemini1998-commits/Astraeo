@@ -12,11 +12,11 @@ import type { MemoryEntry, MemoryType } from "@/lib/types";
 // ─── Config ────────────────────────────────────────────────────────────────────
 
 const TYPE_CONFIG: Record<MemoryType, { label: string; color: string; icon: string; desc: string }> = {
-  user:      { label: "Usuario",    color: "#4A8EB8", icon: "◉", desc: "Preferencias y perfil" },
-  feedback:  { label: "Feedback",   color: "#B88530", icon: "◈", desc: "Correcciones y ajustes" },
-  project:   { label: "Proyecto",   color: "#6655CC", icon: "◆", desc: "Contexto de proyectos" },
-  reference: { label: "Referencia", color: "#3D8A60", icon: "◍", desc: "Recursos externos" },
-  fact:      { label: "Hecho",      color: "#B04858", icon: "◎", desc: "Datos verificados" },
+  user:      { label: "Usuario",    color: "#7C8A98", icon: "◉", desc: "Preferencias y perfil" },
+  feedback:  { label: "Feedback",   color: "#B8A06A", icon: "◈", desc: "Correcciones y ajustes" },
+  project:   { label: "Proyecto",   color: "#7A7088", icon: "◆", desc: "Contexto de proyectos" },
+  reference: { label: "Referencia", color: "#7A8569", icon: "◍", desc: "Recursos externos" },
+  fact:      { label: "Hecho",      color: "#8A5A60", icon: "◎", desc: "Datos verificados" },
 };
 
 const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
@@ -41,7 +41,7 @@ function highlightText(text: string, query: string): React.ReactNode {
   const parts = text.split(new RegExp(`(${esc})`, "gi"));
   return parts.map((p, i) =>
     new RegExp(esc, "gi").test(p)
-      ? <mark key={i} style={{ background: "rgba(74,142,184,0.22)", color: "#4A8EB8", borderRadius: 2, padding: "0 2px" }}>{p}</mark>
+      ? <mark key={i} style={{ background: "rgba(124,138,152,0.22)", color: "#7C8A98", borderRadius: 2, padding: "0 2px" }}>{p}</mark>
       : p
   );
 }
@@ -113,9 +113,9 @@ function MemoryCard({ entry, selected, search, onSelect, onPin, onDelete }: {
               </span>
               {entry.pinned && (
                 <span style={{
-                  fontSize: 9, color: "#B88530",
+                  fontSize: 9, color: "#B8A06A",
                   padding: "1px 5px", borderRadius: 3,
-                  background: "rgba(184,133,48,0.1)", border: "1px solid rgba(184,133,48,0.2)",
+                  background: "rgba(184,160,106,0.1)", border: "1px solid rgba(184,160,106,0.2)",
                 }}>
                   📌 Fijada
                 </span>
@@ -135,12 +135,12 @@ function MemoryCard({ entry, selected, search, onSelect, onPin, onDelete }: {
                   onClick={(e) => { e.stopPropagation(); onPin(); }}
                   style={{
                     width: 24, height: 24, borderRadius: 6,
-                    background: entry.pinned ? "rgba(184,133,48,0.15)" : "var(--bg-surface-2)",
-                    border: `1px solid ${entry.pinned ? "rgba(184,133,48,0.3)" : "var(--border-subtle)"}`,
+                    background: entry.pinned ? "rgba(184,160,106,0.15)" : "var(--bg-surface-2)",
+                    border: `1px solid ${entry.pinned ? "rgba(184,160,106,0.3)" : "var(--border-subtle)"}`,
                     cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
                   }}
                 >
-                  <PinIcon size={10} color={entry.pinned ? "#B88530" : "var(--text-muted)"} />
+                  <PinIcon size={10} color={entry.pinned ? "#B8A06A" : "var(--text-muted)"} />
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); onDelete(); }}
@@ -259,9 +259,9 @@ function MemoryDetail({ entry, onClose, onPin, onDelete, onEdit }: {
               </span>
               {entry.pinned && (
                 <span style={{
-                  fontSize: 10, color: "#B88530",
+                  fontSize: 10, color: "#B8A06A",
                   padding: "2px 7px", borderRadius: 4,
-                  background: "rgba(184,133,48,0.1)", border: "1px solid rgba(184,133,48,0.2)",
+                  background: "rgba(184,160,106,0.1)", border: "1px solid rgba(184,160,106,0.2)",
                 }}>
                   📌 Fijada
                 </span>
@@ -345,9 +345,9 @@ function MemoryDetail({ entry, onClose, onPin, onDelete, onEdit }: {
           whileTap={{ scale: 0.96 }}
           style={{
             flex: 1, padding: "8px 0", borderRadius: 8,
-            border: `1px solid ${entry.pinned ? "rgba(184,133,48,0.4)" : "var(--border-subtle)"}`,
-            background: entry.pinned ? "rgba(184,133,48,0.08)" : "transparent",
-            color: entry.pinned ? "#B88530" : "var(--text-muted)",
+            border: `1px solid ${entry.pinned ? "rgba(184,160,106,0.4)" : "var(--border-subtle)"}`,
+            background: entry.pinned ? "rgba(184,160,106,0.08)" : "transparent",
+            color: entry.pinned ? "#B8A06A" : "var(--text-muted)",
             fontSize: 11, fontWeight: 600, cursor: "pointer",
             display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
           }}
@@ -360,9 +360,9 @@ function MemoryDetail({ entry, onClose, onPin, onDelete, onEdit }: {
           whileTap={{ scale: 0.96 }}
           style={{
             flex: 1, padding: "8px 0", borderRadius: 8,
-            border: "1px solid rgba(168,60,80,0.25)",
-            background: "rgba(168,60,80,0.06)",
-            color: "#A83C50", fontSize: 11, fontWeight: 600, cursor: "pointer",
+            border: "1px solid rgba(122,48,64,0.25)",
+            background: "rgba(122,48,64,0.06)",
+            color: "#7A3040", fontSize: 11, fontWeight: 600, cursor: "pointer",
             display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
           }}
         >
@@ -496,7 +496,7 @@ function NewMemoryModal({ defaultType, onClose, onSave }: {
             )}
           </div>
           <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
-            <input type="checkbox" checked={pinned} onChange={(e) => setPinned(e.target.checked)} style={{ accentColor: "#B88530" }} />
+            <input type="checkbox" checked={pinned} onChange={(e) => setPinned(e.target.checked)} style={{ accentColor: "#B8A06A" }} />
             <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Fijar esta memoria</span>
           </label>
         </div>
@@ -558,7 +558,7 @@ function FolderPane({ memory, selected, onSelect }: {
       <div style={{ padding: "10px 8px 4px" }}>
         {([
           { key: "all", label: "Todas", icon: <DatabaseIcon size={12} />, count: memory.length, color: "var(--text-primary)" },
-          { key: "pinned", label: "Fijadas", icon: <PinIcon size={12} />, count: pinnedCount, color: "#B88530" },
+          { key: "pinned", label: "Fijadas", icon: <PinIcon size={12} />, count: pinnedCount, color: "#B8A06A" },
         ] as const).map((item) => (
           <button
             key={item.key}
@@ -757,9 +757,9 @@ export default function MemoryPage() {
               onClick={() => setShowNew(true)}
               style={{
                 padding: "7px 14px", borderRadius: 8,
-                background: "rgba(74,142,184,0.1)",
-                border: "1px solid rgba(74,142,184,0.28)",
-                color: "#4A8EB8", fontSize: 12, fontWeight: 700, cursor: "pointer",
+                background: "rgba(124,138,152,0.1)",
+                border: "1px solid rgba(124,138,152,0.28)",
+                color: "#7C8A98", fontSize: 12, fontWeight: 700, cursor: "pointer",
                 display: "flex", alignItems: "center", gap: 6,
               }}
             >

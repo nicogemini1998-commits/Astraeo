@@ -4,10 +4,10 @@ import { BellIcon, CheckCheckIcon, XIcon, InfoIcon, CheckCircleIcon, AlertTriang
 import { useAstraeo } from "@/store/astraeo";
 
 const TYPE_CONFIG = {
-  info:    { icon: InfoIcon,          color: "#00D4FF", bg: "rgba(0,212,255,0.08)",   border: "rgba(0,212,255,0.20)"   },
+  info:    { icon: InfoIcon,          color: "#B8A06A", bg: "rgba(0,212,255,0.08)",   border: "rgba(0,212,255,0.20)"   },
   success: { icon: CheckCircleIcon,   color: "#00E5A0", bg: "rgba(0,229,160,0.08)",   border: "rgba(0,229,160,0.20)"   },
   warning: { icon: AlertTriangleIcon, color: "#FFB800", bg: "rgba(255,184,0,0.08)",   border: "rgba(255,184,0,0.20)"   },
-  error:   { icon: XCircleIcon,       color: "#FF4757", bg: "rgba(255,71,87,0.08)",   border: "rgba(255,71,87,0.20)"   },
+  error:   { icon: XCircleIcon,       color: "#FF4757", bg: "rgba(122,48,64,0.08)",   border: "rgba(122,48,64,0.20)"   },
 } as const;
 
 function relativeTime(ts: string | number): string {
@@ -69,7 +69,7 @@ export default function NotifPanel() {
                   background: "rgba(0,212,255,0.1)", border: "1px solid rgba(0,212,255,0.2)",
                   display: "flex", alignItems: "center", justifyContent: "center",
                 }}>
-                  <BellIcon size={15} color="#00D4FF" />
+                  <BellIcon size={15} color="#B8A06A" />
                 </div>
                 <div>
                   <div style={{ color: "#E8ECF8", fontSize: 13, fontWeight: 700, letterSpacing: "0.02em" }}>

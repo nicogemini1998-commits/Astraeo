@@ -144,7 +144,7 @@ function SearchBar() {
               ? "var(--border-focus)"
               : "var(--border-subtle)",
             boxShadow: focused
-              ? "0 0 0 3px rgba(111,91,255,0.12)"
+              ? "0 0 0 3px rgba(122,112,136,0.12)"
               : "none",
             opacity: phVisible ? 1 : 0.8,
           }}
@@ -177,9 +177,9 @@ function SearchBar() {
                 <span
                   className="text-[9px] px-1.5 py-0.5 rounded font-bold font-mono"
                   style={{
-                    background: "rgba(111,91,255,0.12)",
+                    background: "rgba(122,112,136,0.12)",
                     color: "var(--accent-indigo)",
-                    border: "1px solid rgba(111,91,255,0.2)",
+                    border: "1px solid rgba(122,112,136,0.2)",
                   }}
                 >
                   {r.type}
@@ -340,7 +340,7 @@ function UserAvatar() {
         className="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-[10px] cursor-pointer font-mono flex-shrink-0 transition-all"
         style={{
           background: "linear-gradient(135deg, var(--accent-indigo), var(--accent-violet))",
-          boxShadow: "0 0 12px rgba(111,91,255,0.3)",
+          boxShadow: "0 0 12px rgba(122,112,136,0.3)",
         }}
         aria-label={`User: ${settings.userName}`}
       >

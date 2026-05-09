@@ -13,11 +13,11 @@ const NODE_H = 64;
 const PORT_R = 6;
 
 const NODE_STYLES: Record<WorkflowNode["type"], { color: string; bg: string; icon: string; label: string }> = {
-  trigger:   { color: "#B88530", bg: "rgba(184,133,48,0.10)",   icon: "⚡", label: "Trigger" },
-  agent:     { color: "#4A8EB8", bg: "rgba(74,142,184,0.10)",   icon: "◉",  label: "Agente" },
-  condition: { color: "#6655CC", bg: "rgba(102,85,204,0.10)",  icon: "◇",  label: "Condición" },
-  action:    { color: "#3D8A60", bg: "rgba(61,138,96,0.10)",   icon: "▶",  label: "Acción" },
-  output:    { color: "#B04858", bg: "rgba(176,72,88,0.10)", icon: "◎",  label: "Salida" },
+  trigger:   { color: "#B8A06A", bg: "rgba(184,160,106,0.10)",   icon: "⚡", label: "Trigger" },
+  agent:     { color: "#7C8A98", bg: "rgba(124,138,152,0.10)",   icon: "◉",  label: "Agente" },
+  condition: { color: "#7A7088", bg: "rgba(122,112,136,0.10)",  icon: "◇",  label: "Condición" },
+  action:    { color: "#7A8569", bg: "rgba(122,133,105,0.10)",   icon: "▶",  label: "Acción" },
+  output:    { color: "#8A5A60", bg: "rgba(138,90,96,0.10)", icon: "◎",  label: "Salida" },
 };
 
 // ─── Canvas Types ──────────────────────────────────────────────────────────────
@@ -450,9 +450,9 @@ function RunModal({ workflow, agents, settings, onClose, onComplete }: RunModalP
   };
   const stateColor: Record<NodeExecState, string> = {
     pending: "var(--text-muted)",
-    running: "#4A8EB8",
-    done: "#3D8A60",
-    error: "#A83C50",
+    running: "#7C8A98",
+    done: "#7A8569",
+    error: "#7A3040",
     skipped: "#23211C",
   };
 
@@ -469,8 +469,8 @@ function RunModal({ workflow, agents, settings, onClose, onComplete }: RunModalP
         className="glass-strong rounded-2xl w-full max-w-xl mx-4 flex flex-col"
         style={{
           maxHeight: "85vh",
-          border: "1px solid rgba(74,142,184,0.15)",
-          boxShadow: "0 1px 4px rgba(74,142,184,0.08), 0 1px 4px rgba(74,142,184,0.04), inset 0 1px 4px rgba(74,142,184,0.02)",
+          border: "1px solid rgba(124,138,152,0.15)",
+          boxShadow: "0 1px 4px rgba(124,138,152,0.08), 0 1px 4px rgba(124,138,152,0.04), inset 0 1px 4px rgba(124,138,152,0.02)",
         }}
         initial={{ scale: 0.94, opacity: 0, y: 12 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -481,8 +481,8 @@ function RunModal({ workflow, agents, settings, onClose, onComplete }: RunModalP
         <div
           className="px-6 py-5 border-b flex items-center justify-between flex-shrink-0"
           style={{
-            borderColor: "rgba(74,142,184,0.12)",
-            background: "linear-gradient(135deg, rgba(74,142,184,0.06) 0%, rgba(102,85,204,0.04) 100%)",
+            borderColor: "rgba(124,138,152,0.12)",
+            background: "linear-gradient(135deg, rgba(124,138,152,0.06) 0%, rgba(122,112,136,0.04) 100%)",
           }}
         >
           <div>
@@ -491,18 +491,18 @@ function RunModal({ workflow, agents, settings, onClose, onComplete }: RunModalP
                 <motion.span
                   animate={{ opacity: [1, 0.3, 1] }}
                   transition={{ repeat: Infinity, duration: 1.2 }}
-                  style={{ color: "#4A8EB8", fontSize: 10 }}
+                  style={{ color: "#7C8A98", fontSize: 10 }}
                 >
                   ●
                 </motion.span>
               )}
-              {phase === "done" && <span style={{ color: "#3D8A60", fontSize: 10 }}>●</span>}
+              {phase === "done" && <span style={{ color: "#7A8569", fontSize: 10 }}>●</span>}
               {phase === "input" && <span style={{ color: "var(--text-muted)", fontSize: 10 }}>●</span>}
-              <h3 className="text-[13px] font-bold text-[#E8ECF4] uppercase tracking-widest">
+              <h3 className="text-[13px] font-bold text-[var(--text-primary)] uppercase tracking-widest">
                 {phase === "running" ? "EJECUTANDO WORKFLOW" : phase === "done" ? "EJECUCIÓN COMPLETADA" : "EJECUTAR WORKFLOW"}
               </h3>
             </div>
-            <p className="text-[11px] font-mono" style={{ color: "#4A8EB8", opacity: 0.7 }}>{workflow.name}</p>
+            <p className="text-[11px] font-mono" style={{ color: "#7C8A98", opacity: 0.7 }}>{workflow.name}</p>
           </div>
           <button
             onClick={onClose}
@@ -531,7 +531,7 @@ function RunModal({ workflow, agents, settings, onClose, onComplete }: RunModalP
           {phase === "input" && (
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
               <div>
-                <label className="text-[11px] font-semibold text-[#6B7A99] uppercase tracking-wider block mb-2">
+                <label className="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider block mb-2">
                   Input del Trigger
                 </label>
                 <textarea
@@ -545,10 +545,10 @@ function RunModal({ workflow, agents, settings, onClose, onComplete }: RunModalP
               {!settings.claudeApiKey && (
                 <div
                   className="flex items-start gap-3 rounded-xl p-3"
-                  style={{ background: "rgba(184,133,48,0.08)", border: "1px solid rgba(184,133,48,0.2)" }}
+                  style={{ background: "rgba(184,160,106,0.08)", border: "1px solid rgba(184,160,106,0.2)" }}
                 >
-                  <span className="text-[#B88530] mt-0.5">⚠</span>
-                  <p className="text-[11px] text-[#B88530]">
+                  <span className="text-[#B8A06A] mt-0.5">⚠</span>
+                  <p className="text-[11px] text-[#B8A06A]">
                     Sin Claude API Key. Los nodos de agente usarán respuestas simuladas. Configura en Ajustes.
                   </p>
                 </div>
@@ -563,23 +563,23 @@ function RunModal({ workflow, agents, settings, onClose, onComplete }: RunModalP
                 <motion.div
                   className="rounded-xl p-3 mb-1"
                   style={{
-                    background: "rgba(74,142,184,0.05)",
-                    border: "1px solid rgba(74,142,184,0.15)",
+                    background: "rgba(124,138,152,0.05)",
+                    border: "1px solid rgba(124,138,152,0.15)",
                   }}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-bold text-[#6B7A99] uppercase tracking-widest">Progreso</span>
-                    <span className="text-[10px] font-mono text-[#4A8EB8]">
+                    <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Progreso</span>
+                    <span className="text-[10px] font-mono text-[#7C8A98]">
                       {Object.values(nodeStates).filter((s) => s === "done" || s === "error" || s === "skipped").length}
                       /{workflow.nodes.length}
                     </span>
                   </div>
-                  <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(20,18,14,0.8)" }}>
+                  <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,252,245,0.8)" }}>
                     <motion.div
                       className="h-full rounded-full"
                       style={{
-                        background: "linear-gradient(90deg, #4A8EB8, #6655CC)",
-                        boxShadow: "0 1px 4px rgba(74,142,184,0.6)",
+                        background: "linear-gradient(90deg, #7C8A98, #7A7088)",
+                        boxShadow: "0 1px 4px rgba(124,138,152,0.6)",
                       }}
                       initial={{ width: "0%" }}
                       animate={{
@@ -629,13 +629,13 @@ function RunModal({ workflow, agents, settings, onClose, onComplete }: RunModalP
                       >
                         {stateIcon[execState]}
                       </span>
-                      <span className="text-[12px] font-semibold text-[#E8ECF4] flex-1">{node.label}</span>
+                      <span className="text-[12px] font-semibold text-[var(--text-primary)] flex-1">{node.label}</span>
                       <span className="text-[10px] font-mono" style={{ color: cfg.color }}>{cfg.label}</span>
                       {elapsed !== undefined && (
-                        <span className="text-[10px] font-mono text-[#6B7A99]">{(elapsed / 1000).toFixed(1)}s</span>
+                        <span className="text-[10px] font-mono text-[var(--text-secondary)]">{(elapsed / 1000).toFixed(1)}s</span>
                       )}
                       {output && (
-                        <span className="text-[10px] text-[#6B7A99]">{isExpanded ? "▲" : "▼"}</span>
+                        <span className="text-[10px] text-[var(--text-secondary)]">{isExpanded ? "▲" : "▼"}</span>
                       )}
                     </button>
                     <AnimatePresence>
@@ -647,8 +647,8 @@ function RunModal({ workflow, agents, settings, onClose, onComplete }: RunModalP
                           transition={{ duration: 0.2 }}
                           className="overflow-hidden"
                         >
-                          <div className="px-4 pb-3 border-t border-[#1A2744]/40 pt-3">
-                            <p className="text-[11px] text-[#6B7A99] font-mono whitespace-pre-wrap leading-relaxed">
+                          <div className="px-4 pb-3 border-t border-[var(--border-subtle)]/40 pt-3">
+                            <p className="text-[11px] text-[var(--text-secondary)] font-mono whitespace-pre-wrap leading-relaxed">
                               {output.slice(0, 600)}{output.length > 600 ? "…" : ""}
                             </p>
                           </div>
@@ -667,12 +667,12 @@ function RunModal({ workflow, agents, settings, onClose, onComplete }: RunModalP
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               className="rounded-xl p-4 space-y-2"
-              style={{ background: "rgba(61,138,96,0.06)", border: "1px solid rgba(61,138,96,0.2)" }}
+              style={{ background: "rgba(122,133,105,0.06)", border: "1px solid rgba(122,133,105,0.2)" }}
             >
-              <p className="text-[11px] font-semibold text-[#3D8A60] uppercase tracking-wider">
+              <p className="text-[11px] font-semibold text-[#7A8569] uppercase tracking-wider">
                 ✓ Resultado Final · {(totalTime / 1000).toFixed(1)}s
               </p>
-              <p className="text-[12px] text-[#E8ECF4] leading-relaxed whitespace-pre-wrap">
+              <p className="text-[12px] text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap">
                 {finalOutput.slice(0, 800)}
               </p>
             </motion.div>
@@ -682,7 +682,7 @@ function RunModal({ workflow, agents, settings, onClose, onComplete }: RunModalP
         {/* Footer */}
         <div
           className="px-6 py-4 border-t flex justify-end gap-3 flex-shrink-0"
-          style={{ borderColor: "rgba(74,142,184,0.08)", background: "rgba(0,0,0,0.2)" }}
+          style={{ borderColor: "rgba(124,138,152,0.08)", background: "rgba(0,0,0,0.2)" }}
         >
           {phase === "input" && (
             <>
@@ -691,10 +691,10 @@ function RunModal({ workflow, agents, settings, onClose, onComplete }: RunModalP
                 onClick={handleStart}
                 className="text-[12px] font-bold px-5 py-2 rounded-xl transition-all"
                 style={{
-                  background: "linear-gradient(135deg, rgba(74,142,184,0.2), rgba(102,85,204,0.15))",
-                  border: "1px solid rgba(74,142,184,0.4)",
-                  color: "#4A8EB8",
-                  boxShadow: "0 1px 4px rgba(74,142,184,0.15)",
+                  background: "linear-gradient(135deg, rgba(124,138,152,0.2), rgba(122,112,136,0.15))",
+                  border: "1px solid rgba(124,138,152,0.4)",
+                  color: "#7C8A98",
+                  boxShadow: "0 1px 4px rgba(124,138,152,0.15)",
                   letterSpacing: "0.05em",
                   textTransform: "uppercase",
                 }}
@@ -709,11 +709,11 @@ function RunModal({ workflow, agents, settings, onClose, onComplete }: RunModalP
                 animate={{ opacity: [1, 0.3, 1] }}
                 transition={{ repeat: Infinity, duration: 1 }}
                 className="text-[11px] font-mono"
-                style={{ color: "#4A8EB8" }}
+                style={{ color: "#7C8A98" }}
               >
                 ◌
               </motion.span>
-              <span className="text-[11px] text-[#6B7A99] font-mono uppercase tracking-wider">Procesando nodos…</span>
+              <span className="text-[11px] text-[var(--text-secondary)] font-mono uppercase tracking-wider">Procesando nodos…</span>
             </div>
           )}
           {phase === "done" && (
@@ -721,10 +721,10 @@ function RunModal({ workflow, agents, settings, onClose, onComplete }: RunModalP
               onClick={onClose}
               className="text-[12px] font-bold px-5 py-2 rounded-xl transition-all uppercase tracking-wider"
               style={{
-                background: "linear-gradient(135deg, rgba(61,138,96,0.15), rgba(74,142,184,0.1))",
-                border: "1px solid rgba(61,138,96,0.3)",
-                color: "#3D8A60",
-                boxShadow: "0 0 20px rgba(61,138,96,0.1)",
+                background: "linear-gradient(135deg, rgba(122,133,105,0.15), rgba(124,138,152,0.1))",
+                border: "1px solid rgba(122,133,105,0.3)",
+                color: "#7A8569",
+                boxShadow: "0 0 20px rgba(122,133,105,0.1)",
               }}
             >
               ✓ Cerrar
@@ -759,18 +759,18 @@ function NodeInspector({ nodeId, nodes, agents, dispatch, onDelete }: InspectorP
     update({ config: { ...node.config, [key]: value } });
 
   return (
-    <div className="w-60 flex-shrink-0 border-l border-[#1A2744]/60 flex flex-col overflow-y-auto">
-      <div className="px-4 py-3 border-b border-[#1A2744]/60 flex-shrink-0">
+    <div className="w-60 flex-shrink-0 border-l border-[var(--border-subtle)]/60 flex flex-col overflow-y-auto">
+      <div className="px-4 py-3 border-b border-[var(--border-subtle)]/60 flex-shrink-0">
         <div className="flex items-center gap-2 mb-0.5">
           <span style={{ color: cfg.color }}>{cfg.icon}</span>
-          <p className="text-[11px] font-bold text-[#E8ECF4] uppercase tracking-wider">Inspector</p>
+          <p className="text-[11px] font-bold text-[var(--text-primary)] uppercase tracking-wider">Inspector</p>
         </div>
-        <p className="text-[10px] text-[#6B7A99]" style={{ color: cfg.color + "aa" }}>{cfg.label}</p>
+        <p className="text-[10px] text-[var(--text-secondary)]" style={{ color: cfg.color + "aa" }}>{cfg.label}</p>
       </div>
 
       <div className="p-4 space-y-4 flex-1">
         <div>
-          <label className="text-[10px] text-[#6B7A99] uppercase tracking-wider font-semibold block mb-1.5">
+          <label className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block mb-1.5">
             Nombre
           </label>
           <input
@@ -782,7 +782,7 @@ function NodeInspector({ nodeId, nodes, agents, dispatch, onDelete }: InspectorP
 
         {node.type === "agent" && (
           <div>
-            <label className="text-[10px] text-[#6B7A99] uppercase tracking-wider font-semibold block mb-1.5">
+            <label className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block mb-1.5">
               Agente asignado
             </label>
             <select
@@ -800,7 +800,7 @@ function NodeInspector({ nodeId, nodes, agents, dispatch, onDelete }: InspectorP
 
         {(node.type === "agent" || node.type === "action") && (
           <div>
-            <label className="text-[10px] text-[#6B7A99] uppercase tracking-wider font-semibold block mb-1.5">
+            <label className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block mb-1.5">
               Prompt del nodo
             </label>
             <textarea
@@ -815,7 +815,7 @@ function NodeInspector({ nodeId, nodes, agents, dispatch, onDelete }: InspectorP
 
         {node.type === "condition" && (
           <div>
-            <label className="text-[10px] text-[#6B7A99] uppercase tracking-wider font-semibold block mb-1.5">
+            <label className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block mb-1.5">
               Expresión de condición
             </label>
             <input
@@ -824,13 +824,13 @@ function NodeInspector({ nodeId, nodes, agents, dispatch, onDelete }: InspectorP
               value={(node.config.expression as string) ?? ""}
               onChange={(e) => updateConfig("expression", e.target.value)}
             />
-            <p className="text-[9px] text-[#6B7A99] mt-1 font-mono">Variable disponible: output</p>
+            <p className="text-[9px] text-[var(--text-secondary)] mt-1 font-mono">Variable disponible: output</p>
           </div>
         )}
 
         {node.type === "action" && (
           <div>
-            <label className="text-[10px] text-[#6B7A99] uppercase tracking-wider font-semibold block mb-1.5">
+            <label className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block mb-1.5">
               Tipo de acción
             </label>
             <select
@@ -847,7 +847,7 @@ function NodeInspector({ nodeId, nodes, agents, dispatch, onDelete }: InspectorP
         )}
 
         <div>
-          <label className="text-[10px] text-[#6B7A99] uppercase tracking-wider font-semibold block mb-1.5">
+          <label className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block mb-1.5">
             Config JSON
           </label>
           <textarea
@@ -867,7 +867,7 @@ function NodeInspector({ nodeId, nodes, agents, dispatch, onDelete }: InspectorP
         </div>
       </div>
 
-      <div className="p-4 border-t border-[#1A2744]/60 flex-shrink-0">
+      <div className="p-4 border-t border-[var(--border-subtle)]/60 flex-shrink-0">
         <button onClick={onDelete} className="btn-danger text-[11px] py-2 w-full justify-center">
           ✕ Eliminar nodo
         </button>
@@ -1129,8 +1129,8 @@ function WorkflowCanvas({ workflow, agents, settings, onSave, onBack }: Workflow
         <button onClick={onBack} className="btn-ghost text-[11px] py-1.5 px-3">← Volver</button>
         <div className="h-4 w-px" style={{ background: "rgba(255,255,255,0.08)" }} />
         <div>
-          <span className="text-[13px] font-bold text-[#E8ECF4] truncate max-w-48 block">{workflow.name}</span>
-          <span className="text-[9px] font-mono uppercase tracking-widest" style={{ color: "rgba(74,142,184,0.5)" }}>
+          <span className="text-[13px] font-bold text-[var(--text-primary)] truncate max-w-48 block">{workflow.name}</span>
+          <span className="text-[9px] font-mono uppercase tracking-widest" style={{ color: "rgba(124,138,152,0.5)" }}>
             {canvasState.nodes.length} nodos · {canvasState.edges.length} conexiones
           </span>
         </div>
@@ -1138,9 +1138,9 @@ function WorkflowCanvas({ workflow, agents, settings, onSave, onBack }: Workflow
           <span
             className="text-[9px] font-mono px-2 py-0.5 rounded-full"
             style={{
-              color: "#B88530",
-              background: "rgba(184,133,48,0.1)",
-              border: "1px solid rgba(184,133,48,0.2)",
+              color: "#B8A06A",
+              background: "rgba(184,160,106,0.1)",
+              border: "1px solid rgba(184,160,106,0.2)",
             }}
           >
             ● sin guardar
@@ -1155,7 +1155,7 @@ function WorkflowCanvas({ workflow, agents, settings, onSave, onBack }: Workflow
               className="text-[11px] px-2.5 py-1.5 transition-colors hover:text-white"
               style={{ color: "var(--text-muted)" }}
             >−</button>
-            <span className="text-[10px] font-mono w-9 text-center" style={{ color: "#4A8EB8" }}>{zoomPct}%</span>
+            <span className="text-[10px] font-mono w-9 text-center" style={{ color: "#7C8A98" }}>{zoomPct}%</span>
             <button
               onClick={() => dispatch({ type: "SET_ZOOM", zoom: canvasState.zoom + 0.1 })}
               className="text-[11px] px-2.5 py-1.5 transition-colors hover:text-white"
@@ -1176,9 +1176,9 @@ function WorkflowCanvas({ workflow, agents, settings, onSave, onBack }: Workflow
             onClick={handleSave}
             className="text-[11px] py-1.5 px-4 rounded-xl font-semibold transition-all uppercase tracking-wider"
             style={{
-              background: "rgba(74,142,184,0.08)",
-              border: "1px solid rgba(74,142,184,0.2)",
-              color: "#4A8EB8",
+              background: "rgba(124,138,152,0.08)",
+              border: "1px solid rgba(124,138,152,0.2)",
+              color: "#7C8A98",
             }}
           >
             ✓ Guardar
@@ -1187,10 +1187,10 @@ function WorkflowCanvas({ workflow, agents, settings, onSave, onBack }: Workflow
             onClick={() => setShowRunModal(true)}
             className="text-[11px] py-1.5 px-4 rounded-xl font-bold transition-all uppercase tracking-wider"
             style={{
-              background: "linear-gradient(135deg, rgba(61,138,96,0.18), rgba(74,142,184,0.12))",
-              border: "1px solid rgba(61,138,96,0.35)",
-              color: "#3D8A60",
-              boxShadow: "0 0 16px rgba(61,138,96,0.12)",
+              background: "linear-gradient(135deg, rgba(122,133,105,0.18), rgba(124,138,152,0.12))",
+              border: "1px solid rgba(122,133,105,0.35)",
+              color: "#7A8569",
+              boxShadow: "0 0 16px rgba(122,133,105,0.12)",
             }}
           >
             ▶ Ejecutar
@@ -1205,7 +1205,7 @@ function WorkflowCanvas({ workflow, agents, settings, onSave, onBack }: Workflow
           className="flex-1 relative min-w-0 overflow-hidden"
           style={{
             background: "#07091A",
-            backgroundImage: "radial-gradient(rgba(74,142,184,0.18) 1px, transparent 1px)",
+            backgroundImage: "radial-gradient(rgba(124,138,152,0.18) 1px, transparent 1px)",
             backgroundSize: "28px 28px",
             cursor: canvasState.isPanning
               ? "grabbing"
@@ -1229,38 +1229,38 @@ function WorkflowCanvas({ workflow, agents, settings, onSave, onBack }: Workflow
           >
             <defs>
               <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                <polygon points="0 0, 10 3.5, 0 7" fill="rgba(74,142,184,0.5)" />
+                <polygon points="0 0, 10 3.5, 0 7" fill="rgba(124,138,152,0.5)" />
               </marker>
               <marker id="arrowhead-selected" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                <polygon points="0 0, 10 3.5, 0 7" fill="#4A8EB8" />
+                <polygon points="0 0, 10 3.5, 0 7" fill="#7C8A98" />
               </marker>
               <filter id="glow-trigger" x="-20%" y="-20%" width="140%" height="140%">
                 <feGaussianBlur stdDeviation="4" result="blur" />
-                <feFlood floodColor="#B88530" floodOpacity="0.35" result="color" />
+                <feFlood floodColor="#B8A06A" floodOpacity="0.35" result="color" />
                 <feComposite in="color" in2="blur" operator="in" result="glow" />
                 <feMerge><feMergeNode in="glow" /><feMergeNode in="SourceGraphic" /></feMerge>
               </filter>
               <filter id="glow-agent" x="-20%" y="-20%" width="140%" height="140%">
                 <feGaussianBlur stdDeviation="4" result="blur" />
-                <feFlood floodColor="#4A8EB8" floodOpacity="0.35" result="color" />
+                <feFlood floodColor="#7C8A98" floodOpacity="0.35" result="color" />
                 <feComposite in="color" in2="blur" operator="in" result="glow" />
                 <feMerge><feMergeNode in="glow" /><feMergeNode in="SourceGraphic" /></feMerge>
               </filter>
               <filter id="glow-condition" x="-20%" y="-20%" width="140%" height="140%">
                 <feGaussianBlur stdDeviation="4" result="blur" />
-                <feFlood floodColor="#6655CC" floodOpacity="0.35" result="color" />
+                <feFlood floodColor="#7A7088" floodOpacity="0.35" result="color" />
                 <feComposite in="color" in2="blur" operator="in" result="glow" />
                 <feMerge><feMergeNode in="glow" /><feMergeNode in="SourceGraphic" /></feMerge>
               </filter>
               <filter id="glow-action" x="-20%" y="-20%" width="140%" height="140%">
                 <feGaussianBlur stdDeviation="4" result="blur" />
-                <feFlood floodColor="#3D8A60" floodOpacity="0.35" result="color" />
+                <feFlood floodColor="#7A8569" floodOpacity="0.35" result="color" />
                 <feComposite in="color" in2="blur" operator="in" result="glow" />
                 <feMerge><feMergeNode in="glow" /><feMergeNode in="SourceGraphic" /></feMerge>
               </filter>
               <filter id="glow-output" x="-20%" y="-20%" width="140%" height="140%">
                 <feGaussianBlur stdDeviation="4" result="blur" />
-                <feFlood floodColor="#B04858" floodOpacity="0.35" result="color" />
+                <feFlood floodColor="#8A5A60" floodOpacity="0.35" result="color" />
                 <feComposite in="color" in2="blur" operator="in" result="glow" />
                 <feMerge><feMergeNode in="glow" /><feMergeNode in="SourceGraphic" /></feMerge>
               </filter>
@@ -1295,7 +1295,7 @@ function WorkflowCanvas({ workflow, agents, settings, onSave, onBack }: Workflow
                     <path
                       d={path}
                       fill="none"
-                      stroke={isSelected ? "#4A8EB8" : "rgba(74,142,184,0.4)"}
+                      stroke={isSelected ? "#7C8A98" : "rgba(124,138,152,0.4)"}
                       strokeWidth={isSelected ? 3 : 2}
                       markerEnd={isSelected ? "url(#arrowhead-selected)" : "url(#arrowhead)"}
                       style={{ pointerEvents: "none", transition: "stroke 0.2s" }}
@@ -1305,7 +1305,7 @@ function WorkflowCanvas({ workflow, agents, settings, onSave, onBack }: Workflow
                         x={midX}
                         y={midY}
                         textAnchor="middle"
-                        style={{ fill: "#B88530", fontSize: 10, fontFamily: "Space Grotesk", pointerEvents: "none" }}
+                        style={{ fill: "#B8A06A", fontSize: 10, fontFamily: "Space Grotesk", pointerEvents: "none" }}
                       >
                         {edge.label}
                       </text>
@@ -1329,7 +1329,7 @@ function WorkflowCanvas({ workflow, agents, settings, onSave, onBack }: Workflow
                   <path
                     d={path}
                     fill="none"
-                    stroke="rgba(74,142,184,0.4)"
+                    stroke="rgba(124,138,152,0.4)"
                     strokeWidth={2}
                     strokeDasharray="6,4"
                     style={{ pointerEvents: "none" }}
@@ -1461,14 +1461,14 @@ function WorkflowCanvas({ workflow, agents, settings, onSave, onBack }: Workflow
                   style={{
                     width: 64,
                     height: 64,
-                    background: "linear-gradient(135deg, rgba(74,142,184,0.1), rgba(102,85,204,0.08))",
-                    border: "1px solid rgba(74,142,184,0.15)",
+                    background: "linear-gradient(135deg, rgba(124,138,152,0.1), rgba(122,112,136,0.08))",
+                    border: "1px solid rgba(124,138,152,0.15)",
                   }}
                 >
                   <span style={{ fontSize: 28 }}>◫</span>
                 </div>
                 <p className="text-[13px] font-semibold" style={{ color: "var(--text-muted)" }}>Doble click para agregar nodo</p>
-                <p className="text-[10px] font-mono uppercase tracking-widest" style={{ color: "rgba(74,142,184,0.5)" }}>
+                <p className="text-[10px] font-mono uppercase tracking-widest" style={{ color: "rgba(124,138,152,0.5)" }}>
                   o arrastra desde la paleta
                 </p>
               </div>
@@ -1546,8 +1546,8 @@ export default function WorkflowsPage() {
       name: newName,
       description: newDesc,
       nodes: [
-        { id: `n-${nanoid(6)}`, type: "trigger", label: "Inicio", x: 80, y: 120, config: {}, color: "#3D8A60" },
-        { id: `n-${nanoid(6)}`, type: "output", label: "Resultado", x: 420, y: 120, config: {}, color: "#B04858" },
+        { id: `n-${nanoid(6)}`, type: "trigger", label: "Inicio", x: 80, y: 120, config: {}, color: "#7A8569" },
+        { id: `n-${nanoid(6)}`, type: "output", label: "Resultado", x: 420, y: 120, config: {}, color: "#8A5A60" },
       ],
       edges: [],
       active: false,
@@ -1573,16 +1573,16 @@ export default function WorkflowsPage() {
       <div className="flex h-full">
         {/* Node palette + workflow list */}
         <div
-          className="w-52 flex-shrink-0 border-r border-[#1A2744]/60 flex flex-col glass"
+          className="w-52 flex-shrink-0 border-r border-[var(--border-subtle)]/60 flex flex-col glass"
           style={{ zIndex: 1 }}
         >
           {/* Palette header */}
-          <div className="px-4 py-3 border-b border-[#1A2744]/60 flex-shrink-0">
-            <p className="text-[10px] font-bold text-[#6B7A99] uppercase tracking-widest">Tipos de nodo</p>
+          <div className="px-4 py-3 border-b border-[var(--border-subtle)]/60 flex-shrink-0">
+            <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Tipos de nodo</p>
           </div>
 
           {/* Draggable node types */}
-          <div className="p-3 space-y-1.5 flex-shrink-0 border-b border-[#1A2744]/60">
+          <div className="p-3 space-y-1.5 flex-shrink-0 border-b border-[var(--border-subtle)]/60">
             {(Object.entries(NODE_STYLES) as [WorkflowNode["type"], typeof NODE_STYLES[WorkflowNode["type"]]][]).map(
               ([type, cfg]) => (
                 <div
@@ -1611,12 +1611,12 @@ export default function WorkflowsPage() {
           </div>
 
           {/* Workflow list */}
-          <div className="px-4 py-3 border-b border-[#1A2744]/60 flex items-center justify-between flex-shrink-0">
-            <p className="text-[10px] font-bold text-[#6B7A99] uppercase tracking-widest">Workflows</p>
+          <div className="px-4 py-3 border-b border-[var(--border-subtle)]/60 flex items-center justify-between flex-shrink-0">
+            <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Workflows</p>
             <button
               onClick={() => setCreating(true)}
               className="text-[10px] font-semibold"
-              style={{ color: "#4A8EB8" }}
+              style={{ color: "#7C8A98" }}
             >
               + Nuevo
             </button>
@@ -1625,8 +1625,8 @@ export default function WorkflowsPage() {
           <div className="flex-1 overflow-y-auto p-2 space-y-1">
             {creating && (
               <div
-                className="rounded-xl p-3 space-y-2 border border-[#4A8EB8]/20"
-                style={{ background: "rgba(74,142,184,0.04)" }}
+                className="rounded-xl p-3 space-y-2 border border-[#7C8A98]/20"
+                style={{ background: "rgba(124,138,152,0.04)" }}
               >
                 <input
                   className="astraeo-input text-[11px]"
@@ -1642,28 +1642,45 @@ export default function WorkflowsPage() {
               </div>
             )}
             {workflows.map((wf) => (
-              <button
+              <div
                 key={wf.id}
+                role="button"
+                tabIndex={0}
                 onClick={() => setEditorWorkflowId(wf.id)}
-                className="w-full text-left px-3 py-2 rounded-lg transition-all"
+                onKeyDown={(e) => { if (e.key === "Enter") setEditorWorkflowId(wf.id); }}
+                className="w-full text-left px-3 py-2 rounded-lg transition-all group relative cursor-pointer"
                 style={{
-                  background: wf.id === editorWorkflowId ? "rgba(74,142,184,0.08)" : "transparent",
-                  border: `1px solid ${wf.id === editorWorkflowId ? "rgba(74,142,184,0.25)" : "transparent"}`,
+                  background: wf.id === editorWorkflowId ? "rgba(124,138,152,0.08)" : "transparent",
+                  border: `1px solid ${wf.id === editorWorkflowId ? "rgba(124,138,152,0.25)" : "transparent"}`,
                 }}
               >
                 <div className="flex items-center gap-2">
                   <div
                     className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                    style={{ background: wf.active ? "#3D8A60" : "#23211C" }}
+                    style={{ background: wf.active ? "#7A8569" : "#23211C" }}
                   />
                   <span
-                    className="text-[11px] font-medium truncate"
+                    className="text-[11px] font-medium truncate flex-1"
                     style={{ color: wf.id === editorWorkflowId ? "var(--text-primary)" : "var(--text-muted)" }}
                   >
                     {wf.name}
                   </span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (confirm(`¿Eliminar workflow "${wf.name}"?`)) {
+                        deleteWorkflow(wf.id);
+                        if (wf.id === editorWorkflowId) setEditorWorkflowId(null);
+                      }
+                    }}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px]"
+                    style={{ color: "var(--text-muted)", background: "none", border: "none", cursor: "pointer" }}
+                    title="Eliminar workflow"
+                  >
+                    ✕
+                  </button>
                 </div>
-              </button>
+              </div>
             ))}
           </div>
         </div>
@@ -1684,7 +1701,7 @@ export default function WorkflowsPage() {
   return (
     <div className="flex h-full">
       {/* Sidebar */}
-      <div className="w-72 border-r border-[#1A2744]/60 flex flex-col flex-shrink-0">
+      <div className="w-72 border-r border-[var(--border-subtle)]/60 flex flex-col flex-shrink-0">
         <div
           className="px-5 py-4 border-b flex items-center justify-between flex-shrink-0"
           style={{
@@ -1700,7 +1717,7 @@ export default function WorkflowsPage() {
             >
               WORKFLOWS
             </h2>
-            <p className="text-[10px] font-mono mt-0.5" style={{ color: "rgba(74,142,184,0.6)" }}>
+            <p className="text-[10px] font-mono mt-0.5" style={{ color: "rgba(124,138,152,0.6)" }}>
               Diseñador de flujos de trabajo con IA
             </p>
           </div>
@@ -1708,10 +1725,10 @@ export default function WorkflowsPage() {
             onClick={() => setCreating(true)}
             className="text-[11px] font-bold py-1.5 px-4 rounded-xl transition-all uppercase tracking-wider"
             style={{
-              background: "linear-gradient(135deg, rgba(74,142,184,0.15), rgba(102,85,204,0.1))",
-              border: "1px solid rgba(74,142,184,0.3)",
-              color: "#4A8EB8",
-              boxShadow: "0 1px 4px rgba(74,142,184,0.1)",
+              background: "linear-gradient(135deg, rgba(124,138,152,0.15), rgba(122,112,136,0.1))",
+              border: "1px solid rgba(124,138,152,0.3)",
+              color: "#7C8A98",
+              boxShadow: "0 1px 4px rgba(124,138,152,0.1)",
             }}
           >
             + Nuevo
@@ -1723,7 +1740,7 @@ export default function WorkflowsPage() {
             <motion.div
               initial={{ opacity: 0, y: -6 }}
               animate={{ opacity: 1, y: 0 }}
-              className="glass-card rounded-xl p-3.5 border border-[#4A8EB8]/20 space-y-2"
+              className="glass-card rounded-xl p-3.5 border border-[#7C8A98]/20 space-y-2"
             >
               <input
                 className="astraeo-input text-[12px]"
@@ -1753,24 +1770,24 @@ export default function WorkflowsPage() {
               layout
               className="p-3.5 rounded-xl cursor-pointer transition-all border"
               style={{
-                borderColor: "rgba(20,18,14,0.5)",
+                borderColor: "rgba(255,252,245,0.5)",
                 background: "rgba(14,12,10,0.7)",
               }}
-              whileHover={{ borderColor: "rgba(74,142,184,0.2)" }}
+              whileHover={{ borderColor: "rgba(124,138,152,0.2)" }}
               onClick={() => setEditorWorkflowId(wf.id)}
             >
               <div className="flex items-start justify-between gap-2 mb-2">
-                <p className="text-[12px] font-semibold text-[#E8ECF4]">{wf.name}</p>
+                <p className="text-[12px] font-semibold text-[var(--text-primary)]">{wf.name}</p>
                 <div
                   className="w-4 h-4 rounded-full flex-shrink-0 mt-0.5"
                   style={{
-                    background: wf.active ? "#3D8A60" : "#23211C",
-                    boxShadow: wf.active ? "0 0 8px #3D8A60" : "none",
+                    background: wf.active ? "#7A8569" : "#23211C",
+                    boxShadow: wf.active ? "0 0 8px #7A8569" : "none",
                   }}
                 />
               </div>
-              <p className="text-[10px] text-[#6B7A99] mb-2.5 line-clamp-1">{wf.description}</p>
-              <div className="flex items-center justify-between text-[9px] text-[#6B7A99] font-mono mb-2.5">
+              <p className="text-[10px] text-[var(--text-secondary)] mb-2.5 line-clamp-1">{wf.description}</p>
+              <div className="flex items-center justify-between text-[9px] text-[var(--text-secondary)] font-mono mb-2.5">
                 <span>{wf.nodes.length} nodos · {wf.runs} runs</span>
                 {wf.lastRun && (
                   <span>
@@ -1819,7 +1836,7 @@ export default function WorkflowsPage() {
         className="flex-1 flex flex-col items-center justify-center gap-6"
         style={{
           background: "#07091A",
-          backgroundImage: "radial-gradient(rgba(74,142,184,0.10) 1px, transparent 1px)",
+          backgroundImage: "radial-gradient(rgba(124,138,152,0.10) 1px, transparent 1px)",
           backgroundSize: "28px 28px",
         }}
       >
@@ -1834,12 +1851,12 @@ export default function WorkflowsPage() {
             style={{
               width: 80,
               height: 80,
-              background: "linear-gradient(135deg, rgba(74,142,184,0.12), rgba(102,85,204,0.08))",
-              border: "1px solid rgba(74,142,184,0.2)",
-              boxShadow: "0 1px 4px rgba(74,142,184,0.12), 0 1px 4px rgba(74,142,184,0.06)",
+              background: "linear-gradient(135deg, rgba(124,138,152,0.12), rgba(122,112,136,0.08))",
+              border: "1px solid rgba(124,138,152,0.2)",
+              boxShadow: "0 1px 4px rgba(124,138,152,0.12), 0 1px 4px rgba(124,138,152,0.06)",
             }}
           >
-            <span style={{ fontSize: 36, filter: "drop-shadow(0 1px 4px rgba(74,142,184,0.6))" }}>◫</span>
+            <span style={{ fontSize: 36, filter: "drop-shadow(0 1px 4px rgba(124,138,152,0.6))" }}>◫</span>
           </div>
 
           {/* Text */}
@@ -1853,7 +1870,7 @@ export default function WorkflowsPage() {
             <p className="text-[13px]" style={{ color: "rgba(255,255,255,0.35)" }}>
               Crea tu primer workflow con IA
             </p>
-            <p className="text-[11px] font-mono" style={{ color: "rgba(74,142,184,0.4)" }}>
+            <p className="text-[11px] font-mono" style={{ color: "rgba(124,138,152,0.4)" }}>
               o selecciona uno de la lista
             </p>
           </div>
@@ -1867,10 +1884,10 @@ export default function WorkflowsPage() {
               transition={{ delay: 0.3 }}
               className="text-[12px] font-bold py-2.5 px-6 rounded-xl uppercase tracking-wider"
               style={{
-                background: "linear-gradient(135deg, rgba(74,142,184,0.2), rgba(102,85,204,0.15))",
-                border: "1px solid rgba(74,142,184,0.35)",
-                color: "#4A8EB8",
-                boxShadow: "0 1px 4px rgba(74,142,184,0.15)",
+                background: "linear-gradient(135deg, rgba(124,138,152,0.2), rgba(122,112,136,0.15))",
+                border: "1px solid rgba(124,138,152,0.35)",
+                color: "#7C8A98",
+                boxShadow: "0 1px 4px rgba(124,138,152,0.15)",
               }}
             >
               + Nuevo Workflow

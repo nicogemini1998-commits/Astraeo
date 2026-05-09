@@ -16,9 +16,9 @@ const TYPE_CONFIG = {
   error: {
     icon: XCircleIcon,
     color: "#FF4757",
-    bg: "rgba(255,71,87,0.08)",
-    border: "rgba(255,71,87,0.22)",
-    glow: "rgba(255,71,87,0.15)",
+    bg: "rgba(122,48,64,0.08)",
+    border: "rgba(122,48,64,0.22)",
+    glow: "rgba(122,48,64,0.15)",
     bar: "#FF4757",
   },
   warning: {
@@ -31,11 +31,11 @@ const TYPE_CONFIG = {
   },
   info: {
     icon: InfoIcon,
-    color: "#00D4FF",
+    color: "#B8A06A",
     bg: "rgba(0,212,255,0.08)",
     border: "rgba(0,212,255,0.22)",
     glow: "rgba(0,212,255,0.15)",
-    bar: "#00D4FF",
+    bar: "#B8A06A",
   },
 } as const;
 

@@ -47,13 +47,13 @@ interface TimelinePoint {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const CHART_COLORS = [
-  "#4A8EB8",
-  "#6655CC",
-  "#3D8A60",
-  "#B88530",
-  "#B04858",
-  "#A83C50",
-  "#64B5F6",
+  "#7C8A98",
+  "#7A7088",
+  "#7A8569",
+  "#B8A06A",
+  "#8A5A60",
+  "#7A3040",
+  "#7C8A98",
 ];
 
 const PERIODS: { key: Period; label: string; days: number }[] = [
@@ -82,7 +82,7 @@ function makeGlassTooltip(suffix: string) {
     if (!active || !payload?.length) return null;
     return (
       <div style={GLASS_TOOLTIP}>
-        <p className="text-[10px] text-[#6B7A99] font-mono mb-1">{label}</p>
+        <p className="text-[10px] text-[var(--text-secondary)] font-mono mb-1">{label}</p>
         {payload.map((entry) => (
           <p key={entry.name} className="text-[12px] font-semibold font-mono" style={{ color: entry.color }}>
             {entry.value}
@@ -229,7 +229,7 @@ interface SectionHeaderProps {
   accent?: string;
 }
 
-function SectionHeader({ title, sub, accent = "#4A8EB8" }: SectionHeaderProps) {
+function SectionHeader({ title, sub, accent = "#7C8A98" }: SectionHeaderProps) {
   return (
     <div style={{ marginBottom: 20, display: "flex", alignItems: "flex-start", gap: 10 }}>
       <div style={{
@@ -281,7 +281,7 @@ function PieLegend({ data, total }: PieLegendProps) {
                 className="w-2 h-2 rounded-full flex-shrink-0"
                 style={{ background: CHART_COLORS[i % CHART_COLORS.length] }}
               />
-              <span className="text-[11px] text-[#6B7A99] truncate">{d.name}</span>
+              <span className="text-[11px] text-[var(--text-secondary)] truncate">{d.name}</span>
             </div>
             <div className="flex items-center gap-1.5 flex-shrink-0">
               <span
@@ -290,15 +290,15 @@ function PieLegend({ data, total }: PieLegendProps) {
               >
                 {d.value}
               </span>
-              <span className="text-[9px] text-[#4A5570] font-mono">{pct}%</span>
+              <span className="text-[9px] text-[var(--text-muted)] font-mono">{pct}%</span>
             </div>
           </div>
         );
       })}
       <div className="pt-2 border-t border-white/[0.06]">
         <div className="flex items-center justify-between">
-          <span className="text-[11px] text-[#6B7A99]">Total</span>
-          <span className="text-[13px] font-bold font-mono text-[#E8ECF4]">{total}</span>
+          <span className="text-[11px] text-[var(--text-secondary)]">Total</span>
+          <span className="text-[13px] font-bold font-mono text-[var(--text-primary)]">{total}</span>
         </div>
       </div>
     </div>
@@ -307,10 +307,10 @@ function PieLegend({ data, total }: PieLegendProps) {
 
 // ─── Timeline Item ────────────────────────────────────────────────────────────
 const NOTIF_CFG = {
-  success: { dot: "#3D8A60", bg: "#3D8A6018", label: "OK" },
-  info: { dot: "#4A8EB8", bg: "#4A8EB818", label: "INF" },
-  warning: { dot: "#B88530", bg: "#B8853018", label: "WAR" },
-  error: { dot: "#A83C50", bg: "#A83C5018", label: "ERR" },
+  success: { dot: "#7A8569", bg: "#7A856918", label: "OK" },
+  info: { dot: "#7C8A98", bg: "#7C8A9818", label: "INF" },
+  warning: { dot: "#B8A06A", bg: "#B8A06A18", label: "WAR" },
+  error: { dot: "#7A3040", bg: "#7A304018", label: "ERR" },
 } as const;
 
 type NotifType = keyof typeof NOTIF_CFG;
@@ -344,14 +344,14 @@ function TimelineItem({ title, message, type, timestamp, index }: TimelineItemPr
         >
           {cfg.label}
         </div>
-        <span className="text-[10px] text-[#4A5570] font-mono ml-auto flex-shrink-0">
+        <span className="text-[10px] text-[var(--text-muted)] font-mono ml-auto flex-shrink-0">
           {mmdd} {hhmm}
         </span>
       </div>
-      <p className="text-[12px] font-semibold text-[#E8ECF4] leading-tight mb-0.5 line-clamp-1">
+      <p className="text-[12px] font-semibold text-[var(--text-primary)] leading-tight mb-0.5 line-clamp-1">
         {title}
       </p>
-      <p className="text-[10px] text-[#6B7A99] leading-snug line-clamp-2">{message}</p>
+      <p className="text-[10px] text-[var(--text-secondary)] leading-snug line-clamp-2">{message}</p>
     </motion.div>
   );
 }
@@ -364,14 +364,14 @@ interface PeriodSelectorProps {
 
 function PeriodSelector({ value, onChange }: PeriodSelectorProps) {
   return (
-    <div className="flex gap-0.5 p-1 rounded-xl border border-white/[0.07] bg-[#060B1A]/70">
+    <div className="flex gap-0.5 p-1 rounded-xl border border-white/[0.07] bg-[var(--bg-base)]/70">
       {PERIODS.map((p) => (
         <button
           key={p.key}
           onClick={() => onChange(p.key)}
           className="relative px-3.5 py-1.5 rounded-lg text-[11px] font-mono transition-all duration-200"
           style={{
-            color: value === p.key ? "#4A8EB8" : "var(--text-muted)",
+            color: value === p.key ? "#7C8A98" : "var(--text-muted)",
           }}
         >
           {value === p.key && (
@@ -379,8 +379,8 @@ function PeriodSelector({ value, onChange }: PeriodSelectorProps) {
               layoutId="period-pill"
               className="absolute inset-0 rounded-lg"
               style={{
-                background: "rgba(74,142,184,0.1)",
-                border: "1px solid rgba(74,142,184,0.2)",
+                background: "rgba(124,138,152,0.1)",
+                border: "1px solid rgba(124,138,152,0.2)",
               }}
               transition={{ type: "spring", bounce: 0.2, duration: 0.35 }}
             />
@@ -452,7 +452,7 @@ export default function Analytics() {
         value: totalTasks,
         display: totalTasks.toLocaleString(),
         sub: `${onlineCount} agentes online`,
-        color: "#4A8EB8",
+        color: "#7C8A98",
         unit: "n",
       },
       {
@@ -463,7 +463,7 @@ export default function Analytics() {
             ? `${(totalTokens / 1000).toFixed(1)}k`
             : totalTokens.toLocaleString(),
         sub: `${metrics.tokensPerMinute > 0 ? metrics.tokensPerMinute : "—"} tok/min`,
-        color: "#6655CC",
+        color: "#7A7088",
         unit: "k",
       },
       {
@@ -471,7 +471,7 @@ export default function Analytics() {
         value: Math.round(metrics.successRate),
         display: `${metrics.successRate}%`,
         sub: `${metrics.requestsToday.toLocaleString()} req hoy`,
-        color: "#3D8A60",
+        color: "#7A8569",
         unit: "%",
       },
       {
@@ -479,7 +479,7 @@ export default function Analytics() {
         value: avgLatency,
         display: `${avgLatency}ms`,
         sub: "objetivo < 1000ms",
-        color: "#B88530",
+        color: "#B8A06A",
         unit: "ms",
       },
     ],
@@ -545,14 +545,14 @@ export default function Analytics() {
   // ── Period-scoped summary stats ───────────────────────────────────────────
   const summaryStats = useMemo(
     () => [
-      { label: "Eficiencia", value: `${metrics.efficiency}%`, color: "#3D8A60" },
-      { label: "Agentes totales", value: agents.length, color: "#4A8EB8" },
-      { label: "Memorias", value: memory.length, color: "#6655CC" },
-      { label: "Workflows activos", value: workflows.filter((w) => w.active).length, color: "#B04858" },
+      { label: "Eficiencia", value: `${metrics.efficiency}%`, color: "#7A8569" },
+      { label: "Agentes totales", value: agents.length, color: "#7C8A98" },
+      { label: "Memorias", value: memory.length, color: "#7A7088" },
+      { label: "Workflows activos", value: workflows.filter((w) => w.active).length, color: "#8A5A60" },
       {
         label: "Workflow runs",
         value: workflows.reduce((s, w) => s + w.runs, 0),
-        color: "#B88530",
+        color: "#B8A06A",
       },
     ],
     [metrics.efficiency, agents.length, memory.length, workflows]
@@ -599,14 +599,14 @@ export default function Analytics() {
         <SectionHeader
           title="Token Usage"
           sub={`${metrics.tokensPerMinute > 0 ? metrics.tokensPerMinute : "—"} tok/min · live stream`}
-          accent="#4A8EB8"
+          accent="#7C8A98"
         />
         <ResponsiveContainer width="100%" height={148}>
           <AreaChart data={tokensData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
             <defs>
               <linearGradient id="tokGradPremium" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#4A8EB8" stopOpacity={0.22} />
-                <stop offset="100%" stopColor="#4A8EB8" stopOpacity={0} />
+                <stop offset="0%" stopColor="#7C8A98" stopOpacity={0.22} />
+                <stop offset="100%" stopColor="#7C8A98" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid
@@ -631,12 +631,12 @@ export default function Analytics() {
             <Area
               type="monotone"
               dataKey="v"
-              stroke="#4A8EB8"
+              stroke="#7C8A98"
               strokeWidth={1.5}
               fill="url(#tokGradPremium)"
               dot={false}
               name="Tokens/min"
-              activeDot={{ r: 4, fill: "#4A8EB8", stroke: "rgba(74,142,184,0.3)", strokeWidth: 4 }}
+              activeDot={{ r: 4, fill: "#7C8A98", stroke: "rgba(124,138,152,0.3)", strokeWidth: 4 }}
             />
           </AreaChart>
         </ResponsiveContainer>
@@ -649,10 +649,10 @@ export default function Analytics() {
           <SectionHeader
             title="Agent Performance"
             sub="tokens (k) por agente · top 7"
-            accent="#6655CC"
+            accent="#7A7088"
           />
           {agentBars.length === 0 ? (
-            <div className="flex items-center justify-center h-32 text-[12px] text-[#4A5570] font-mono">
+            <div className="flex items-center justify-center h-32 text-[12px] text-[var(--text-muted)] font-mono">
               Sin datos de agentes
             </div>
           ) : (
@@ -705,7 +705,7 @@ export default function Analytics() {
           <SectionHeader
             title="Task Distribution"
             sub="misiones por estado · actual"
-            accent="#3D8A60"
+            accent="#7A8569"
           />
           <div className="flex items-center gap-4">
             <div className="flex-shrink-0">
@@ -753,14 +753,14 @@ export default function Analytics() {
           <SectionHeader
             title="API Latency"
             sub={`${metrics.apiLatency > 0 ? `${metrics.apiLatency}ms` : "—"} actual · objetivo < 1000ms`}
-            accent="#6655CC"
+            accent="#7A7088"
           />
           <ResponsiveContainer width="100%" height={120}>
             <AreaChart data={latencyData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
               <defs>
                 <linearGradient id="latGradPremium" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#6655CC" stopOpacity={0.2} />
-                  <stop offset="100%" stopColor="#6655CC" stopOpacity={0} />
+                  <stop offset="0%" stopColor="#7A7088" stopOpacity={0.2} />
+                  <stop offset="100%" stopColor="#7A7088" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid
@@ -785,12 +785,12 @@ export default function Analytics() {
               <Area
                 type="monotone"
                 dataKey="v"
-                stroke="#6655CC"
+                stroke="#7A7088"
                 strokeWidth={1.5}
                 fill="url(#latGradPremium)"
                 dot={false}
                 name="Latencia"
-                activeDot={{ r: 4, fill: "#6655CC", stroke: "rgba(102,85,204,0.3)", strokeWidth: 4 }}
+                activeDot={{ r: 4, fill: "#7A7088", stroke: "rgba(122,112,136,0.3)", strokeWidth: 4 }}
               />
             </AreaChart>
           </ResponsiveContainer>
@@ -798,11 +798,11 @@ export default function Analytics() {
 
         {/* Summary stats */}
         <ChartCard delay={0.3}>
-          <SectionHeader title="System Summary" accent="#B88530" />
+          <SectionHeader title="System Summary" accent="#B8A06A" />
           <div className="space-y-2.5">
             {summaryStats.map((s) => (
               <div key={s.label} className="flex items-center justify-between gap-2">
-                <span className="text-[11px] text-[#6B7A99]">{s.label}</span>
+                <span className="text-[11px] text-[var(--text-secondary)]">{s.label}</span>
                 <span
                   className="text-[13px] font-bold font-mono tabular-nums"
                   style={{ color: s.color }}
@@ -813,14 +813,14 @@ export default function Analytics() {
             ))}
             <div className="pt-2.5 border-t border-white/[0.06] space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] text-[#6B7A99]">Success rate</span>
-                <span className="text-[13px] font-bold font-mono text-[#4A8EB8]">
+                <span className="text-[11px] text-[var(--text-secondary)]">Success rate</span>
+                <span className="text-[13px] font-bold font-mono text-[#7C8A98]">
                   {metrics.successRate}%
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[11px] text-[#6B7A99]">Req hoy</span>
-                <span className="text-[13px] font-bold font-mono text-[#E8ECF4]">
+                <span className="text-[11px] text-[var(--text-secondary)]">Req hoy</span>
+                <span className="text-[13px] font-bold font-mono text-[var(--text-primary)]">
                   {metrics.requestsToday.toLocaleString()}
                 </span>
               </div>
@@ -834,12 +834,12 @@ export default function Analytics() {
         <SectionHeader
           title="Activity Timeline"
           sub={`Últimos ${filteredNotifs.length} eventos · periodo ${PERIODS.find((p) => p.key === period)?.label}`}
-          accent="#B04858"
+          accent="#8A5A60"
         />
         {filteredNotifs.length === 0 ? (
           <div className="flex items-center justify-center py-8 gap-2 opacity-40">
             <span className="text-2xl">◌</span>
-            <p className="text-[12px] text-[#6B7A99] font-mono">Sin eventos en este periodo</p>
+            <p className="text-[12px] text-[var(--text-secondary)] font-mono">Sin eventos en este periodo</p>
           </div>
         ) : (
           <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">

@@ -14,31 +14,31 @@ import type { Hook, HookTrigger, HookAction } from "@/lib/types";
 // ─── Config maps ──────────────────────────────────────────────────────────────
 
 const TRIGGER_CONFIG: Record<HookTrigger, { label: string; desc: string; color: string; icon: typeof ZapIcon; group: string }> = {
-  "pre-message":    { label: "Pre-Mensaje",      desc: "Antes de enviar un mensaje",       color: "#6655CC", icon: ChevronRightIcon, group: "Mensajes" },
-  "post-message":   { label: "Post-Mensaje",     desc: "Después de recibir respuesta",     color: "#6655CC", icon: SendIcon,         group: "Mensajes" },
-  "agent-start":    { label: "Agente Iniciado",  desc: "Al activar un agente",             color: "#4A8EB8", icon: PlayIcon,         group: "Agentes" },
-  "agent-end":      { label: "Agente Terminado", desc: "Al finalizar sesión de agente",    color: "#4A8EB8", icon: StopCircleIcon,   group: "Agentes" },
-  "workflow-start": { label: "Workflow Inicia",  desc: "Al comenzar un workflow",          color: "#3D8A60", icon: GitBranchIcon,    group: "Workflows" },
-  "workflow-end":   { label: "Workflow Completa",desc: "Al terminar un workflow",          color: "#3D8A60", icon: CheckIcon,        group: "Workflows" },
-  "schedule":       { label: "Programado",       desc: "En fecha/hora definida (cron)",    color: "#B88530", icon: ClockIcon,        group: "Tiempo" },
-  "webhook":        { label: "Webhook Entrante", desc: "Al recibir petición HTTP externa", color: "#B04858", icon: HashIcon,         group: "Externo" },
-  "error":          { label: "Error",            desc: "Cuando ocurre un error",           color: "#A83C50", icon: AlertTriangleIcon,group: "Sistema" },
-  "success":        { label: "Éxito",            desc: "Cuando una acción tiene éxito",    color: "#3D8A60", icon: CheckIcon,        group: "Sistema" },
+  "pre-message":    { label: "Pre-Mensaje",      desc: "Antes de enviar un mensaje",       color: "#7A7088", icon: ChevronRightIcon, group: "Mensajes" },
+  "post-message":   { label: "Post-Mensaje",     desc: "Después de recibir respuesta",     color: "#7A7088", icon: SendIcon,         group: "Mensajes" },
+  "agent-start":    { label: "Agente Iniciado",  desc: "Al activar un agente",             color: "#7C8A98", icon: PlayIcon,         group: "Agentes" },
+  "agent-end":      { label: "Agente Terminado", desc: "Al finalizar sesión de agente",    color: "#7C8A98", icon: StopCircleIcon,   group: "Agentes" },
+  "workflow-start": { label: "Workflow Inicia",  desc: "Al comenzar un workflow",          color: "#7A8569", icon: GitBranchIcon,    group: "Workflows" },
+  "workflow-end":   { label: "Workflow Completa",desc: "Al terminar un workflow",          color: "#7A8569", icon: CheckIcon,        group: "Workflows" },
+  "schedule":       { label: "Programado",       desc: "En fecha/hora definida (cron)",    color: "#B8A06A", icon: ClockIcon,        group: "Tiempo" },
+  "webhook":        { label: "Webhook Entrante", desc: "Al recibir petición HTTP externa", color: "#8A5A60", icon: HashIcon,         group: "Externo" },
+  "error":          { label: "Error",            desc: "Cuando ocurre un error",           color: "#7A3040", icon: AlertTriangleIcon,group: "Sistema" },
+  "success":        { label: "Éxito",            desc: "Cuando una acción tiene éxito",    color: "#7A8569", icon: CheckIcon,        group: "Sistema" },
 };
 
 const ACTION_CONFIG: Record<HookAction, { label: string; desc: string; color: string; icon: typeof ZapIcon }> = {
-  notify:    { label: "Notificar",    desc: "Envía notificación in-app",       color: "#4A8EB8", icon: BellIcon },
-  log:       { label: "Registrar",   desc: "Guarda en logs del sistema",       color: "#6655CC", icon: CodeIcon },
-  transform: { label: "Transformar", desc: "Modifica datos del payload",       color: "#B88530", icon: RotateCcwIcon },
-  webhook:   { label: "Webhook",     desc: "Envía datos a URL externa",        color: "#3D8A60", icon: SendIcon },
-  email:     { label: "Email",       desc: "Envía email al destinatario",      color: "#B04858", icon: MailIcon },
-  slack:     { label: "Slack",       desc: "Publica mensaje en canal Slack",   color: "#4A154B", icon: HashIcon },
-  stop:      { label: "Detener",     desc: "Para la ejecución del flujo",      color: "#A83C50", icon: StopCircleIcon },
-  branch:    { label: "Bifurcar",    desc: "Dirige a rama condicional",        color: "#B88530", icon: GitBranchIcon },
+  notify:    { label: "Notificar",    desc: "Envía notificación in-app",       color: "#7C8A98", icon: BellIcon },
+  log:       { label: "Registrar",   desc: "Guarda en logs del sistema",       color: "#7A7088", icon: CodeIcon },
+  transform: { label: "Transformar", desc: "Modifica datos del payload",       color: "#B8A06A", icon: RotateCcwIcon },
+  webhook:   { label: "Webhook",     desc: "Envía datos a URL externa",        color: "#7A8569", icon: SendIcon },
+  email:     { label: "Email",       desc: "Envía email al destinatario",      color: "#8A5A60", icon: MailIcon },
+  slack:     { label: "Slack",       desc: "Publica mensaje en canal Slack",   color: "#7A7088", icon: HashIcon },
+  stop:      { label: "Detener",     desc: "Para la ejecución del flujo",      color: "#7A3040", icon: StopCircleIcon },
+  branch:    { label: "Bifurcar",    desc: "Dirige a rama condicional",        color: "#B8A06A", icon: GitBranchIcon },
 };
 
 const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
-const HOOK_COLORS = ["#4A8EB8", "#6655CC", "#3D8A60", "#B88530", "#B04858", "#A83C50"];
+const HOOK_COLORS = ["#7C8A98", "#7A7088", "#7A8569", "#B8A06A", "#8A5A60", "#7A3040"];
 
 function relTime(ts?: string): string {
   if (!ts) return "—";
@@ -135,7 +135,7 @@ function HookItem({ hook, active, onSelect, onToggle }: {
           <span style={{ fontSize: 8, color: "var(--border-subtle)" }}>·</span>
           <span style={{
             fontSize: 9, fontFamily: "var(--font-mono)",
-            color: successRate >= 95 ? "#3D8A60" : successRate >= 80 ? "#B88530" : "#A83C50",
+            color: successRate >= 95 ? "#7A8569" : successRate >= 80 ? "#B8A06A" : "#7A3040",
           }}>
             {successRate}%
           </span>
@@ -308,8 +308,8 @@ function HookDetail({ hook, onClose, onToggle, onDelete }: {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 16 }}>
           {[
             { label: "EJECUCIONES", value: hook.runCount.toLocaleString(), color: hook.color },
-            { label: "TASA ÉXITO",  value: `${successRate}%`,             color: "#3D8A60" },
-            { label: "TASA FALLO",  value: `${failRate}%`,                color: Number(failRate) > 5 ? "#A83C50" : "var(--text-muted)" },
+            { label: "TASA ÉXITO",  value: `${successRate}%`,             color: "#7A8569" },
+            { label: "TASA FALLO",  value: `${failRate}%`,                color: Number(failRate) > 5 ? "#7A3040" : "var(--text-muted)" },
           ].map((s) => (
             <div key={s.label} style={{
               padding: "10px 12px", borderRadius: 10,
@@ -366,7 +366,7 @@ function HookDetail({ hook, onClose, onToggle, onDelete }: {
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
             <span style={{ fontSize: 10, color: "var(--text-muted)", letterSpacing: "0.06em" }}>FIABILIDAD</span>
-            <span style={{ fontSize: 10, color: "#3D8A60", fontFamily: "var(--font-mono)", fontWeight: 700 }}>{successRate}%</span>
+            <span style={{ fontSize: 10, color: "#7A8569", fontFamily: "var(--font-mono)", fontWeight: 700 }}>{successRate}%</span>
           </div>
           <div style={{ width: "100%", height: 3, background: "var(--bg-surface-2)", borderRadius: 2 }}>
             <motion.div
@@ -375,7 +375,7 @@ function HookDetail({ hook, onClose, onToggle, onDelete }: {
               transition={{ duration: 0.9, ease: EASE }}
               style={{
                 height: "100%", borderRadius: 2,
-                background: "linear-gradient(90deg, #3D8A60, #4A8EB8)",
+                background: "linear-gradient(90deg, #7A8569, #7C8A98)",
               }}
             />
           </div>
@@ -393,9 +393,9 @@ function HookDetail({ hook, onClose, onToggle, onDelete }: {
           whileTap={{ scale: 0.96 }}
           style={{
             flex: 2, padding: "9px 0", borderRadius: 9,
-            border: `1px solid ${hook.active ? "rgba(168,60,80,0.3)" : `${hook.color}35`}`,
-            background: hook.active ? "rgba(168,60,80,0.07)" : `${hook.color}10`,
-            color: hook.active ? "#A83C50" : hook.color,
+            border: `1px solid ${hook.active ? "rgba(122,48,64,0.3)" : `${hook.color}35`}`,
+            background: hook.active ? "rgba(122,48,64,0.07)" : `${hook.color}10`,
+            color: hook.active ? "#7A3040" : hook.color,
             fontSize: 11, fontWeight: 700, cursor: "pointer",
           }}
         >
@@ -406,9 +406,9 @@ function HookDetail({ hook, onClose, onToggle, onDelete }: {
           whileTap={{ scale: 0.96 }}
           style={{
             flex: 1, padding: "9px 0", borderRadius: 9,
-            border: "1px solid rgba(168,60,80,0.25)",
-            background: "rgba(168,60,80,0.06)",
-            color: "#A83C50", fontSize: 11, fontWeight: 600, cursor: "pointer",
+            border: "1px solid rgba(122,48,64,0.25)",
+            background: "rgba(122,48,64,0.06)",
+            color: "#7A3040", fontSize: 11, fontWeight: 600, cursor: "pointer",
           }}
         >
           Eliminar
@@ -429,7 +429,7 @@ function NewHookWizard({ onClose, onSave }: {
   const [action, setAction] = useState<HookAction | null>(null);
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
-  const [color, setColor] = useState("#4A8EB8");
+  const [color, setColor] = useState("#7C8A98");
 
   useEffect(() => {
     const handle = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -490,7 +490,7 @@ function NewHookWizard({ onClose, onSave }: {
         {/* Accent */}
         <div style={{
           height: 2,
-          background: `linear-gradient(90deg, transparent, #3D8A6080, #3D8A60cc, #3D8A6080, transparent)`,
+          background: `linear-gradient(90deg, transparent, #7A856980, #7A8569cc, #7A856980, transparent)`,
         }} />
 
         {/* Header */}
@@ -516,7 +516,7 @@ function NewHookWizard({ onClose, onSave }: {
             {steps.map((s, i) => (
               <div key={s} style={{
                 width: i === step ? 22 : 7, height: 7, borderRadius: 4,
-                background: i < step ? "#3D8A60" : i === step ? "#4A8EB8" : "var(--bg-surface-2)",
+                background: i < step ? "#7A8569" : i === step ? "#7C8A98" : "var(--bg-surface-2)",
                 transition: "all 0.25s",
               }} />
             ))}
@@ -744,9 +744,9 @@ function NewHookWizard({ onClose, onSave }: {
               whileTap={{ scale: 0.97 }}
               style={{
                 flex: 2, padding: "10px 0", borderRadius: 9,
-                border: "1px solid rgba(74,142,184,0.35)",
-                background: "rgba(74,142,184,0.1)",
-                color: "#4A8EB8", fontSize: 12, fontWeight: 700, cursor: "pointer",
+                border: "1px solid rgba(124,138,152,0.35)",
+                background: "rgba(124,138,152,0.1)",
+                color: "#7C8A98", fontSize: 12, fontWeight: 700, cursor: "pointer",
                 opacity: canProceed[step] ? 1 : 0.4,
               }}
             >
@@ -766,9 +766,9 @@ function NewHookWizard({ onClose, onSave }: {
               whileTap={{ scale: 0.97 }}
               style={{
                 flex: 2, padding: "10px 0", borderRadius: 9,
-                border: "1px solid rgba(61,138,96,0.35)",
-                background: "rgba(61,138,96,0.1)",
-                color: "#3D8A60", fontSize: 12, fontWeight: 700, cursor: "pointer",
+                border: "1px solid rgba(122,133,105,0.35)",
+                background: "rgba(122,133,105,0.1)",
+                color: "#7A8569", fontSize: 12, fontWeight: 700, cursor: "pointer",
                 opacity: canProceed[2] ? 1 : 0.4,
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
               }}
@@ -826,11 +826,11 @@ export default function HooksPage() {
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 5 }}>
               <div style={{
                 width: 32, height: 32, borderRadius: 9,
-                background: "rgba(61,138,96,0.1)",
-                border: "1px solid rgba(61,138,96,0.22)",
+                background: "rgba(122,133,105,0.1)",
+                border: "1px solid rgba(122,133,105,0.22)",
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}>
-                <ActivityIcon size={15} color="#3D8A60" />
+                <ActivityIcon size={15} color="#7A8569" />
               </div>
               <h1 style={{
                 fontSize: 20, fontWeight: 700,
@@ -849,13 +849,13 @@ export default function HooksPage() {
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <div style={{
               padding: "6px 12px", borderRadius: 8,
-              background: "rgba(61,138,96,0.07)",
-              border: "1px solid rgba(61,138,96,0.18)",
+              background: "rgba(122,133,105,0.07)",
+              border: "1px solid rgba(122,133,105,0.18)",
               display: "flex", alignItems: "center", gap: 6,
             }}>
-              <PlayIcon size={10} color="#3D8A60" />
+              <PlayIcon size={10} color="#7A8569" />
               <span style={{
-                fontSize: 11, color: "#3D8A60",
+                fontSize: 11, color: "#7A8569",
                 fontFamily: "var(--font-display)",
                 fontWeight: 700,
               }}>
@@ -868,9 +868,9 @@ export default function HooksPage() {
               onClick={() => setShowWizard(true)}
               style={{
                 padding: "7px 14px", borderRadius: 8,
-                background: "rgba(61,138,96,0.1)",
-                border: "1px solid rgba(61,138,96,0.28)",
-                color: "#3D8A60", fontSize: 12, fontWeight: 700, cursor: "pointer",
+                background: "rgba(122,133,105,0.1)",
+                border: "1px solid rgba(122,133,105,0.28)",
+                color: "#7A8569", fontSize: 12, fontWeight: 700, cursor: "pointer",
                 display: "flex", alignItems: "center", gap: 6,
               }}
             >
@@ -1011,11 +1011,11 @@ export default function HooksPage() {
               >
                 <div style={{
                   width: 60, height: 60, borderRadius: 15,
-                  background: "rgba(61,138,96,0.06)",
-                  border: "1px solid rgba(61,138,96,0.12)",
+                  background: "rgba(122,133,105,0.06)",
+                  border: "1px solid rgba(122,133,105,0.12)",
                   display: "flex", alignItems: "center", justifyContent: "center",
                 }}>
-                  <ActivityIcon size={26} color="rgba(61,138,96,0.25)" />
+                  <ActivityIcon size={26} color="rgba(122,133,105,0.25)" />
                 </div>
                 <div style={{ textAlign: "center" }}>
                   <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 5 }}>
@@ -1031,9 +1031,9 @@ export default function HooksPage() {
                   onClick={() => setShowWizard(true)}
                   style={{
                     padding: "9px 18px", borderRadius: 9,
-                    border: "1px solid rgba(61,138,96,0.28)",
-                    background: "rgba(61,138,96,0.07)",
-                    color: "#3D8A60", fontSize: 12, fontWeight: 700, cursor: "pointer",
+                    border: "1px solid rgba(122,133,105,0.28)",
+                    background: "rgba(122,133,105,0.07)",
+                    color: "#7A8569", fontSize: 12, fontWeight: 700, cursor: "pointer",
                     display: "flex", alignItems: "center", gap: 6,
                   }}
                 >
