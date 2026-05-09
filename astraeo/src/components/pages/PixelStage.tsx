@@ -33,15 +33,16 @@ const STAR_POSITIONS: [number, number][] = Array.from({ length: 120 }, (_, i) =>
 });
 
 // ─── Agent desk positions in the grid ─────────────────────────────────────────
+// Paired rows facing each other, coworking-style — two parallel columns of desks
 const DESK_POSITIONS: Record<string, { col: number; row: number }> = {
-  "agent-1": { col: 1,  row: 2  },
-  "agent-2": { col: 6,  row: 1  },
-  "agent-3": { col: 1,  row: 6  },
-  "agent-4": { col: 6,  row: 5  },
-  "agent-5": { col: 1,  row: 10 },
-  "agent-6": { col: 6,  row: 9  },
-  "agent-7": { col: 11, row: 3  },
-  "agent-8": { col: 11, row: 7  },
+  "agent-1": { col: 2,  row: 3  },
+  "agent-2": { col: 5,  row: 3  },
+  "agent-3": { col: 2,  row: 6  },
+  "agent-4": { col: 5,  row: 6  },
+  "agent-5": { col: 2,  row: 9  },
+  "agent-6": { col: 5,  row: 9  },
+  "agent-7": { col: 2,  row: 12 },
+  "agent-8": { col: 5,  row: 12 },
 };
 
 interface AgentConfig {
@@ -349,25 +350,25 @@ function drawFloorTile(
 }
 
 function drawAllFloorTiles(ctx: CanvasRenderingContext2D): void {
-  // Main workspace — light warm oak/ash hardwood (research-backed: #C8A882 / #B8956F / #D9BC99)
+  // Main workspace — dark charcoal with warm grid (sober editorial look)
   for (let c = 0; c < 14; c++) {
     for (let r = 0; r < 14; r++) {
-      const shade = (c + r) % 2 === 0 ? "#C4A278" : "#B8956F";
-      drawFloorTile(ctx, c, r, shade, "#9A7450");
+      const shade = (c + r) % 2 === 0 ? "#2A2620" : "#252118";
+      drawFloorTile(ctx, c, r, shade, "#3A332A");
     }
   }
-  // Meeting room — cool polished light concrete/marble
+  // Meeting room — slightly lighter neutral charcoal
   for (let c = 14; c < 19; c++) {
     for (let r = 0; r < 9; r++) {
-      const shade = (c + r) % 2 === 0 ? "#3A4A60" : "#344458";
-      drawFloorTile(ctx, c, r, shade, "#222E42");
+      const shade = (c + r) % 2 === 0 ? "#322C24" : "#2C2620";
+      drawFloorTile(ctx, c, r, shade, "#42392E");
     }
   }
-  // Lounge zone — warm plum/charcoal carpet with visible pile texture
+  // Lounge zone — warm gold-tinted accent carpet
   for (let c = 10; c < 14; c++) {
     for (let r = 10; r < 14; r++) {
-      const shade = (c + r) % 2 === 0 ? "#3C2C58" : "#342450";
-      drawFloorTile(ctx, c, r, shade, "#281840");
+      const shade = (c + r) % 2 === 0 ? "#3A2E20" : "#322618";
+      drawFloorTile(ctx, c, r, shade, "#4A3826");
     }
   }
 }
@@ -1016,22 +1017,28 @@ function drawChair(ctx: CanvasRenderingContext2D, col: number, row: number): voi
   const cx = isoX(col, row);
   const cy = isoY(col, row, 14);
 
-  // Chair seat — teal/slate
-  ctx.fillStyle = "#1A2838";
+  // Chair seat — warm coral cushion
+  ctx.fillStyle = "#A85850";
   ctx.beginPath();
   ctx.roundRect(cx - 10, cy - 6, 20, 14, 3);
   ctx.fill();
 
-  // Chair backrest — slightly lighter
-  ctx.fillStyle = "#22344A";
+  // Chair backrest — slightly lighter coral
+  ctx.fillStyle = "#B86860";
   ctx.beginPath();
   ctx.roundRect(cx - 9, cy - 22, 18, 18, 3);
   ctx.fill();
 
-  // Backrest highlight
-  ctx.fillStyle = "rgba(100,180,255,0.06)";
+  // Backrest highlight (top edge sheen)
+  ctx.fillStyle = "rgba(255,200,180,0.18)";
   ctx.beginPath();
   ctx.roundRect(cx - 9, cy - 22, 18, 4, [3, 3, 0, 0]);
+  ctx.fill();
+
+  // Subtle bottom shadow under seat
+  ctx.fillStyle = "rgba(0,0,0,0.18)";
+  ctx.beginPath();
+  ctx.roundRect(cx - 9, cy + 7, 18, 2, 1);
   ctx.fill();
 }
 
