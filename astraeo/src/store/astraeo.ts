@@ -514,7 +514,25 @@ export const useAstraeo = create<AstraeoState>()(
     }),
     {
       name: "astraeo-store",
-      version: 2,
+      version: 3,
+      // Migración v2 → v3: re-aplica seeds de skills/hooks preservando los
+      // creados por el usuario (no built-in). Garantiza que catálogos elite
+      // estén disponibles aunque el usuario tenga state antiguo en localStorage.
+      migrate: (persisted: unknown, version: number) => {
+        const ps = (persisted ?? {}) as Partial<AstraeoState>;
+        if (version < 3) {
+          const userSkills = (ps.skills ?? []).filter((s) => !s.builtIn);
+          const seedIds = new Set(seedSkills.map((s) => s.id));
+          const userSkillsDeduped = userSkills.filter((s) => !seedIds.has(s.id));
+          ps.skills = [...seedSkills, ...userSkillsDeduped];
+
+          const userHooks = (ps.hooks ?? []).filter((h) => h.id.startsWith("hook-user-"));
+          const hookSeedIds = new Set(seedHooks.map((h) => h.id));
+          const userHooksDeduped = userHooks.filter((h) => !hookSeedIds.has(h.id));
+          ps.hooks = [...seedHooks, ...userHooksDeduped];
+        }
+        return ps as AstraeoState;
+      },
       partialize: (s) => ({
         agents: s.agents,
         missions: s.missions,
