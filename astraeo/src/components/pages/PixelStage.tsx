@@ -1057,8 +1057,8 @@ function drawSofa(ctx: CanvasRenderingContext2D): void {
   ctx.ellipse(isoX(col + 1.25, row + 1), isoY(col + 1.25, row + 1), 90, 35, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Sofa left face — dark burnt orange
-  ctx.fillStyle = "#7A2E0C";
+  // Sofa left face — muted wine, sober elegant
+  ctx.fillStyle = "#3E2228";
   ctx.beginPath();
   ctx.moveTo(isoX(col, row), isoY(col, row));
   ctx.lineTo(isoX(col, row + 2), isoY(col, row + 2));
@@ -1067,8 +1067,8 @@ function drawSofa(ctx: CanvasRenderingContext2D): void {
   ctx.closePath();
   ctx.fill();
 
-  // Sofa front face — mid burnt orange
-  ctx.fillStyle = "#A83E16";
+  // Sofa front face — mid muted wine
+  ctx.fillStyle = "#4E2C32";
   ctx.beginPath();
   ctx.moveTo(isoX(col, row + 2), isoY(col, row + 2));
   ctx.lineTo(isoX(col + 2.5, row + 2), isoY(col + 2.5, row + 2));
@@ -1081,9 +1081,9 @@ function drawSofa(ctx: CanvasRenderingContext2D): void {
   const seatTopCx = isoX(col + 1.25, row + 1);
   const seatTopCy = isoY(col + 1.25, row + 1) - SOFA_H;
   const seatGrad  = ctx.createRadialGradient(seatTopCx - 20, seatTopCy - 10, 0, seatTopCx, seatTopCy, 80);
-  seatGrad.addColorStop(0, "#E85A22");
-  seatGrad.addColorStop(0.55, "#C24818");
-  seatGrad.addColorStop(1, "#943010");
+  seatGrad.addColorStop(0, "#6A4248");
+  seatGrad.addColorStop(0.55, "#4E2C32");
+  seatGrad.addColorStop(1, "#3A1E24");
   ctx.fillStyle = seatGrad;
   ctx.beginPath();
   ctx.moveTo(isoX(col, row), isoY(col, row) - SOFA_H);
@@ -1094,7 +1094,7 @@ function drawSofa(ctx: CanvasRenderingContext2D): void {
   ctx.fill();
 
   // Cushion seam lines on seat
-  ctx.strokeStyle = "rgba(80,20,0,0.35)";
+  ctx.strokeStyle = "rgba(30,12,18,0.45)";
   ctx.lineWidth = 1.2;
   [0.83, 1.67].forEach((frac) => {
     const lx = isoX(col + frac * 2.5, row);
@@ -1111,9 +1111,9 @@ function drawSofa(ctx: CanvasRenderingContext2D): void {
   const backCx  = isoX(col + 1.25, row);
   const backCy  = isoY(col + 1.25, row) - SOFA_H - BACK_H * 0.5;
   const backGrad = ctx.createRadialGradient(backCx - 18, backCy - 12, 0, backCx, backCy, 70);
-  backGrad.addColorStop(0, "#D85018");
-  backGrad.addColorStop(0.6, "#A83A12");
-  backGrad.addColorStop(1, "#7A2808");
+  backGrad.addColorStop(0, "#5E3A40");
+  backGrad.addColorStop(0.6, "#4A2A30");
+  backGrad.addColorStop(1, "#361E24");
   ctx.fillStyle = backGrad;
   ctx.beginPath();
   ctx.moveTo(isoX(col, row), isoY(col, row) - SOFA_H);
@@ -1134,7 +1134,7 @@ function drawSofa(ctx: CanvasRenderingContext2D): void {
   ctx.fill();
 
   // Cushion dividers on backrest
-  ctx.strokeStyle = "rgba(80,20,0,0.3)";
+  ctx.strokeStyle = "rgba(30,12,18,0.4)";
   ctx.lineWidth = 1.2;
   [0.83, 1.67].forEach((frac) => {
     const lx = isoX(col + frac * 2.5, row);
@@ -1185,6 +1185,90 @@ function drawSofa(ctx: CanvasRenderingContext2D): void {
   ctx.lineTo(isoX(ctCol, ctRow + 0.5), isoY(ctCol, ctRow + 0.5) - CT_H);
   ctx.closePath();
   ctx.fill();
+}
+
+// ─── Lounge Poufs — round colorful seats (SoWork-style accent) ────────────────
+function drawLoungePouf(
+  ctx: CanvasRenderingContext2D,
+  col: number,
+  row: number,
+  hex: string,
+  hexHl: string,
+): void {
+  const cx = isoX(col, row);
+  const cy = isoY(col, row);
+  const r = 11;
+  const POUF_H = 8;
+
+  // Shadow
+  ctx.fillStyle = "rgba(0,0,0,0.32)";
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + 3, r + 1, (r + 1) * 0.45, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Side band
+  ctx.fillStyle = hex;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + POUF_H * 0.5, r, r * 0.5, 0, 0, Math.PI);
+  ctx.lineTo(cx - r, cy - POUF_H * 0.5);
+  ctx.ellipse(cx, cy - POUF_H * 0.5, r, r * 0.5, 0, Math.PI, 0, true);
+  ctx.closePath();
+  ctx.fill();
+
+  // Top
+  const topG = ctx.createRadialGradient(cx - r * 0.3, cy - POUF_H * 0.5 - r * 0.3, 0, cx, cy - POUF_H * 0.5, r);
+  topG.addColorStop(0, hexHl);
+  topG.addColorStop(0.7, hex);
+  topG.addColorStop(1, hex);
+  ctx.fillStyle = topG;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy - POUF_H * 0.5, r, r * 0.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Tufted center button
+  ctx.fillStyle = "rgba(0,0,0,0.22)";
+  ctx.beginPath();
+  ctx.arc(cx, cy - POUF_H * 0.5, 1.2, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawLoungeRug(ctx: CanvasRenderingContext2D): void {
+  // Area rug under the lounge — soft warm tone for diorama depth
+  const rugCorners: [number, number][] = [
+    [10, 10.2], [13.6, 10.2], [13.6, 13.6], [10, 13.6],
+  ];
+  const points = rugCorners.map(([c, r]) => [isoX(c, r), isoY(c, r)] as const);
+
+  // Rug body — warm beige with subtle gradient
+  const rugG = ctx.createLinearGradient(points[0][0], points[0][1], points[2][0], points[2][1]);
+  rugG.addColorStop(0, "#5A4A38");
+  rugG.addColorStop(1, "#4A3C2A");
+  ctx.fillStyle = rugG;
+  ctx.beginPath();
+  ctx.moveTo(points[0][0], points[0][1]);
+  for (let i = 1; i < points.length; i++) ctx.lineTo(points[i][0], points[i][1]);
+  ctx.closePath();
+  ctx.fill();
+
+  // Rug fringe / inner border
+  ctx.strokeStyle = "rgba(184,160,106,0.35)";
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  const inset: [number, number][] = [
+    [10.2, 10.4], [13.4, 10.4], [13.4, 13.4], [10.2, 13.4],
+  ];
+  const ip = inset.map(([c, r]) => [isoX(c, r), isoY(c, r)] as const);
+  ctx.moveTo(ip[0][0], ip[0][1]);
+  for (let i = 1; i < ip.length; i++) ctx.lineTo(ip[i][0], ip[i][1]);
+  ctx.closePath();
+  ctx.stroke();
+}
+
+function drawLoungePoufs(ctx: CanvasRenderingContext2D): void {
+  // Three poufs in a triangle around the coffee table — sober warm palette
+  drawLoungePouf(ctx, 10.4, 12.8, "#9A7C4A", "#C9A96E");  // gold
+  drawLoungePouf(ctx, 13.0, 12.8, "#7C8A98", "#9CA8B4");  // slate
+  drawLoungePouf(ctx, 12.6, 11.0, "#8A5A60", "#A87478");  // dusty rose
 }
 
 function drawCeilingLights(ctx: CanvasRenderingContext2D, t: number): void {
@@ -2470,8 +2554,10 @@ function drawScene(
   // 6. Meeting table
   drawMeetingTable(ctx);
 
-  // 7. Sofa / lounge
+  // 7. Lounge — rug under, sofa middle, poufs over
+  drawLoungeRug(ctx);
   drawSofa(ctx);
+  drawLoungePoufs(ctx);
 
   // Bookshelf on left wall (col 0, rows 3-5)
   {
