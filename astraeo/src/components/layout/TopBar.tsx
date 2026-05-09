@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboardIcon,
@@ -319,12 +319,23 @@ function ConnectionDot() {
 }
 
 function UserAvatar() {
-  const { settings } = useAstraeo();
+  const { settings, logout, showToast } = useAstraeo();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
   const initials = settings.userName.slice(0, 2).toUpperCase();
+
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    if (open) document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, [open]);
 
   return (
     <div
-      className="flex items-center gap-2 pl-2.5"
+      ref={ref}
+      className="flex items-center gap-2 pl-2.5 relative"
       style={{ borderLeft: "1px solid var(--border-subtle)" }}
     >
       <div className="hidden sm:block text-right">
@@ -335,17 +346,64 @@ function UserAvatar() {
           {settings.userRole}
         </p>
       </div>
-      <motion.div
+      <motion.button
+        onClick={() => setOpen((v) => !v)}
         whileHover={{ scale: 1.06 }}
-        className="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-[10px] cursor-pointer font-mono flex-shrink-0 transition-all"
+        whileTap={{ scale: 0.94 }}
+        className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-[10px] cursor-pointer font-mono flex-shrink-0 transition-all"
         style={{
-          background: "linear-gradient(135deg, var(--accent-indigo), var(--accent-violet))",
-          boxShadow: "0 0 12px rgba(122,112,136,0.3)",
+          background: "linear-gradient(135deg, #B8A06A 0%, #8A7855 100%)",
+          color: "#0A0908",
+          boxShadow: "0 0 14px rgba(184,160,106,0.25)",
+          border: "1px solid rgba(184,160,106,0.4)",
         }}
         aria-label={`User: ${settings.userName}`}
       >
         {initials}
-      </motion.div>
+      </motion.button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -6, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.96 }}
+            transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute right-0 top-[calc(100%+8px)] z-50"
+            style={{
+              minWidth: 200,
+              padding: 6,
+              borderRadius: 10,
+              background: "var(--bg-surface)",
+              border: "1px solid var(--border-subtle)",
+              boxShadow: "0 12px 30px rgba(0,0,0,0.45)",
+            }}
+          >
+            <div style={{ padding: "8px 10px 6px", borderBottom: "1px solid var(--border-subtle)", marginBottom: 4 }}>
+              <p style={{ fontSize: 11, fontWeight: 600, color: "var(--text-primary)" }}>{settings.userName}</p>
+              <p style={{ fontSize: 9, color: "var(--text-muted)", fontFamily: "var(--font-mono)", letterSpacing: "0.08em", textTransform: "uppercase" }}>{settings.userRole}</p>
+            </div>
+            <button
+              onClick={() => {
+                setOpen(false);
+                showToast("Sesión cerrada", "info");
+                logout();
+              }}
+              style={{
+                width: "100%", textAlign: "left", padding: "8px 10px",
+                borderRadius: 6, background: "transparent", border: "none",
+                color: "#A85060", fontSize: 11, fontWeight: 600,
+                cursor: "pointer", transition: "background 0.15s",
+                display: "flex", alignItems: "center", gap: 8,
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(122,48,64,0.08)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+            >
+              <span>↗</span> Cerrar sesión
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

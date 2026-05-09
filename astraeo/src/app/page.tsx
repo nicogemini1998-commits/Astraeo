@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAstraeo } from "@/store/astraeo";
 import Sidebar from "@/components/layout/Sidebar";
@@ -19,6 +19,7 @@ import SettingsPage from "@/components/pages/Settings";
 import Commander from "@/components/pages/Commander";
 import SkillsPage from "@/components/pages/Skills";
 import HooksPage from "@/components/pages/Hooks";
+import LoginScreen from "@/components/auth/LoginScreen";
 
 import type { Variants } from "framer-motion";
 
@@ -123,11 +124,23 @@ function PageContent() {
 }
 
 export default function App() {
-  const { tickMetrics, settings } = useAstraeo();
+  const { tickMetrics, settings, isAuthenticated } = useAstraeo();
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+  const [appReady, setAppReady] = useState(false);
+
+  useEffect(() => { setHydrated(true); }, []);
 
   useEffect(() => {
-    if (!settings.realtimeUpdates) {
+    if (isAuthenticated && hydrated) {
+      const t = setTimeout(() => setAppReady(true), 450);
+      return () => clearTimeout(t);
+    }
+    setAppReady(false);
+  }, [isAuthenticated, hydrated]);
+
+  useEffect(() => {
+    if (!settings.realtimeUpdates || !isAuthenticated) {
       if (tickRef.current) clearInterval(tickRef.current);
       return;
     }
@@ -135,10 +148,24 @@ export default function App() {
     return () => {
       if (tickRef.current) clearInterval(tickRef.current);
     };
-  }, [settings.realtimeUpdates, tickMetrics]);
+  }, [settings.realtimeUpdates, tickMetrics, isAuthenticated]);
+
+  // Avoid hydration mismatch — render nothing on server, login or app on client
+  if (!hydrated) {
+    return <div className="h-screen w-screen bg-[#0A0908]" />;
+  }
+
+  if (!isAuthenticated) {
+    return <LoginScreen />;
+  }
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-[#050810] text-[#E8ECF4] relative">
+    <motion.div
+      initial={{ opacity: 0, scale: 1.02, filter: "blur(8px)" }}
+      animate={appReady ? { opacity: 1, scale: 1, filter: "blur(0px)" } : { opacity: 0.4 }}
+      transition={{ duration: 0.7, ease: EASE_EXPO }}
+      className="h-screen w-screen overflow-hidden bg-[#0A0908] text-[var(--text-primary)] relative"
+    >
       <Starfield density={settings.starfieldDensity} />
       <div className="fixed inset-0 grid-bg pointer-events-none z-0 opacity-60" />
 
@@ -154,6 +181,6 @@ export default function App() {
       </div>
 
       <ToastContainer />
-    </div>
+    </motion.div>
   );
 }

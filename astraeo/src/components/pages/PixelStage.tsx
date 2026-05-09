@@ -1525,51 +1525,36 @@ function drawSimsAvatar(
   const isOffline = agent.status === "offline";
   const breathe   = isOffline ? 0 : Math.sin(t * 1.4) * 0.9;
 
-  // ── Contact shadow ──
-  const shGrad = ctx.createRadialGradient(0, 8, 0, 0, 8, 20);
-  shGrad.addColorStop(0, "rgba(0,0,0,0.42)");
+  // ── Contact shadow (softer, more elegant) ──
+  const shGrad = ctx.createRadialGradient(0, 9, 0, 0, 9, 18);
+  shGrad.addColorStop(0, "rgba(0,0,0,0.32)");
   shGrad.addColorStop(1, "rgba(0,0,0,0)");
   ctx.fillStyle = shGrad;
   ctx.beginPath();
-  ctx.ellipse(0, 8, 20, 7, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 9, 16, 5, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // ── Selection halo ──
+  // ── Selection halo — single soft ring, no glow spam ──
   if (hovered || selected) {
     ctx.save();
-    ctx.shadowColor = cfg.color;
-    ctx.shadowBlur  = selected ? 26 : 11;
-    ctx.strokeStyle = cfg.color + (selected ? "AA" : "44");
-    ctx.lineWidth   = selected ? 2 : 1.4;
+    ctx.strokeStyle = cfg.color + (selected ? "B0" : "55");
+    ctx.lineWidth   = selected ? 1.4 : 1;
+    ctx.setLineDash(selected ? [] : [3, 4]);
     ctx.beginPath();
-    ctx.arc(0, -32, 34, 0, Math.PI * 2);
+    ctx.arc(0, -34, 30, 0, Math.PI * 2);
     ctx.stroke();
     ctx.restore();
   }
 
-  // ── Chair ──
-  ctx.fillStyle = appleGrad(ctx, 0, -8, 15, 9, "#201A38", "#2E2848");
+  // ── Legs (slimmer, more refined proportions) ──
+  const pantsHL = blendHex(cfg.pants, "#FFF4E0", 0.10);
+  ctx.fillStyle = appleGrad(ctx, -5, -8, 5, 13, cfg.pants, pantsHL);
   ctx.beginPath();
-  ctx.roundRect(-13, -4, 26, 14, 3);
+  ctx.roundRect(-8, -8, 6, 17, 2.5);
   ctx.fill();
-  ctx.fillStyle = appleGrad(ctx, 0, -18, 12, 10, "#1C1630", "#2A2244");
+  ctx.fillStyle = appleGrad(ctx, 5, -8, 5, 13, cfg.pants, pantsHL);
   ctx.beginPath();
-  ctx.roundRect(-11, -22, 22, 18, 3);
-  ctx.fill();
-  ctx.fillStyle = "rgba(255,252,245,0.04)";
-  ctx.beginPath();
-  ctx.roundRect(-11, -22, 22, 4, [3, 3, 0, 0]);
-  ctx.fill();
-
-  // ── Legs (Sims proportions — longer, thinner) ──
-  const pantsHL = blendHex(cfg.pants, "#FFF4E0", 0.12);
-  ctx.fillStyle = appleGrad(ctx, -6, -8, 6, 13, cfg.pants, pantsHL);
-  ctx.beginPath();
-  ctx.roundRect(-10, -8, 8, 17, 3);
-  ctx.fill();
-  ctx.fillStyle = appleGrad(ctx, 6, -8, 6, 13, cfg.pants, pantsHL);
-  ctx.beginPath();
-  ctx.roundRect(2, -8, 8, 17, 3);
+  ctx.roundRect(2, -8, 6, 17, 2.5);
   ctx.fill();
 
   // Shoes — Apple radial gradient, no outline
@@ -1592,33 +1577,34 @@ function drawSimsAvatar(
   ctx.save();
   ctx.translate(0, breathe);
 
-  const shirtHL = blendHex(cfg.shirt, "#FFF4E0", 0.18);
-  ctx.fillStyle  = appleGrad(ctx, -3, -34, 14, 20, cfg.shirt, shirtHL);
+  // Slimmer torso with single subtle gradient
+  const shirtHL = blendHex(cfg.shirt, "#FFF4E0", 0.12);
+  ctx.fillStyle  = appleGrad(ctx, -3, -34, 12, 20, cfg.shirt, shirtHL);
   ctx.beginPath();
-  ctx.roundRect(-13, -48, 26, 40, [8, 8, 4, 4]);
+  ctx.roundRect(-11, -48, 22, 40, [7, 7, 3, 3]);
   ctx.fill();
 
-  // Dept collar accent
-  ctx.fillStyle = cfg.color + "55";
+  // Refined collar — tiny gold accent dot, not a heavy bar
+  ctx.fillStyle = cfg.color + "DD";
   ctx.beginPath();
-  ctx.roundRect(-13, -48, 26, 8, [8, 8, 0, 0]);
+  ctx.arc(0, -45, 1.4, 0, Math.PI * 2);
   ctx.fill();
 
-  // Arms
-  const skinHL = blendHex(cfg.skin, "#FFF4E0", 0.24);
+  // Arms — slimmer, closer to body
+  const skinHL = blendHex(cfg.skin, "#FFF4E0", 0.20);
   ctx.save();
-  ctx.rotate(isOffline ? 0 : Math.sin(t * 3.1) * 0.05);
-  ctx.fillStyle = appleGrad(ctx, -20, -38, 7, 6, cfg.skin, skinHL);
+  ctx.rotate(isOffline ? 0 : Math.sin(t * 3.1) * 0.04);
+  ctx.fillStyle = appleGrad(ctx, -18, -38, 6, 5, cfg.skin, skinHL);
   ctx.beginPath();
-  ctx.roundRect(-27, -43, 14, 9, 4);
+  ctx.roundRect(-23, -43, 12, 8, 3.5);
   ctx.fill();
   ctx.restore();
 
   ctx.save();
-  ctx.rotate(isOffline ? 0 : Math.sin(t * 3.1 + 1.2) * 0.05);
-  ctx.fillStyle = appleGrad(ctx, 20, -38, 7, 6, cfg.skin, skinHL);
+  ctx.rotate(isOffline ? 0 : Math.sin(t * 3.1 + 1.2) * 0.04);
+  ctx.fillStyle = appleGrad(ctx, 18, -38, 6, 5, cfg.skin, skinHL);
   ctx.beginPath();
-  ctx.roundRect(13, -43, 14, 9, 4);
+  ctx.roundRect(11, -43, 12, 8, 3.5);
   ctx.fill();
   ctx.restore();
 

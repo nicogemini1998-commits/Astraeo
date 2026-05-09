@@ -40,6 +40,11 @@ interface AstraeoState {
   notifPanelOpen: boolean;
   modalOpen: boolean;
   toasts: { id: string; message: string; type: "success" | "error" | "info" | "warning" }[];
+  isAuthenticated: boolean;
+
+  // Auth
+  login: (user: string, pass: string) => boolean;
+  logout: () => void;
 
   // Navigation
   setPage: (page: Page) => void;
@@ -181,6 +186,17 @@ export const useAstraeo = create<AstraeoState>()(
       notifPanelOpen: false,
       modalOpen: false,
       toasts: [],
+      isAuthenticated: false,
+
+      // Auth — demo-grade only (creds visible in bundle). Replace with real
+      // auth (NextAuth + hashed creds) before production.
+      login: (user, pass) => {
+        const ok = user === "nicolas" && pass === "Master123";
+        if (ok) set({ isAuthenticated: true });
+        return ok;
+      },
+      logout: () => set({ isAuthenticated: false }),
+
       skills: seedSkills,
       hooks: seedHooks,
       metrics: {
@@ -511,6 +527,7 @@ export const useAstraeo = create<AstraeoState>()(
         integrations: s.integrations,
         notifications: s.notifications,
         settings: s.settings,
+        isAuthenticated: s.isAuthenticated,
       }),
     }
   )

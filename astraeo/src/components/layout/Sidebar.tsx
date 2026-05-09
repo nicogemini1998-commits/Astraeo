@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboardIcon,
@@ -292,18 +293,50 @@ export default function Sidebar() {
   const { currentPage, setPage, metrics, settings, sidebarOpen, toggleSidebar, integrations } = useAstraeo();
   const claudeConnected = !!integrations.find((i) => i.id === "int-1")?.connected;
   const tokensToday = metrics.tokensPerMinute * 60;
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  // Auto-close on mobile when navigating
+  const handleNav = (p: typeof currentPage) => {
+    setPage(p);
+    if (isMobile && sidebarOpen) toggleSidebar();
+  };
 
   const groups = Array.from(new Set(NAV_ITEMS.map((i) => i.group ?? "core")));
+  const showOverlay = isMobile && sidebarOpen;
 
   return (
+    <>
+      {showOverlay && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={toggleSidebar}
+          className="fixed inset-0 z-40"
+          style={{ background: "rgba(10,9,8,0.6)", backdropFilter: "blur(4px)" }}
+        />
+      )}
     <motion.aside
       initial={false}
-      animate={{ width: sidebarOpen ? 220 : 56 }}
-      transition={{ duration: 0.2, ease: EASE }}
-      className="h-full flex flex-col z-50 flex-shrink-0 relative border-r border-[var(--border-subtle)]"
+      animate={{
+        width: isMobile ? (sidebarOpen ? 240 : 0) : (sidebarOpen ? 220 : 56),
+        x: isMobile && !sidebarOpen ? -240 : 0,
+      }}
+      transition={{ duration: 0.22, ease: EASE }}
+      className="h-full flex flex-col z-50 flex-shrink-0 border-r border-[var(--border-subtle)]"
       style={{
-        minWidth: sidebarOpen ? 220 : 56,
+        minWidth: isMobile ? 0 : (sidebarOpen ? 220 : 56),
         background: "var(--bg-base)",
+        position: isMobile ? "fixed" : "relative",
+        top: 0, bottom: 0, left: 0,
+        boxShadow: isMobile && sidebarOpen ? "8px 0 32px rgba(0,0,0,0.45)" : "none",
       }}
     >
       {/* ── Brand ────────────────────────────────────────────────── */}
@@ -391,7 +424,7 @@ export default function Sidebar() {
                     item={item}
                     active={currentPage === item.id}
                     collapsed={!sidebarOpen}
-                    onClick={() => setPage(item.id)}
+                    onClick={() => handleNav(item.id)}
                   />
                 ))}
               </div>
@@ -485,5 +518,6 @@ export default function Sidebar() {
         </AnimatePresence>
       </div>
     </motion.aside>
+    </>
   );
 }
