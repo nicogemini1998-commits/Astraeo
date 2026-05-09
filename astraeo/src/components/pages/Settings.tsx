@@ -66,6 +66,11 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [clearConfirm, setClearConfirm] = useState(false);
   const [restoreConfirm, setRestoreConfirm] = useState(false);
+  const [wipeOpen, setWipeOpen] = useState(false);
+  const [wipePhrase, setWipePhrase] = useState("");
+  const [wipePass, setWipePass] = useState("");
+  const [wipeLoading, setWipeLoading] = useState(false);
+  const [wipeErr, setWipeErr] = useState<string | null>(null);
   const [brandTag, setBrandTag] = useState("");
   const refs = useRef<Partial<Record<Section, HTMLElement>>>({});
 
@@ -142,6 +147,39 @@ export default function SettingsPage() {
     chatSessions.forEach((s) => store.deleteChat(s.id));
     showToast("Conversaciones eliminadas", "info");
     setClearConfirm(false);
+  };
+
+  const handleWipeAll = async () => {
+    if (wipeLoading) return;
+    setWipeErr(null);
+    setWipeLoading(true);
+    try {
+      const res = await fetch("/api/admin/wipe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmation: wipePhrase, password: wipePass }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        const code = (data as { code?: string }).code;
+        if (code === "BAD_CONFIRMATION") setWipeErr("Frase de confirmación incorrecta");
+        else if (code === "BAD_PASSWORD") setWipeErr("Contraseña incorrecta");
+        else if (code === "RATE_LIMITED") setWipeErr("Demasiados intentos — espera unos segundos");
+        else if (code === "UNAUTHENTICATED") setWipeErr("Sesión expirada, vuelve a iniciar sesión");
+        else setWipeErr("Error al borrar — revisa la consola");
+        setWipeLoading(false);
+        return;
+      }
+      // Success — wipe client storage and force reload to login
+      showToast("Todos los datos eliminados", "info");
+      localStorage.removeItem("astraeo-store");
+      // Logout cookie too
+      await fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined);
+      setTimeout(() => window.location.reload(), 600);
+    } catch {
+      setWipeErr("No se pudo contactar el servidor");
+      setWipeLoading(false);
+    }
   };
 
   const restoreDemo = () => {
@@ -451,6 +489,37 @@ export default function SettingsPage() {
             <DangerRow title="Exportar configuración" desc="Descarga todos los ajustes actuales como archivo JSON para respaldo o migración (sin API key).">
               <button onClick={exportConfig} style={GHOST}>↑ Exportar JSON</button>
             </DangerRow>
+
+            {/* ── BORRAR TODO — destructivo, doble auth ──────────────── */}
+            <div style={{
+              marginTop: 6, padding: "14px 16px", borderRadius: 12,
+              background: "rgba(122,48,64,0.06)",
+              border: "1px solid rgba(122,48,64,0.25)",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: "#A85060", marginBottom: 3, letterSpacing: "0.02em" }}>
+                    ⚠ Borrar toda la información
+                  </p>
+                  <p style={{ fontSize: 11, color: "var(--text-muted)", lineHeight: 1.55 }}>
+                    Elimina permanentemente todos los datos del sistema (agentes, conversaciones, memoria, misiones, ajustes) para preparar la herramienta para un nuevo cliente. Requiere confirmación con frase + contraseña. <strong style={{ color: "#A85060" }}>Acción irreversible.</strong>
+                  </p>
+                </div>
+                <button
+                  onClick={() => { setWipePhrase(""); setWipePass(""); setWipeErr(null); setWipeOpen(true); }}
+                  style={{
+                    ...DANGER_BTN,
+                    padding: "9px 14px",
+                    background: "rgba(122,48,64,0.18)",
+                    borderColor: "rgba(122,48,64,0.55)",
+                    color: "#C46878",
+                    fontWeight: 700,
+                  }}
+                >
+                  Borrar todo
+                </button>
+              </div>
+            </div>
           </SectionCard>
 
         </div>
@@ -472,6 +541,166 @@ export default function SettingsPage() {
                   Guardar cambios
                 </motion.button>
               </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Wipe-all confirmation modal (double-auth) ──────────────── */}
+        <AnimatePresence>
+          {wipeOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18, ease: EASE }}
+              onClick={() => { if (!wipeLoading) setWipeOpen(false); }}
+              style={{
+                position: "fixed", inset: 0, zIndex: 200,
+                background: "rgba(10,9,8,0.78)", backdropFilter: "blur(16px)",
+                display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
+              }}
+            >
+              <motion.div
+                onClick={(e) => e.stopPropagation()}
+                initial={{ opacity: 0, scale: 0.94, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.94, y: 10 }}
+                transition={{ duration: 0.22, ease: EASE }}
+                style={{
+                  width: "min(440px, 92vw)",
+                  borderRadius: 16,
+                  background: "var(--bg-surface)",
+                  border: "1px solid rgba(122,48,64,0.35)",
+                  overflow: "hidden",
+                  boxShadow: "0 30px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(122,48,64,0.15)",
+                }}
+              >
+                {/* Top crimson accent stripe */}
+                <div style={{ height: 3, background: "linear-gradient(90deg, transparent, #7A3040 30%, #A85060 50%, #7A3040 70%, transparent)" }} />
+
+                <div style={{ padding: "22px 24px 20px" }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 14 }}>
+                    <div style={{
+                      width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                      background: "rgba(122,48,64,0.12)",
+                      border: "1px solid rgba(122,48,64,0.4)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 18, color: "#A85060",
+                    }}>⚠</div>
+                    <div style={{ flex: 1 }}>
+                      <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)", fontFamily: "var(--font-display)", marginBottom: 4 }}>
+                        Borrar toda la información
+                      </h3>
+                      <p style={{ fontSize: 11, color: "var(--text-muted)", lineHeight: 1.6 }}>
+                        Esta acción elimina permanentemente <strong style={{ color: "#C46878" }}>todos los agentes, conversaciones, memoria, misiones y ajustes</strong> de la base de datos y del navegador. Sólo se conserva el log de auditoría.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Step 1 — phrase */}
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={{ display: "block", fontSize: 10, color: "var(--text-muted)", letterSpacing: "0.08em", fontWeight: 600, textTransform: "uppercase", marginBottom: 6 }}>
+                      Paso 1 · Escribe <strong style={{ color: "#C46878", fontFamily: "var(--font-mono)" }}>BORRAR TODO</strong>
+                    </label>
+                    <input
+                      autoFocus
+                      value={wipePhrase}
+                      onChange={(e) => { setWipePhrase(e.target.value); setWipeErr(null); }}
+                      disabled={wipeLoading}
+                      placeholder="BORRAR TODO"
+                      style={{
+                        width: "100%", padding: "10px 14px", borderRadius: 9,
+                        background: "var(--bg-base)",
+                        border: `1px solid ${wipePhrase === "BORRAR TODO" ? "rgba(122,48,64,0.45)" : "var(--border-subtle)"}`,
+                        color: wipePhrase === "BORRAR TODO" ? "#C46878" : "var(--text-primary)",
+                        fontSize: 13, fontFamily: "var(--font-mono)", letterSpacing: "0.05em",
+                        outline: "none", boxSizing: "border-box",
+                        transition: "all 0.15s",
+                      }}
+                    />
+                  </div>
+
+                  {/* Step 2 — password */}
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={{ display: "block", fontSize: 10, color: "var(--text-muted)", letterSpacing: "0.08em", fontWeight: 600, textTransform: "uppercase", marginBottom: 6 }}>
+                      Paso 2 · Re-introduce tu contraseña
+                    </label>
+                    <input
+                      type="password"
+                      value={wipePass}
+                      onChange={(e) => { setWipePass(e.target.value); setWipeErr(null); }}
+                      disabled={wipeLoading}
+                      placeholder="••••••••"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && wipePhrase === "BORRAR TODO" && wipePass) handleWipeAll();
+                      }}
+                      style={{
+                        width: "100%", padding: "10px 14px", borderRadius: 9,
+                        background: "var(--bg-base)",
+                        border: "1px solid var(--border-subtle)",
+                        color: "var(--text-primary)",
+                        fontSize: 13, outline: "none", boxSizing: "border-box",
+                        fontFamily: "inherit",
+                      }}
+                    />
+                  </div>
+
+                  <AnimatePresence>
+                    {wipeErr && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        style={{
+                          padding: "8px 12px", borderRadius: 8, marginBottom: 12,
+                          background: "rgba(122,48,64,0.1)",
+                          border: "1px solid rgba(122,48,64,0.3)",
+                          color: "#C46878", fontSize: 11, fontWeight: 500,
+                          display: "flex", alignItems: "center", gap: 8,
+                        }}
+                      >
+                        <span>⚠</span> {wipeErr}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+                    <button
+                      onClick={() => setWipeOpen(false)}
+                      disabled={wipeLoading}
+                      style={{
+                        flex: 1, padding: "10px 0", borderRadius: 9,
+                        border: "1px solid var(--border-subtle)",
+                        background: "transparent",
+                        color: "var(--text-muted)", fontSize: 12, fontWeight: 500,
+                        cursor: wipeLoading ? "not-allowed" : "pointer",
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                    <motion.button
+                      onClick={handleWipeAll}
+                      whileTap={{ scale: 0.98 }}
+                      disabled={wipeLoading || wipePhrase !== "BORRAR TODO" || !wipePass}
+                      style={{
+                        flex: 2, padding: "10px 0", borderRadius: 9,
+                        border: "1px solid rgba(122,48,64,0.6)",
+                        background: wipeLoading
+                          ? "rgba(122,48,64,0.15)"
+                          : "linear-gradient(135deg, #7A3040 0%, #5A2030 100%)",
+                        color: wipeLoading ? "#C46878" : "#F0EDE6",
+                        fontSize: 12, fontWeight: 700, letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                        cursor: (wipeLoading || wipePhrase !== "BORRAR TODO" || !wipePass) ? "not-allowed" : "pointer",
+                        opacity: (wipePhrase !== "BORRAR TODO" || !wipePass) ? 0.5 : 1,
+                        transition: "all 0.18s",
+                      }}
+                    >
+                      {wipeLoading ? "Borrando…" : "Borrar todo"}
+                    </motion.button>
+                  </div>
+                </div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
