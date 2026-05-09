@@ -470,22 +470,21 @@ interface SessionItemProps {
 
 function SessionItem({ sessionId: _sessionId, title, msgCount, agentIcon, agentColor, isActive, onClick, onDelete }: SessionItemProps) {
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
-      className="w-full text-left p-2.5 rounded-xl transition-all group relative"
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onClick(); }}
+      className="w-full text-left p-2.5 rounded-xl transition-all group relative cursor-pointer"
       style={{
         background: isActive ? `${agentColor}0c` : "transparent",
         border: `1px solid ${isActive ? agentColor + "28" : "transparent"}`,
       }}
       onMouseEnter={(e) => {
-        if (!isActive) {
-          (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.03)";
-        }
+        if (!isActive) (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.03)";
       }}
       onMouseLeave={(e) => {
-        if (!isActive) {
-          (e.currentTarget as HTMLButtonElement).style.background = "transparent";
-        }
+        if (!isActive) (e.currentTarget as HTMLDivElement).style.background = "transparent";
       }}
     >
       <div className="flex items-center gap-2">
@@ -500,7 +499,7 @@ function SessionItem({ sessionId: _sessionId, title, msgCount, agentIcon, agentC
         </div>
       </div>
       <button
-        onClick={onDelete}
+        onClick={(e) => { e.stopPropagation(); onDelete(e); }}
         className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-[10px]"
         style={{ color: C.muted }}
         onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = C.red; }}
@@ -508,7 +507,7 @@ function SessionItem({ sessionId: _sessionId, title, msgCount, agentIcon, agentC
       >
         ✕
       </button>
-    </button>
+    </div>
   );
 }
 

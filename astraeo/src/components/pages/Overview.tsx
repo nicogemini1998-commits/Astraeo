@@ -148,12 +148,15 @@ function KpiCard({ label, color, icon, trend, trendText, delay, target }: KpiCar
         }}>
           {displayed.toLocaleString()}
         </span>
-        <span style={{
-          fontSize: 10, fontWeight: 600, color: trendColor,
-          background: `${trendColor}12`, border: `1px solid ${trendColor}22`,
-          borderRadius: 20, padding: "2px 7px", marginBottom: 5,
-          fontFamily: "var(--font-mono)",
-        }}>
+        <span
+          suppressHydrationWarning
+          style={{
+            fontSize: 10, fontWeight: 600, color: trendColor,
+            background: `${trendColor}12`, border: `1px solid ${trendColor}22`,
+            borderRadius: 20, padding: "2px 7px", marginBottom: 5,
+            fontFamily: "var(--font-mono)",
+          }}
+        >
           {trendSymbol} {trendText}
         </span>
       </div>
