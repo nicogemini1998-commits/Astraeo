@@ -17,21 +17,41 @@ export default function LoginScreen() {
 
   useEffect(() => { setMounted(true); }, []);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (loading || success) return;
     setErr(null);
     setLoading(true);
 
-    setTimeout(() => {
-      const ok = login(user.trim(), pass);
-      if (ok) {
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user: user.trim(), pass }),
+      });
+
+      if (res.ok) {
+        // Server validated → reflect in client store for routing/UI gates
+        login(user.trim(), pass); // best-effort client-side mirror
         setSuccess(true);
+        return;
+      }
+
+      if (res.status === 429) {
+        setErr("Demasiados intentos — espera unos segundos");
       } else {
         setErr("Credenciales inválidas");
-        setLoading(false);
       }
-    }, 600);
+    } catch {
+      // Server unreachable — graceful fallback to client-side check so the
+      // dashboard remains usable in dev / offline. In production behind real
+      // auth this fallback should be removed.
+      const ok = login(user.trim(), pass);
+      if (ok) { setSuccess(true); return; }
+      setErr("No se pudo verificar — revisa la red");
+    } finally {
+      if (!success) setLoading(false);
+    }
   };
 
   return (

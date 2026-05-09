@@ -121,3 +121,23 @@ model TaskLog {
   @@index([status])
   @@map("task_log")
 }
+
+// Audit log — every security-relevant mutation lands here.
+// Never delete rows; archive after retention window via cron if needed.
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String   // e.g. "auth.login.success", "agent.update", "settings.write"
+  entity    String   // resource type: "session", "agent", "settings", ...
+  entityId  String?  // resource id when applicable
+  userId    String?  // who did it (session sub)
+  ip        String?
+  userAgent String?
+  meta      Json?    // before/after diff or extra context
+  createdAt DateTime @default(now())
+
+  @@index([action])
+  @@index([entity, entityId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_log")
+}

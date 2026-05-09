@@ -85,6 +85,7 @@ export const LIMITS = {
   commander:  { capacity: 10, refillRate: 0.5 },   // 10 burst, 1 per 2s
   memory:     { capacity: 60, refillRate: 5 },     // 60 burst, 5/s
   workflow:   { capacity: 5,  refillRate: 0.1 },   // 5 burst, 1 per 10s
+  auth:       { capacity: 5,  refillRate: 0.05 },  // 5 attempts, then 1 per 20s — anti-bruteforce
   default:    { capacity: 30, refillRate: 2 },
 } as const satisfies Record<string, TokenBucketOptions>;
 
